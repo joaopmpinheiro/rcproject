@@ -1,0 +1,8 @@
+# Ignore compiled artifacts
+user
+*.o
+*.out
+*.exe
+
+# Ignore PDFs
+*.pdf
