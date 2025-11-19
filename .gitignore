@@ -6,3 +6,6 @@ user
 
 # Ignore PDFs
 *.pdf
+
+# Ignore .vscode settings
+.vscode/
