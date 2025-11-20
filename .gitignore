@@ -1,6 +1,4 @@
 # Ignore compiled artifacts
-user
-server
 *.o
 *.out
 *.exe
