@@ -1,11 +1,15 @@
 # Ignore compiled artifacts
 user
+server
 *.o
 *.out
 *.exe
 
 # Ignore PDFs
 *.pdf
+
+# Ignore Markdown
+*.md
 
 # Ignore .vscode settings
 .vscode/

@@ -1,14 +1,13 @@
-CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -O2
-TARGET = user
-SRC = user.c
+SUBDIRS := server user
 
-.PHONY: all clean
+.PHONY: all $(SUBDIRS) clean
 
-all: $(TARGET)
+all: $(SUBDIRS)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $^
+$(SUBDIRS):
+	$(MAKE) -C $@
 
 clean:
-	rm -f $(TARGET)
+	@for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean || exit $$?; \
+	done
