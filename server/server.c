@@ -1,11 +1,15 @@
+#define _POSIX_C_SOURCE 200112L // TODO: confirmar se isto esta bem/é preciso
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+
 
 #define BASE_PORT 58000
 #define GROUP_NUMBER 32
@@ -34,6 +38,7 @@ int main() {
     struct sockaddr_in addr;
     socklen_t addrlen;
     char buffer[128];
+   
 
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1) {
