@@ -2,6 +2,9 @@
 *.o
 *.out
 *.exe
+user/user
+server/server
+
 
 # Ignore PDFs
 *.pdf
