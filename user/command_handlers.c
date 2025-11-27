@@ -2,8 +2,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+
 #include "command_handlers.h"
 #include "verifications.h"
+#include "client_data.h"
 
 CommandType identify_command(char* command) {
     if (strcmp(command, "login") == 0) {
@@ -35,49 +37,241 @@ CommandType identify_command(char* command) {
     }
 }
 
-int login_handler(char* request, char* args) {
+int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+     socklen_t udp_addr_len) {
     // FIXME as verificações dão return a -1 e já dão print, 
     // pode dar problema depois com erros na implementação do envio do pedido
-    char REQUEST_TYPE[3] = "LIN";
-    char uid[6];
-    char password[8];
+    char uid[7];
+    char password[9];
+    ssize_t n;
 
     if (!verify_argument_count(args, 2)) {
-        printf("Invalid login arguments count, expected 2 arguments: <uid> <password>\n");
+        printf("Invalid login argument count, expected 2 arguments: <uid> <password>\n");
         return -1;
     }
+
     sscanf(args, "%s %s", uid, password);
     if (!verify_uid_format(uid)) {
-        printf("Invalid UID format, UID must be exactly 6 digits\n");
+        printf("Login failed: Invalid UID format, UID must be exactly 6 digits\n");
         return -1;
     }
     if (!verify_password_format(password)) {
-        printf("Invalid password format, password must be exactly 8 alphanumeric characters\n");
+        printf("Login failed: Invalid password format, password must be exactly 8 alphanumeric characters\n");
         return -1;
     }
 
-    char REQUEST[256];
-    snprintf(REQUEST, sizeof(REQUEST), "%s %s %s", REQUEST_TYPE, uid, password);
-    // TODO send request to server and then process response
-    // DOUBT if the request protocol isn't right what should be done? Assume it's always right from the server?
+    char request[256];
+
+    // PROTOCOL: LIN <uid> <password>
+    snprintf(request, sizeof(request), "LIN %s %s\n", uid, password);
+
+    n = sendto(udp_fd, request, strlen(request), 0,
+         (struct sockaddr*)server_udp_addr, udp_addr_len);
+
+    if (n == -1) {
+        perror("Failed to send login request");
+        return -1;
+    }
+
+    char response[256];
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
+         NULL, NULL);
+    if (n == -1) {
+        perror("Failed to receive login response");
+        return -1;
+    }
+
+    response[n] = '\0';
+
+    char response_code[4];
+    char reply_status[4];
+
+    sscanf(response, "%s %s", response_code, reply_status);
+    int status = 0;
+
+    if (strcmp(response_code, "RLI") == 0) {
+        if (strcmp(reply_status, "OK") == 0) {
+            printf("Login successfull\n");
+            status = 1;
+        } else if (strcmp(reply_status, "NOK") == 0) {
+            printf("Login failed: Wrong password\n");
+        } else if (strcmp(reply_status, "REG") == 0) {
+            printf("Login successfull: New user registered\n");
+            status = 1;
+        } else {
+            printf("Login failed: Unknown reply status\n");
+        }
+    } else {
+        printf("Login failed: Unexpected response code\n");
+    }
+
+    if (status == 1) {
+        is_logged_in = 1;
+        strcpy(current_password, password);
+        strcpy(current_uid, uid);
+    }
+
     return 0;
 }
 
-void command_handler(CommandType command, char* args) {
+int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+     socklen_t udp_addr_len) {
+    
+    ssize_t n;
+
+    if (!verify_argument_count(args, 0)) {
+        printf("Invalid unregister argument count, no arguments expected\n");
+        return -1;
+    }
+
+    if (!is_logged_in) {
+        printf("Unregister failed: User not logged in\n");
+        return -1;
+    }
+
     char request[256];
+
+    // PROTOCOL: UNR <uid> <password>
+    snprintf(request, sizeof(request), "UNR %s %s\n", current_uid, current_password);
+
+    n = sendto(udp_fd, request, strlen(request), 0,
+         (struct sockaddr*)server_udp_addr, udp_addr_len);
+
+    if (n == -1) {
+        perror("Failed to send unregister request");
+        return -1;
+    }
+
+    char response[256];
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
+         NULL, NULL);
+    if (n == -1) {
+        perror("Failed to receive unregister response");
+        return -1;
+    }
+
+    response[n] = '\0';
+
+    char response_code[4];
+    char reply_status[4];
+
+    sscanf(response, "%s %s", response_code, reply_status);
+    int status = 0;
+
+    if (strcmp(response_code, "RUR") == 0) {
+        if (strcmp(reply_status, "OK") == 0) {
+            printf("Unregister successfull\n");
+                status = 1;
+        } else if (strcmp(reply_status, "NOK") == 0) {
+            printf("Unregister failed: User not logged in\n");
+        } else if (strcmp(reply_status, "WRP") == 0) {
+            printf("Unregister failed: Wrong password\n");
+        } else if (strcmp(reply_status, "UNR") == 0) {
+            printf("Unregister failed: User not registered\n");
+        } 
+        else {
+            printf("Unregister failed: Unknown reply status\n");
+        }
+    } else {
+        printf("Unregister failed: Unexpected response code\n");
+    }
+
+    if (status == 1) {
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
+    }
+
+    return 0;
+}
+
+int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+     socklen_t udp_addr_len) {
+
+    ssize_t n;
+
+    if (!verify_argument_count(args, 0)) {
+        printf("Invalid logout argument count, no arguments expected\n");
+        return -1;
+    }
+
+    if (!is_logged_in) {
+        printf("Logout failed: User not logged in\n");
+        return -1;
+    }
+    char request[256];
+
+    // PROTOCOL: LOU <uid> <password>
+    snprintf(request, sizeof(request), "LOU %s %s\n", current_uid, current_password);
+
+    n = sendto(udp_fd, request, strlen(request), 0,
+         (struct sockaddr*)server_udp_addr, udp_addr_len);
+
+    if (n == -1) {
+        perror("Failed to send logout request");
+        return -1;
+    }
+
+    char response[256];
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
+         NULL, NULL);
+    if (n == -1) {
+        perror("Failed to receive logout response");
+        return -1;
+    }
+
+    response[n] = '\0';
+
+    char response_code[4];
+    char reply_status[4];
+
+    sscanf(response, "%s %s", response_code, reply_status);
+    int status = 0;
+
+    if (strcmp(response_code, "RLO") == 0) {
+        if (strcmp(reply_status, "OK") == 0) {
+            printf("Logout successfull\n");
+                status = 1;
+        } else if (strcmp(reply_status, "NOK") == 0) {
+            printf("Logout failed: User not logged in\n");
+        } else if (strcmp(reply_status, "WRP") == 0) {
+            printf("Logout failed: Wrong password\n");
+        } else if (strcmp(reply_status, "UNR") == 0) {
+            printf("Logout failed: User not registered\n");
+        } 
+        else {
+            printf("Logout failed: Unknown reply status\n");
+        }
+    } else {
+        printf("Logout failed: Unexpected response code\n");
+    }
+
+    if (status == 1) {
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
+    }
+
+    return 0;
+}
+
+void command_handler(CommandType command, char* args, int udp_fd,
+     struct sockaddr_in* server_udp_addr) {
+    
+    socklen_t udp_addr_len = sizeof(*server_udp_addr);
     switch (command) {
         case LOGIN:
             // Handle login
-            login_handler(request, args);
+            login_handler(args, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case CHANGEPASS:
             // Handle change password
             break;
         case UNREGISTER:
-            // Handle unregister
+            unregister_handler(args, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case LOGOUT:
-            // Handle logout
+            logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case EXIT:
             // Handle exit
@@ -91,7 +285,6 @@ void command_handler(CommandType command, char* args) {
             // Handle close event
             break;
         case MYEVENTS:
-            // Handle my events
             break;
         case LIST:
             // Handle list events

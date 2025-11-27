@@ -13,6 +13,7 @@
 
 #include "command_handlers.h"
 #include "verifications.h"
+#include "client_data.h"
 
 #define BASE_PORT 58000
 #define GROUP_NUMBER 32
@@ -20,6 +21,10 @@
 #define DEFAULT_IP "127.0.0.1"
 #define PORTMAX 65535
 #define PORTMIN 0
+
+char current_uid[7] = "";
+char current_password[9] = "";
+int is_logged_in = 0;
 
 char* get_server_ip(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
@@ -75,6 +80,34 @@ int connect_tcp(char* ip, char* port) {
     return fd;
 }
 
+int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
+    struct addrinfo hints, *res;
+    int fd, errcode;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    errcode = getaddrinfo(ip, port, &hints, &res);
+    if (errcode != 0) return -1;
+
+    fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (fd == -1) {
+        freeaddrinfo(res);
+        return -1;
+    }
+
+    struct timeval timeout = {5, 0};
+
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    memset(server_addr, 0, sizeof(*server_addr));
+    memcpy(server_addr, res->ai_addr, res->ai_addrlen);
+
+    freeaddrinfo(res);
+    return fd;
+}
+
 int main(int argc, char* argv[]) {
 
     char* SERVER_IP = get_server_ip(argc, argv);
@@ -83,24 +116,11 @@ int main(int argc, char* argv[]) {
     if (SERVER_IP == NULL || SERVER_PORT == NULL) {
         return -1;
     }
-    
-    struct addrinfo hints, *res;
-    int fd, errcode;
-    ssize_t n;
 
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd == -1) return -1;
-    
-    struct timeval timeout = {5, 0};
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    errcode = getaddrinfo(SERVER_IP, SERVER_PORT, &hints, &res);
-    if (errcode != 0) {
-        close(fd);
+    struct sockaddr_in server_udp_addr;
+    int udp_fd = setup_udp(SERVER_IP, SERVER_PORT, &server_udp_addr);
+    if (udp_fd == -1) {
+        perror("UDP setup failed");
         return -1;
     }
 
@@ -110,6 +130,7 @@ int main(int argc, char* argv[]) {
 
     fflush(stdout);
     while (1) {
+        printf("> ");
         if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) break;
 
         memset(command_buffer, 0, sizeof(command_buffer));
@@ -118,7 +139,7 @@ int main(int argc, char* argv[]) {
         sscanf(input_buffer, "%s %[^\n]", command_buffer, command_arg_buffer);
 
         CommandType command = identify_command(command_buffer);
-        command_handler(command, command_arg_buffer);
+        command_handler(command, command_arg_buffer, udp_fd, &server_udp_addr);
     }
 
     return 0;
