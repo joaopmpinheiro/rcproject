@@ -10,6 +10,8 @@
 #include <sys/socket.h>  // For socket functions
 #include <sys/types.h>  // For data types
 #include <netinet/in.h>  // For sockaddr_in
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <time.h>  // For time functions
 #include <signal.h>
 #include <ctype.h>
@@ -17,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <pthread.h>
+
 #include "../../common/common.h"
 
 #define BUFFER_SIZE 1024
@@ -66,7 +69,8 @@ typedef struct {
 
 
 typedef struct {
-    int verbose_mode;
+    int verbose;
+    char* port;
     int udp_socket;
     int tcp_socket;
     struct timeval timeout;

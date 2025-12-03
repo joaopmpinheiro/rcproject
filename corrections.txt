@@ -1,0 +1,5 @@
+USER:
+
+- o commando "login 58000 tejo.tecnico.ulisboa.pt devia funcionar?
+  (aka sem o -n e -p)
+  
