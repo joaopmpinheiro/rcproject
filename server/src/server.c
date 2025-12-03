@@ -13,6 +13,26 @@ int main(int argc, char *argv[]) {
 
     server_setup();
 
+    while(1){
+
+    if (select_handler() < 0) {
+            // Something went wrong
+            continue;
+        }
+
+        // Check for UDP connection
+        if (FD_ISSET(settings.udp_socket, &settings.temp_fds)) {
+            udp_connection();
+            // One of the threads will handle the request, check handle_task() in threads.c
+        }
+
+        // Check for TCP connection
+        if (FD_ISSET(settings.tcp_socket, &settings.temp_fds)) {
+            tcp_connection();
+            // One of the threads will handle the request, check handle_task() in threads.c
+        }
+    }
+
 
     return 0;
 }

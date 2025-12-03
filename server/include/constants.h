@@ -22,7 +22,7 @@
 
 #include "../../common/common.h"
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 1024 //TODO: confirmar
 #define TIMEOUT_SECONDS 5
 #define PASSWORD_LENGTH 8
 #define MAX_EVENT_NAME 10
@@ -32,6 +32,7 @@
 #define MAX_SEATS 999
 #define ERROR -1
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
+
 
 typedef struct{
     int EID;
@@ -75,6 +76,7 @@ typedef struct {
     int udp_socket;
     int tcp_socket;
     fd_set read_fds;
+    fd_set temp_fds;
     struct timeval timeout;
 } Set;
 

@@ -3,3 +3,6 @@ USER:
 - o commando "login 58000 tejo.tecnico.ulisboa.pt devia funcionar?
   (aka sem o -n e -p)
   
+
+COMMON:
+- algumas funcoes no connection do server podiam estar no commmon e ser usadas no user
