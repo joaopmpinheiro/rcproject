@@ -40,7 +40,7 @@ char* get_server_port(int argc, char* argv[]) {
             if (!is_valid_port(argv[i + 1])) {
                 return NULL;
             }
-            atoi(argv[i + 1]);
+            return argv[i + 1];
         }
     }
     return DEFAULT_PORT;

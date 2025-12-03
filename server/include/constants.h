@@ -21,5 +21,55 @@
 
 #define BUFFER_SIZE 1024
 #define TIMEOUT_SECONDS 5
+#define PASSWORD_LENGTH 8
+#define MAX_EVENT_NAME 10
+#define DATE_LENGTH 11
+#define TIME_LENGTH 5
+#define MIN_SEATS 10
+#define MAX_SEATS 999
+
+
+typedef struct{
+    int EID;
+    char description[MAX_EVENT_NAME];
+    char* file;
+    char date[DATE_LENGTH];
+    char time[TIME_LENGTH];
+    int total_seats;
+    int available_seats;
+    int status; //TODO: confirmar e defenir estados
+    int num_reservations;
+} Event;
+
+typedef struct EventNode {
+    Event event;
+    struct EventNode* next;
+} EventNode;
+
+typedef struct {
+    Event* event;
+    int num_seats;
+} Reservation;
+
+typedef struct ReservationNode {
+    Reservation reservation;
+    struct ReservationNode* next;
+} ReservationNode;
+
+typedef struct {
+    int status;
+    int UID;
+    char password[PASSWORD_LENGTH];
+    EventNode* created_events; //linked list of event names
+    ReservationNode* reserved_events; //linked list of event names 
+} User;
+
+
+typedef struct {
+    int verbose_mode;
+    int udp_socket;
+    int tcp_socket;
+    struct timeval timeout;
+} Set;
 
 #endif 
