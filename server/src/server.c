@@ -11,6 +11,8 @@ int main(int argc, char *argv[]) {
 
     parse_arguments(argc, argv);
 
+    server_setup();
+
 
     return 0;
 }

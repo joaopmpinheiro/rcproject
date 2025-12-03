@@ -2,10 +2,11 @@
 #define __UTILS_H__
 
 //connection.c
-char* get_server_ip(int argc, char* argv[]);
-char* get_server_port(int argc, char* argv[]);
+int tcp_setup();
+int udp_setup();
 int connect_tcp(char* ip, char* port);
 int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr);
+void server_setup();
 
 // connection.c
 void parse_arguments(int argc, char *argv[]);

@@ -37,20 +37,3 @@ int is_valid_port(const char *port_str) {
 
     return VALID;
 }
-
-
-
-static char* get_server_port(int argc, char* argv[]) {
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-p") == 0) {
-            if (i + 1 >= argc) {
-                return INVALID;
-            }
-            if (!is_valid_port(argv[i + 1])) {
-                return INVALID;
-            }
-            return argv[i + 1];
-        }
-    }
-    return DEFAULT_PORT;
-}

@@ -30,7 +30,8 @@
 #define TIME_LENGTH 5
 #define MIN_SEATS 10
 #define MAX_SEATS 999
-
+#define ERROR -1
+#define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
 
 typedef struct{
     int EID;
@@ -73,6 +74,7 @@ typedef struct {
     char* port;
     int udp_socket;
     int tcp_socket;
+    fd_set read_fds;
     struct timeval timeout;
 } Set;
 
