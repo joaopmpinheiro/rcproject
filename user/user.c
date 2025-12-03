@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 200112L // TODO: confirmar se isto esta bem/é preciso
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,19 +12,16 @@
 #include "command_handlers.h"
 #include "verifications.h"
 #include "client_data.h"
+#include "../common/common.h"
 
-#define BASE_PORT 58000
-#define GROUP_NUMBER 32
-#define DEFAULT_PORT "58032"
-#define DEFAULT_IP "127.0.0.1"
-#define PORTMAX 65535
-#define PORTMIN 0
+
 
 char current_uid[7] = "";
 char current_password[9] = "";
 int is_logged_in = 0;
 
 char* get_server_ip(int argc, char* argv[]) {
+    // TODO: validar IP
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-n") == 0) {
             return argv[i + 1];
@@ -39,15 +34,15 @@ char* get_server_ip(int argc, char* argv[]) {
 char* get_server_port(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-p") == 0) {
-            char* port = argv[i + 1];
-            int port_num = atoi(port);
-            if (port_num < PORTMIN || port_num > PORTMAX) {
+            if (i + 1 >= argc) {
                 return NULL;
             }
-            return port;
+            if (!is_valid_port(argv[i + 1])) {
+                return NULL;
+            }
+            atoi(argv[i + 1]);
         }
     }
-    
     return DEFAULT_PORT;
 }
 
@@ -120,7 +115,7 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in server_udp_addr;
     int udp_fd = setup_udp(SERVER_IP, SERVER_PORT, &server_udp_addr);
     if (udp_fd == -1) {
-        perror("UDP setup failed");
+        fprintf(stderr, "UDP setup failed\n");
         return -1;
     }
 
