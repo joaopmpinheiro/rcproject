@@ -34,6 +34,7 @@
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
 
 
+
 typedef struct{
     int EID;
     char description[MAX_EVENT_NAME];
@@ -68,6 +69,24 @@ typedef struct {
     EventNode* created_events; //linked list of event names
     ReservationNode* reserved_events; //linked list of event names 
 } User;
+
+
+typedef struct {
+    int client_socket;
+    struct sockaddr_in client_addr;
+    socklen_t addr_len;
+    int is_tcp;
+    char buffer[BUFFER_SIZE];
+} Request;
+
+typedef struct {
+    Request req[MAX_TCP_CLIENTS];
+    int front;
+    int rear;
+    int count;
+    pthread_mutex_t lock;
+    pthread_cond_t cond;
+} RequestQueue;
 
 
 typedef struct {

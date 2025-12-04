@@ -19,14 +19,22 @@ void udp_connection() {
     char buffer[BUFFER_SIZE];
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
+
+    // copia o conteudo enviado para o UDP para dentro do buffer
     ssize_t len = recvfrom(settings.udp_socket, buffer, sizeof(buffer) - 1, 0,
                             (struct sockaddr *)&client_addr, &addr_len);
-/*     if (len > 0) {
+
+    // se o buffer nao estiver vazio
+    if (len > 0) {
+        //acrecentar \0 para poder ser usado como string
         buffer[len] = '\0';
-        Task task = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
-        strncpy(task.buffer, buffer, sizeof(task.buffer));
-        task_queue_push(&task_queue, task);
-    } */
+
+        // criar um novo request para poder ser usado yay
+        Request req = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
+        strncpy(req.buffer, buffer, sizeof(req.buffer));
+        manage_UDP_request(&req);
+        task_queue_push(&task_queue, req);
+    } 
 }
 
 void tcp_connection() {
