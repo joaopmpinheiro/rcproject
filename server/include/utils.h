@@ -1,6 +1,11 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+// socket_manager.c
+int select_handler();
+void udp_connection();
+void tcp_connection();
+
 //connection.c
 int tcp_setup();
 int udp_setup();
@@ -14,9 +19,5 @@ void parse_arguments(int argc, char *argv[]);
 //error.c
 void usage(const char *prog_name);
 
-// socket_manager.c
-int select_handler();
-void udp_connection();
-void tcp_connection();
 
 #endif

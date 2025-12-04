@@ -14,3 +14,5 @@ server/server
 
 # Ignore .vscode settings
 .vscode/
+
+.idea/
