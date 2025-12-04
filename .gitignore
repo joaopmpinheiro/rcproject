@@ -2,6 +2,7 @@
 *.o
 *.out
 *.exe
+*.a
 user/user
 server/server
 
