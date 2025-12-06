@@ -35,6 +35,23 @@
 
 
 
+typedef enum RequestType {
+    LOGIN,
+    CHANGEPASS,
+    UNREGISTER,
+    LOGOUT,
+    EXIT,
+    CREATE,
+    CLOSE,
+    MYEVENTS,
+    LIST,
+    SHOW,
+    RESERVE,
+    MYRESERVATIONS,
+    UNKNOWN,
+} RequestType;
+
+
 typedef struct{
     int EID;
     char description[MAX_EVENT_NAME];
@@ -70,6 +87,10 @@ typedef struct {
     ReservationNode* reserved_events; //linked list of event names 
 } User;
 
+typedef struct UserNode {
+    User user;
+    struct UserNode* next;
+} UserNode;
 
 typedef struct {
     int client_socket;

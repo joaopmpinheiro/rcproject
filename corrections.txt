@@ -6,3 +6,8 @@ USER:
 
 COMMON:
 - algumas funcoes no connection do server podiam estar no commmon e ser usadas no user
+
+
+
+
++ por verifications num common

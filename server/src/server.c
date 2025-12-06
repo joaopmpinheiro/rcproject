@@ -3,6 +3,8 @@
 #include "../include/utils.h"
 
 Set settings = {0};
+UserNode *users = NULL;
+EventNode *events = NULL;
 
 
 int main(int argc, char *argv[]) {

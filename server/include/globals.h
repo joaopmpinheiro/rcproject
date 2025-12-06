@@ -3,9 +3,8 @@
 
 #include "constants.h"
 
-extern User *users;
+extern UserNode *users;
 extern EventNode *events;
-
 extern Set settings;
 
 #endif

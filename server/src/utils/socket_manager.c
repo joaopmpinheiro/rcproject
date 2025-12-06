@@ -32,9 +32,13 @@ void udp_connection() {
         // criar um novo request para poder ser usado yay
         Request req = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
         strncpy(req.buffer, buffer, sizeof(req.buffer));
-        manage_UDP_request(&req);
-        task_queue_push(&task_queue, req);
+        handle_request(&req);
     } 
+}
+
+
+void send_udp_response(const char* message, struct sockaddr_in* client_addr, socklen_t addr_len, int udp_socket) {
+    sendto(udp_socket, message, strlen(message), 0, (struct sockaddr *)client_addr, addr_len);
 }
 
 void tcp_connection() {

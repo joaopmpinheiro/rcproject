@@ -132,33 +132,19 @@ static ReplyStatus parse_status_code(const char* status) {
 }
 
 CommandType identify_command(char* command) {
-    if (strcmp(command, "login") == 0) {
-        return LOGIN;
-    } else if (strcmp(command, "changePass") == 0) {
-        return CHANGEPASS;
-    } else if (strcmp(command, "unregister") == 0) {
-        return UNREGISTER;
-    } else if (strcmp(command, "logout") == 0) {
-        return LOGOUT;
-    } else if (strcmp(command, "exit") == 0) {
-        return EXIT;
-    } else if (strcmp(command, "create") == 0) {
-        return CREATE;
-    } else if (strcmp(command, "close") == 0) {
-        return CLOSE;
-    } else if (strcmp(command, "myevents") == 0 || strcmp(command, "mye") == 0) {
-        return MYEVENTS;
-    } else if (strcmp(command, "list") == 0) {
-        return LIST;
-    } else if (strcmp(command, "show") == 0) {
-        return SHOW;
-    } else if (strcmp(command, "reserve") == 0) {
-        return RESERVE;
-    } else if (strcmp(command, "myreservations") == 0 || strcmp(command, "myr") == 0) {
-        return MYRESERVATIONS;
-    } else {
-        return UNKNOWN;
-    }
+    if (strcmp(command, "login") == 0) return LOGIN;
+    else if (strcmp(command, "changePass") == 0) return CHANGEPASS;
+    else if (strcmp(command, "unregister") == 0) return UNREGISTER;
+    else if (strcmp(command, "logout") == 0) return LOGOUT;
+    else if (strcmp(command, "exit") == 0) return EXIT;
+    else if (strcmp(command, "create") == 0) return CREATE;
+    else if (strcmp(command, "close") == 0) return CLOSE;
+    else if (strcmp(command, "myevents") == 0 || strcmp(command, "mye") == 0) return MYEVENTS;
+    else if (strcmp(command, "list") == 0) return LIST;
+    else if (strcmp(command, "show") == 0) return SHOW;
+    else if (strcmp(command, "reserve") == 0) return RESERVE;
+    else if (strcmp(command, "myreservations") == 0 || strcmp(command, "myr") == 0) return MYRESERVATIONS;
+    else return UNKNOWN;
 }
 
 ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
@@ -167,9 +153,7 @@ ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp
     char password[32];
     ssize_t n;
 
-    if (is_logged_in) {
-        return STATUS_ALREADY_LOGGED_IN;
-    }
+    if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
 
     if (!verify_argument_count(args, 2)) {
         return STATUS_INVALID_ARGS;
@@ -492,4 +476,6 @@ void command_handler(CommandType command, char* args, int udp_fd,
             printf("Unknown command\n");
             break;
     }
+
+    
 }
