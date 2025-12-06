@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 
 #include "command_handlers.h"
-#include "../common/verifications.h"
+#include "../../common/verifications.h"
 #include "client_data.h"
 
 // Helper function to get command name string

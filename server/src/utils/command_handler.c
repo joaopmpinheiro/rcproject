@@ -1,50 +1,9 @@
 #include "../../include/constants.h"
 #include "../../include/utils.h"
 #include "../../include/globals.h"
-#include "../../include/verifications.h"
+#include "../../common/verifications.h"
 
-void manage_UDP_request(Request* req) {
-    // login
-    // unregister
-    // logout
-    // my events or mye
-    // my reservations or myr
-
-}
-
-RequestType identify_request(char* command) {
-    if (strcmp(command, "LIN") == 0) {
-        return LOGIN;
-    } else {
-        return UNKNOWN;
-    }
-}
-
-void handle_request(Request req) {
-    char command_buff[3];
-    sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
-    RequestType command = identify_request_type(command_buff);
-
-    // known command but wrong args
-    if (!correct_UID_password_args(&req) && command != UNKNOWN) {
-        send_udp_response("%s ERR\n", command_buff, &req->client_addr, req->addr_len, settings.udp_socket);
-        return;
-    }
-
-    switch (command) {
-        case LOGIN:
-            // Handle login
-            login_handler(&req);
-            break;
-        default:
-            send_udp_response("ERR\n", &req->client_addr, req->addr_len, settings.udp_socket);
-            break;
-    }
-}
-
-
-
-int identify_request_type(char* command_buff){
+RequestType identify_request_type(char* command_buff){
     if (strncmp(command_buff, "LIN", 3) == 0) {
         return LOGIN;
     } else if (strncmp(command_buff, "RUR", 3) == 0) {
@@ -54,63 +13,14 @@ int identify_request_type(char* command_buff){
     }
 }
 
-int manage
 
-_UDP_request(Request* req){
-    RequestType type = identify_request_type(req);
-    switch (type) {
-        case LOGIN:
-            login_handler(req);
-            break;
-        case UNREGISTER:
-            unregister_handler(req);
-            break;
-        case LOGOUT:
-            logout_handler(req);
-            break;
-        case MYEVENTS:
-            check_user_events_handler(req);
-            break;
-        case MYRESERVATIONS:
-            check_user_reservations_handler(req);
-            break;
-        default:
-            // Unknown request type
-            return -1;
-    }
-    return 0;
-}
-
-User get_user_by_uid(int UID) {
-    UserNode* current = users;
-    while (current != NULL) {
-        if (current->user.UID == UID) {
-            return current->user;
-        }
-        current = current->next;
-    }
-    return NULL;
-}
-
-User create_user(int UID, char* password) {
-    UserNode* new_node = (UserNode*)malloc(sizeof(UserNode));
-    new_node->user.UID = UID;
-    strncpy(new_node->user.password, password, PASSWORD_LENGTH);
-    new_node->user.status = 1; // logged in
-    new_node->user.created_events = NULL;
-    new_node->user.reserved_events = NULL;
-    new_node->next = users;
-    users = new_node;
-    return new_node->user;
-}
-
-int correct_UID_password_args(Request* req) {
+int correct_args_UID_password_args(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) {
         return INVALID;
     }
-    int UID;
+    char UID[3];
     char password[PASSWORD_LENGTH];
-    sscanf(req->buffer, "%*s %d %s", &UID, password);
+    sscanf(req->buffer, "%*s %s %s", UID, password);
 
     if (!verify_uid_format(UID)) {
         return INVALID;
@@ -120,6 +30,61 @@ int correct_UID_password_args(Request* req) {
     }
     return VALID;
 }
+
+void handle_request(Request* req) {
+    char command_buff[3] = {0};
+    char command_arg_buffer[BUFFER_SIZE] = {0};
+
+    sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
+    RequestType command = identify_request_type(command_buff);
+
+    // known command but wrong args
+    if (!correct_args_UID_password(req) && command != UNKNOWN) {
+        char response[16];   // enough space for your message
+        snprintf(response, sizeof(response), "%s ERR\n", command_buff);
+        send_udp_response(response, &req->client_addr, req->addr_len, settings.udp_socket);
+        return;
+    }
+
+    switch (command) {
+        case LOGIN:
+            // Handle login
+            login_handler(req);
+            break;
+        default:
+            send_udp_response("ERR\n", &req->client_addr, req->addr_len, settings.udp_socket);
+            break;
+    }
+}
+
+
+
+
+
+
+User* get_user_by_uid(int UID) {
+    UserNode* current = users;
+    while (current != NULL) {
+        if (current->user.UID == UID) {
+            return &current->user;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+void create_user(int UID, char* password) {
+    UserNode* new_node = (UserNode*)malloc(sizeof(UserNode));
+    new_node->user.UID = UID;
+    strncpy(new_node->user.password, password, PASSWORD_LENGTH);
+    new_node->user.status = 1; // logged in
+    new_node->user.created_events = NULL;
+    new_node->user.reserved_events = NULL;
+    new_node->next = users;
+    users = new_node;
+}
+
+
 
 // ------ UDP ---
 /** LIN UID password
@@ -132,27 +97,25 @@ int correct_UID_password_args(Request* req) {
 **/
 //TODO: o que acontece se o UID vier errado?
 void login_handler(Request* req) {
-    
     int UID;
     char password[PASSWORD_LENGTH];
     sscanf(req->buffer, "LIN %d %s", &UID, password);
 
-    if(!verify_uid_format(UID)) {
-        send_udp_response("RLI ERR\n", &req->client_addr, req->addr_len, settings.udp_socket);
-        return;
-    }
-    User user = get_user_by_uid(UID);
-    if (user.UID == NULL) {
+    User* user = get_user_by_uid(UID);
+    if (user == NULL) {
         create_user(UID, password);
         send_udp_response("RLI REG\n", &req->client_addr, req->addr_len, settings.udp_socket);
         return;
     }
 
-    if(!verify_password_format(password)) {
-        send_udp_response("RLI ERR\n", &req->client_addr, req->addr_len, settings.udp_socket);
-        return;
+    if (strcmp(user->password, password) == 0) {
+        user->status = 1; // logged in
+        send_udp_response("RLI OK\n", &req->client_addr, req->addr_len, settings.udp_socket);
     }
 
+    else {
+        send_udp_response("RLI NOK\n", &req->client_addr, req->addr_len, settings.udp_socket);
+    }
 }
 
 /** LOU UID password

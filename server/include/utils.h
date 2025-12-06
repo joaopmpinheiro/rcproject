@@ -23,10 +23,22 @@ void usage(const char *prog_name);
 
 
 // command_handler.c
-int identify_request_type(Request* req);
-int manage_UDP_request(Request* req);
-int manage_TCP_request(Request* req);
+int correct_args_UID_password(Request* req);
+RequestType identify_request_type(char* command);
 void handle_request(Request* req);
+
+User* get_user_by_uid(int UID);
+void create_user(int UID, char* password);
+
+void login_handler(Request* req);
+void logout_handler();
+void unregister_handler();
+void change_password_handler();
+void create_event_handler();
+void close_event_handler();
+void show_event_handler();
+void reserve_seats_handler();
+
 
 
 
