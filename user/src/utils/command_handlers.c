@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -6,6 +7,129 @@
 #include "command_handlers.h"
 #include "../common/verifications.h"
 #include "client_data.h"
+
+// Helper function to get command name string
+static const char* get_command_name(CommandType command) {
+    switch (command) {
+        case LOGIN: return "Login";
+        case CHANGEPASS: return "Change password";
+        case UNREGISTER: return "Unregister";
+        case LOGOUT: return "Logout";
+        case EXIT: return "Exit";
+        case CREATE: return "Create";
+        case CLOSE: return "Close";
+        case MYEVENTS: return "My events";
+        case LIST: return "List";
+        case SHOW: return "Show";
+        case RESERVE: return "Reserve";
+        case MYRESERVATIONS: return "My reservations";
+        default: return "Unknown";
+    }
+}
+
+// Centralized result printing
+void print_result(CommandType command, ReplyStatus status) {
+    const char* cmd_name = get_command_name(command);
+    
+    switch (status) {
+        // Success cases
+        case STATUS_OK:
+            switch (command) {
+                case LOGIN:
+                    printf("%s successful: User logged in\n", cmd_name);
+                    break;
+                case LOGOUT:
+                    printf("%s successful: User logged out\n", cmd_name);
+                    break;
+                case UNREGISTER:
+                    printf("%s successful: User unregistered\n", cmd_name);
+                    break;
+                default:
+                    printf("%s successful\n", cmd_name);
+                    break;
+            }
+            break;
+        case STATUS_REGISTERED:
+            printf("%s successful: New user registered\n", cmd_name);
+            break;
+            
+        // Server error cases
+        case STATUS_NOK:
+            switch (command) {
+                case LOGIN:
+                    printf("%s failed: Wrong password\n", cmd_name);
+                    break;
+                case LOGOUT:
+                case UNREGISTER:
+                    printf("%s failed: User not logged in\n", cmd_name);
+                    break;
+                case MYEVENTS:
+                    printf("%s: User has no events\n", cmd_name);
+                    break;
+                default:
+                    printf("%s failed\n", cmd_name);
+                    break;
+            }
+            break;
+        case STATUS_NOT_LOGGED_IN:
+            printf("%s failed: User not logged in\n", cmd_name);
+            break;
+        case STATUS_WRONG_PASSWORD:
+            printf("%s failed: Wrong password\n", cmd_name);
+            break;
+        case STATUS_USER_NOT_REGISTERED:
+            printf("%s failed: User not registered\n", cmd_name);
+            break;
+        case STATUS_USER_NOT_FOUND:
+            printf("%s failed: User does not exist\n", cmd_name);
+            break;
+            
+        // Client-side errors
+        case STATUS_INVALID_ARGS:
+            printf("%s failed: Invalid argument count\n", cmd_name);
+            break;
+        case STATUS_INVALID_UID:
+            printf("%s failed: Invalid UID format (must be 6 digits)\n", cmd_name);
+            break;
+        case STATUS_INVALID_PASSWORD:
+            printf("%s failed: Invalid password format (must be 8 alphanumeric characters)\n", cmd_name);
+            break;
+        case STATUS_NOT_LOGGED_IN_LOCAL:
+            printf("%s failed: User not logged in\n", cmd_name);
+            break;
+        case STATUS_SEND_FAILED:
+            printf("%s failed: Failed to send request\n", cmd_name);
+            break;
+        case STATUS_RECV_FAILED:
+            printf("%s failed: Failed to receive response\n", cmd_name);
+            break;
+        case STATUS_MALFORMED_RESPONSE:
+            printf("%s failed: Malformed server response\n", cmd_name);
+            break;
+        case STATUS_UNEXPECTED_RESPONSE:
+            printf("%s failed: Unexpected response code\n", cmd_name);
+            break;
+        case STATUS_ALREADY_LOGGED_IN:
+            printf("%s failed: User already logged in\n", cmd_name);
+            break;
+            
+        // Special cases - no printing needed
+        case STATUS_CUSTOM_OUTPUT:
+            break;
+    }
+}
+
+// Helper to parse common protocol status codes
+static ReplyStatus parse_status_code(const char* status) {
+    if (strcmp(status, "OK") == 0) return STATUS_OK;
+    if (strcmp(status, "NOK") == 0) return STATUS_NOK;
+    if (strcmp(status, "REG") == 0) return STATUS_REGISTERED;
+    if (strcmp(status, "NLG") == 0) return STATUS_NOT_LOGGED_IN;
+    if (strcmp(status, "WRP") == 0) return STATUS_WRONG_PASSWORD;
+    if (strcmp(status, "UNR") == 0) return STATUS_USER_NOT_REGISTERED;
+    if (strcmp(status, "NID") == 0) return STATUS_USER_NOT_FOUND;
+    return STATUS_UNEXPECTED_RESPONSE;
+}
 
 CommandType identify_command(char* command) {
     if (strcmp(command, "login") == 0) {
@@ -37,28 +161,27 @@ CommandType identify_command(char* command) {
     }
 }
 
-int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
-    // FIXME as verificações dão return a -1 e já dão print, 
-    // pode dar problema depois com erros na implementação do envio do pedido
     char uid[32];
     char password[32];
     ssize_t n;
 
+    if (is_logged_in) {
+        return STATUS_ALREADY_LOGGED_IN;
+    }
+
     if (!verify_argument_count(args, 2)) {
-        printf("Login failed: Invalid argument count, expected 2 arguments: <uid> <password>\n");
-        return -1;
+        return STATUS_INVALID_ARGS;
     }
 
     sscanf(args, "%31s %31s", uid, password);
 
     if (!verify_uid_format(uid)) {
-        printf("Login failed: Invalid UID format, UID must be exactly 6 digits\n");
-        return -1;
+        return STATUS_INVALID_UID;
     }
     if (!verify_password_format(password)) {
-        printf("Login failed: Invalid password format, password must be exactly 8 alphanumeric characters\n");
-        return -1;
+        return STATUS_INVALID_PASSWORD;
     }
 
     char request[256];
@@ -70,16 +193,13 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Login failed: Failed to send login request");
-        return -1;
+        return STATUS_SEND_FAILED;
     }
 
     char response[256];
-    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
-         NULL, NULL);
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
     if (n == -1) {
-        perror("Login failed: Failed to receive login response");
-        return -1;
+        return STATUS_RECV_FAILED;
     }
 
     response[n] = '\0';
@@ -90,50 +210,36 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Login failed: Malformed server response\n");
-        return -1;
-    }
-    
-    int status = 0;
-
-    if (strcmp(response_code, "RLI") == 0) {
-        if (strcmp(reply_status, "OK") == 0) {
-            printf("Login successfull: User logged in\n");
-            status = 1;
-        } else if (strcmp(reply_status, "NOK") == 0) {
-            printf("Login failed: Wrong password\n");
-        } else if (strcmp(reply_status, "REG") == 0) {
-            printf("Login successfull: New user registered\n");
-            status = 1;
-        } else {
-            printf("Login failed: Unknown reply status\n");
-        }
-    } else {
-        printf("Login failed: Unexpected response code\n");
+        return STATUS_MALFORMED_RESPONSE;
     }
 
-    if (status == 1) {
+    if (strcmp(response_code, "RLI") != 0) {
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
+
+    ReplyStatus status = parse_status_code(reply_status);
+
+    // Update global state on successful login
+    if (status == STATUS_OK || status == STATUS_REGISTERED) {
         is_logged_in = 1;
         strcpy(current_password, password);
         strcpy(current_uid, uid);
     }
 
-    return 0;
+    return status;
 }
 
-int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
     
     ssize_t n;
 
     if (!verify_argument_count(args, 0)) {
-        printf("Unregister failed: Invalid argument count, no arguments expected\n");
-        return -1;
+        return STATUS_INVALID_ARGS;
     }
 
     if (!is_logged_in) {
-        printf("Unregister failed: User not logged in\n");
-        return -1;
+        return STATUS_NOT_LOGGED_IN_LOCAL;
     }
 
     char request[256];
@@ -145,16 +251,13 @@ int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_ad
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Unregister failed: Failed to send unregister request");
-        return -1;
+        return STATUS_SEND_FAILED;
     }
 
     char response[256];
-    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
-         NULL, NULL);
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
     if (n == -1) {
-        perror("Unregister failed: Failed to receive unregister response");
-        return -1;
+        return STATUS_RECV_FAILED;
     }
 
     response[n] = '\0';
@@ -165,53 +268,38 @@ int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_ad
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Unregister failed: Malformed server response\n");
-        return -1;
-    }
-    
-    int status = 0;
-
-    if (strcmp(response_code, "RUR") == 0) {
-        if (strcmp(reply_status, "OK") == 0) {
-            printf("Unregister successfull: User unregistered\n");
-                status = 1;
-        } else if (strcmp(reply_status, "NOK") == 0) {
-            printf("Unregister failed: User not logged in\n");
-        } else if (strcmp(reply_status, "WRP") == 0) {
-            printf("Unregister failed: Wrong password\n");
-        } else if (strcmp(reply_status, "UNR") == 0) {
-            printf("Unregister failed: User not registered\n");
-        } 
-        else {
-            printf("Unregister failed: Unknown reply status\n");
-        }
-    } else {
-        printf("Unregister failed: Unexpected response code\n");
+        return STATUS_MALFORMED_RESPONSE;
     }
 
-    if (status == 1) {
+    if (strcmp(response_code, "RUR") != 0) {
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
+
+    ReplyStatus status = parse_status_code(reply_status);
+
+    // Clear global state on successful unregister
+    if (status == STATUS_OK) {
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
     }
 
-    return 0;
+    return status;
 }
 
-int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
 
     ssize_t n;
 
     if (!verify_argument_count(args, 0)) {
-        printf("Logout failed: Invalid argument count, no arguments expected\n");
-        return -1;
+        return STATUS_INVALID_ARGS;
     }
 
     if (!is_logged_in) {
-        printf("Logout failed: User not logged in\n");
-        return -1;
+        return STATUS_NOT_LOGGED_IN_LOCAL;
     }
+
     char request[256];
 
     // PROTOCOL: LOU <uid> <password>
@@ -221,16 +309,13 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Logout failed: Failed to send logout request");
-        return -1;
+        return STATUS_SEND_FAILED;
     }
 
     char response[256];
-    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
-         NULL, NULL);
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
     if (n == -1) {
-        perror("Logout failed: Failed to receive logout response");
-        return -1;
+        return STATUS_RECV_FAILED;
     }
 
     response[n] = '\0';
@@ -241,47 +326,36 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Logout failed: Malformed server response\n");
-        return -1;
+        return STATUS_MALFORMED_RESPONSE;
     }
 
-    if (strcmp(response_code, "RLO") == 0) {
-        if (strcmp(reply_status, "OK") == 0) {
-            printf("Logout successfull: User logged out\n");
-
-            is_logged_in = 0;
-            memset(current_password, 0, sizeof(current_password));
-            memset(current_uid, 0, sizeof(current_uid));
-        } else if (strcmp(reply_status, "NOK") == 0) {
-            printf("Logout failed: User not logged in\n");
-        } else if (strcmp(reply_status, "WRP") == 0) {
-            printf("Logout failed: Wrong password\n");
-        } else if (strcmp(reply_status, "UNR") == 0) {
-            printf("Logout failed: User not registered\n");
-        } 
-        else {
-            printf("Logout failed: Unknown reply status\n");
-        }
-    } else {
-        printf("Logout failed: Unexpected response code\n");
+    if (strcmp(response_code, "RLO") != 0) {
+        return STATUS_UNEXPECTED_RESPONSE;
     }
 
-    return 0;
+    ReplyStatus status = parse_status_code(reply_status);
+
+    // Clear global state on successful logout
+    if (status == STATUS_OK) {
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
+    }
+
+    return status;
 }
 
-int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
 
     ssize_t n;
 
     if (!verify_argument_count(args, 0)) {
-        printf("Myevents failed: Invalid argument count, no arguments expected\n");
-        return -1;
+        return STATUS_INVALID_ARGS;
     }
 
     if (!is_logged_in) {
-        printf("Myevents failed: User not logged in\n");
-        return -1;
+        return STATUS_NOT_LOGGED_IN_LOCAL;
     }
 
     char request[256];
@@ -293,16 +367,13 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Myevents failed: Failed to send request");
-        return -1;
+        return STATUS_SEND_FAILED;
     }
 
     char response[8192];
-    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
-         NULL, NULL);
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
     if (n == -1) {
-        perror("Myevents failed: Failed to receive response");
-        return -1;
+        return STATUS_RECV_FAILED;
     }
 
     response[n] = '\0';
@@ -313,30 +384,17 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Myevents failed: Malformed server response\n");
-        return -1;
+        return STATUS_MALFORMED_RESPONSE;
     }
 
-    int status = 0;
+    if (strcmp(response_code, "RME") != 0) {
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
+
+    ReplyStatus status = parse_status_code(reply_status);
+
     // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
-    if (strcmp(response_code, "RME") == 0) {
-        if (strcmp(reply_status, "OK") == 0) {
-            status = 1;
-        } else if (strcmp(reply_status, "NOK") == 0) {
-            printf("Myevents failed: User has no events\n");
-        } else if (strcmp(reply_status, "NLG") == 0) {
-            printf("Myevents failed: User not logged in\n");
-        } else if (strcmp(reply_status, "WRP") == 0) {
-            printf("Myevents failed: Wrong password\n");
-        } else {
-            printf("Myevents failed: Unknown reply status\n");
-        }
-    } else {
-        printf("Myevents failed: Unexpected response code\n");
-    }
-
-    if (status == 1) {
-
+    if (status == STATUS_OK) {
         char* event_list = response + 7;
         
         printf("Your events:\n");
@@ -345,7 +403,7 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
 
         if (strlen(event_list) == 0) {
             printf("(no events)\n");
-            return 0;
+            return STATUS_CUSTOM_OUTPUT;
         }
 
         char eid[4];
@@ -371,35 +429,42 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
             printf("%-5s %-10s\n", eid, state_str);
             offset += chars_read;
         }
+        return STATUS_CUSTOM_OUTPUT;
     }
 
-    return 0;
+    return status;
 }
 
 void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr) {
     
     socklen_t udp_addr_len = sizeof(*server_udp_addr);
+    ReplyStatus status;
+    
     switch (command) {
         case LOGIN:
-            // Handle login
-            if (login_handler(args, udp_fd, server_udp_addr, udp_addr_len) == -1) {
-                
-            };
+            status = login_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            print_result(LOGIN, status);
             break;
         case CHANGEPASS:
             // Handle change password
             break;
         case UNREGISTER:
-            unregister_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = unregister_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            print_result(UNREGISTER, status);
             break;
         case LOGOUT:
-            logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            print_result(LOGOUT, status);
             break;
         case EXIT:
-            // Handle exit
-            // FIXME, o chat disse para dar close ao fd e freeaddrinfo ao res
-            // FIXME, APAGUEI O RETURN -1;
+            if (is_logged_in) {
+                status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+                print_result(LOGOUT, status);
+            }
+            printf("Exiting application.\n");
+            close(udp_fd);
+            exit(0);
             break;
         case CREATE:
             // Handle create event
@@ -408,7 +473,8 @@ void command_handler(CommandType command, char* args, int udp_fd,
             // Handle close event
             break;
         case MYEVENTS:
-            myevent_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = myevent_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            print_result(MYEVENTS, status);
             break;
         case LIST:
             // Handle list events
@@ -422,7 +488,6 @@ void command_handler(CommandType command, char* args, int udp_fd,
         case MYRESERVATIONS:
             // Handle my reservations
             break;
-        case UNKNOWN:
         default:
             printf("Unknown command\n");
             break;
