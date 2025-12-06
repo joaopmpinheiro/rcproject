@@ -46,7 +46,7 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     ssize_t n;
 
     if (!verify_argument_count(args, 2)) {
-        printf("Invalid login argument count, expected 2 arguments: <uid> <password>\n");
+        printf("Login failed: Invalid argument count, expected 2 arguments: <uid> <password>\n");
         return -1;
     }
 
@@ -70,7 +70,7 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Failed to send login request");
+        perror("Login failed: Failed to send login request");
         return -1;
     }
 
@@ -78,7 +78,7 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
          NULL, NULL);
     if (n == -1) {
-        perror("Failed to receive login response");
+        perror("Login failed: Failed to receive login response");
         return -1;
     }
 
@@ -90,7 +90,7 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Error: Malformed server response\n");
+        printf("Login failed: Malformed server response\n");
         return -1;
     }
     
@@ -98,7 +98,7 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
 
     if (strcmp(response_code, "RLI") == 0) {
         if (strcmp(reply_status, "OK") == 0) {
-            printf("Login successfull\n");
+            printf("Login successfull: User logged in\n");
             status = 1;
         } else if (strcmp(reply_status, "NOK") == 0) {
             printf("Login failed: Wrong password\n");
@@ -127,7 +127,7 @@ int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_ad
     ssize_t n;
 
     if (!verify_argument_count(args, 0)) {
-        printf("Invalid unregister argument count, no arguments expected\n");
+        printf("Unregister failed: Invalid argument count, no arguments expected\n");
         return -1;
     }
 
@@ -145,7 +145,7 @@ int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_ad
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Failed to send unregister request");
+        perror("Unregister failed: Failed to send unregister request");
         return -1;
     }
 
@@ -153,7 +153,7 @@ int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_ad
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
          NULL, NULL);
     if (n == -1) {
-        perror("Failed to receive unregister response");
+        perror("Unregister failed: Failed to receive unregister response");
         return -1;
     }
 
@@ -165,7 +165,7 @@ int unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_ad
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Error: Malformed server response\n");
+        printf("Unregister failed: Malformed server response\n");
         return -1;
     }
     
@@ -204,7 +204,7 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     ssize_t n;
 
     if (!verify_argument_count(args, 0)) {
-        printf("Invalid logout argument count, no arguments expected\n");
+        printf("Logout failed: Invalid argument count, no arguments expected\n");
         return -1;
     }
 
@@ -221,7 +221,7 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Failed to send logout request");
+        perror("Logout failed: Failed to send logout request");
         return -1;
     }
 
@@ -229,7 +229,7 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
          NULL, NULL);
     if (n == -1) {
-        perror("Failed to receive logout response");
+        perror("Logout failed: Failed to receive logout response");
         return -1;
     }
 
@@ -241,16 +241,17 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Error: Malformed server response\n");
+        printf("Logout failed: Malformed server response\n");
         return -1;
     }
 
-    int status = 0;
-
     if (strcmp(response_code, "RLO") == 0) {
         if (strcmp(reply_status, "OK") == 0) {
-            printf("Logout successfull\n");
-                status = 1;
+            printf("Logout successfull: User logged out\n");
+
+            is_logged_in = 0;
+            memset(current_password, 0, sizeof(current_password));
+            memset(current_uid, 0, sizeof(current_uid));
         } else if (strcmp(reply_status, "NOK") == 0) {
             printf("Logout failed: User not logged in\n");
         } else if (strcmp(reply_status, "WRP") == 0) {
@@ -265,12 +266,6 @@ int logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
         printf("Logout failed: Unexpected response code\n");
     }
 
-    if (status == 1) {
-        is_logged_in = 0;
-        memset(current_password, 0, sizeof(current_password));
-        memset(current_uid, 0, sizeof(current_uid));
-    }
-
     return 0;
 }
 
@@ -280,7 +275,7 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     ssize_t n;
 
     if (!verify_argument_count(args, 0)) {
-        printf("Invalid myevents argument count, no arguments expected\n");
+        printf("Myevents failed: Invalid argument count, no arguments expected\n");
         return -1;
     }
 
@@ -298,15 +293,15 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
          (struct sockaddr*)server_udp_addr, udp_addr_len);
 
     if (n == -1) {
-        perror("Failed to send myevents request");
+        perror("Myevents failed: Failed to send request");
         return -1;
     }
 
-    char response[256];
+    char response[8192];
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0,
          NULL, NULL);
     if (n == -1) {
-        perror("Failed to receive myevents response");
+        perror("Myevents failed: Failed to receive response");
         return -1;
     }
 
@@ -318,12 +313,12 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) {
-        printf("Error: Malformed server response\n");
+        printf("Myevents failed: Malformed server response\n");
         return -1;
     }
 
     int status = 0;
-
+    // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
     if (strcmp(response_code, "RME") == 0) {
         if (strcmp(reply_status, "OK") == 0) {
             status = 1;
@@ -341,7 +336,41 @@ int myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
     }
 
     if (status == 1) {
+
+        char* event_list = response + 7;
         
+        printf("Your events:\n");
+        printf("%-5s %-10s\n", "EID", "State");
+        printf("-------------------\n");
+
+        if (strlen(event_list) == 0) {
+            printf("(no events)\n");
+            return 0;
+        }
+
+        char eid[4];
+        int state;
+        int offset = 0;
+        int chars_read;
+
+        while (sscanf(event_list + offset, " %3s %d%n", eid, &state, &chars_read) == 2) {
+            // Validate EID format (3 digits)
+            if (strlen(eid) != 3) {
+                printf("Warning: Invalid EID format in response\n");
+                break;
+            }
+
+            const char* state_str;
+            switch (state) {
+                case 0: state_str = "Past"; break;
+                case 1: state_str = "Active"; break;
+                case 2: state_str = "Sold out"; break;
+                case 3: state_str = "Closed"; break;
+                default: state_str = "Unknown"; break;
+            }
+            printf("%-5s %-10s\n", eid, state_str);
+            offset += chars_read;
+        }
     }
 
     return 0;

@@ -13,7 +13,6 @@ server/server
 # Ignore Markdown
 *.md
 
-# Ignore .vscode settings
+# Ignore IDE settings
 .vscode/
-
 .idea/

@@ -9,12 +9,10 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 
-#include "command_handlers.h"
-#include "verifications.h"
-#include "client_data.h"
+#include "../include/command_handlers.h"
+#include "../include/verifications.h"
+#include "../include/client_data.h"
 #include "../common/common.h"
-
-
 
 char current_uid[7] = "";
 char current_password[9] = "";
@@ -138,3 +136,4 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
+}
