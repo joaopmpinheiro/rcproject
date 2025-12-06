@@ -7,7 +7,6 @@ UTILS = $(SRCDIR)/utils
 
 OBJS = \
 	$(UTILS)/command_handlers.o \
-	$(UTILS)/verifications.o \
 	$(SRCDIR)/user.o
 
 TARGET = user

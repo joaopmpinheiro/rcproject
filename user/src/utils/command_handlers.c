@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 
 #include "command_handlers.h"
-#include "verifications.h"
+#include "../common/verifications.h"
 #include "client_data.h"
 
 CommandType identify_command(char* command) {
@@ -41,8 +41,8 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
     // FIXME as verificações dão return a -1 e já dão print, 
     // pode dar problema depois com erros na implementação do envio do pedido
-    char uid[7];
-    char password[9];
+    char uid[32];
+    char password[32];
     ssize_t n;
 
     if (!verify_argument_count(args, 2)) {
@@ -50,7 +50,7 @@ int login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
         return -1;
     }
 
-    sscanf(args, "%s %s", uid, password);
+    sscanf(args, "%31s %31s", uid, password);
 
     if (!verify_uid_format(uid)) {
         printf("Login failed: Invalid UID format, UID must be exactly 6 digits\n");
@@ -383,7 +383,9 @@ void command_handler(CommandType command, char* args, int udp_fd,
     switch (command) {
         case LOGIN:
             // Handle login
-            login_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            if (login_handler(args, udp_fd, server_udp_addr, udp_addr_len) == -1) {
+                
+            };
             break;
         case CHANGEPASS:
             // Handle change password

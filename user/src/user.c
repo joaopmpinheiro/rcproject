@@ -10,8 +10,8 @@
 #include <sys/time.h>
 
 #include "../include/command_handlers.h"
-#include "../include/verifications.h"
 #include "../include/client_data.h"
+#include "../common/verifications.h"
 #include "../common/common.h"
 
 char current_uid[7] = "";
