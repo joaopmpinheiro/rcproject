@@ -23,7 +23,7 @@ void usage(const char *prog_name);
 
 
 // command_handler.c
-int correct_args_UID_password(Request* req);
+int verify_args_UID_password(Request* req);
 RequestType identify_request_type(char* command);
 void handle_request(Request* req);
 

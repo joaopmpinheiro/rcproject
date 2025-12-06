@@ -14,18 +14,25 @@ RequestType identify_request_type(char* command_buff){
 }
 
 
-int correct_args_UID_password(Request* req) {
+int verify_args_UID_password(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) {
+        fprintf(stderr, "Invalid argument count\n");
         return INVALID;
     }
-    char UID[3];
-    char password[PASSWORD_LENGTH];
-    sscanf(req->buffer, "%*s %s %s", UID, password);
+    char UID[UID_LENGTH + 1];
+    char command[4];
+    char password[PASSWORD_LENGTH + 1];
+
+    sscanf(req->buffer, "%3s %6s %8s", command, UID, password);
+    printf("Verifying UID: %s, Password: %s\n", UID, password);
+    fflush(stdout);
 
     if (!verify_uid_format(UID)) {
+        fprintf(stderr, "Invalid UID format\n");
         return INVALID;
     }
     if (!verify_password_format(password)) {
+        fprintf(stderr, "Invalid password format\n");
         return INVALID;
     }
     return VALID;
@@ -39,7 +46,9 @@ void handle_request(Request* req) {
     RequestType command = identify_request_type(command_buff);
 
     // known command but wrong args
-    if (!correct_args_UID_password(req) && command != UNKNOWN) {
+    if (verify_args_UID_password(req) == INVALID && command != UNKNOWN) {
+        fprintf(stderr, "Invalid arguments for command %s\n", command_buff);
+        fflush(stderr);
         char response[16];   // enough space for your message
         snprintf(response, sizeof(response), "%s ERR\n", command_buff);
         send_udp_response(response, &req->client_addr, req->addr_len, settings.udp_socket);
@@ -100,6 +109,8 @@ void login_handler(Request* req) {
     int UID;
     char password[PASSWORD_LENGTH];
     sscanf(req->buffer, "LIN %d %s", &UID, password);
+    printf("Handling login for UID: %d\n", UID);
+    fflush(stdout);
 
     User* user = get_user_by_uid(UID);
     if (user == NULL) {

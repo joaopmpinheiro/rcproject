@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 
         // Check for UDP connection
         if (FD_ISSET(settings.udp_socket, &settings.temp_fds)) {
+            fprintf(stderr, "Received UDP connection\n");
             udp_connection();
             // One of the threads will handle the request, check handle_task() in threads.c
         }
