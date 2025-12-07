@@ -7,12 +7,10 @@ int select_handler() {
     settings.temp_fds = settings.read_fds;
 
     if (select(max_fd + 1, &settings.temp_fds, NULL, NULL, &settings.timeout) < 0) {
-        if (settings.verbose) {
-            perror("Select failed");
-        }
-        return -1;
+        if (settings.verbose) perror("Select failed");
+        return ERROR;
     }
-    return 0;
+    return SUCCESS;
 }
 
 void udp_connection() {
@@ -33,7 +31,7 @@ void udp_connection() {
         // TODO: implement threading for UDP requests
         Request req = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
         strncpy(req.buffer, buffer, sizeof(req.buffer));
-        handle_request(&req);
+        handle_UDP_request(&req);
     } 
 }
 

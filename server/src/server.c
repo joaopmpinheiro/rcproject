@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     server_setup();
 
     while(1){
-        if (select_handler() < 0) {
+        if (select_handler() == ERROR) {
             // Something went wrong
             continue;
         }

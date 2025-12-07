@@ -45,7 +45,7 @@ RequestType identify_request_type(char* command);
  * 
  * @param req The request to handle.
  */
-void handle_request(Request* req);
+void handle_UDP_request(Request* req);
 
 /**
  * @brief Get the user by UID.

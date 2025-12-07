@@ -7,7 +7,7 @@ void parse_arguments(int argc, char *argv[]) {
     settings.port = DEFAULT_PORT;
     settings.verbose = 0;
 
-    while ((opt = getopt(argc, argv, "p:v")) != -1) {
+    while ((opt = getopt(argc, argv, "-p:-v")) != -1) {
         switch (opt) {
             case 'p':
                 if(!is_valid_port(optarg)) {
@@ -33,7 +33,7 @@ int socket_setup(int flag){
     int sck = socket(AF_INET, flag, 0);
     if (sck < 0) {
         perror("Socket creation failed"); 
-        return -1;
+        return ERROR;
     }
 
     memset(&hints, 0, sizeof(hints));
@@ -82,13 +82,11 @@ int tcp_setup(){
         return ERROR;
     }
     printf("TCP server listening on port %s...\n", settings.port);
-    return 0;
+    return SUCCESS;
 }
 
 
-
 void server_setup(){
-
     udp_setup();
     tcp_setup();
 
@@ -96,5 +94,4 @@ void server_setup(){
     FD_ZERO(&settings.read_fds);
     FD_SET(settings.udp_socket, &settings.read_fds);
     FD_SET(settings.tcp_socket, &settings.read_fds);
-
 }

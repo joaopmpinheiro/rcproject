@@ -16,6 +16,8 @@
 #define SUCCESS 1
 #define FAILURE 0
 
+#define ERROR -1
+
 #define VALID 1
 #define INVALID 0
 

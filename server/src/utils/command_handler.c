@@ -24,19 +24,21 @@ int verify_args_UID_password(Request* req) {
     return VALID;
 }
 
-void handle_request(Request* req) {
+void handle_UDP_request(Request* req) {
     char command_buff[3] = {0};
     char command_arg_buffer[BUFFER_SIZE] = {0};
 
+    // get 3-letter command
     sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
     RequestType command = identify_request_type(command_buff);
 
-    // known command but wrong args
+    // known command but wrong arguments
     if (verify_args_UID_password(req) == INVALID && command != UNKNOWN) {
-        fprintf(stderr, "Invalid arguments for command %s\n", command_buff);
-        fflush(stderr);
-        char response[16];   // enough space for your message
+
+        // build error response
+        char response[16]; 
         snprintf(response, sizeof(response), "%s ERR\n", command_buff);
+
         send_udp_response(response, &req->client_addr, req->addr_len, settings.udp_socket);
         return;
     }
