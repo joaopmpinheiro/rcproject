@@ -14,35 +14,42 @@
 #include "../common/verifications.h"
 #include "../common/common.h"
 
-char current_uid[7] = "";
-char current_password[9] = "";
-int is_logged_in = 0;
+char current_uid[UID_LENGTH + 1] = "";
+char current_password[PASSWORD_LENGTH + 1] = "";
+int is_logged_in = LOGGED_OUT;
 
-char* get_server_ip(int argc, char* argv[]) {
-    // TODO: validar IP
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-n") == 0) {
-            return argv[i + 1];
-        }
-    }
-    
-    return DEFAULT_IP;
+char IP[INET_ADDRSTRLEN] = DEFAULT_IP;
+char port[6] = DEFAULT_PORT;
+
+
+void usage(const char *prog_name) {
+    fprintf(stderr, "Usage: %s [-n server_ip] [-p server_port]\n", prog_name);
+    fprintf(stderr, "  -n server_ip    Specify the server IP address\n");
+    fprintf(stderr, "  -p server_port  Specify the server port number\n");
 }
 
-char* get_server_port(int argc, char* argv[]) {
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-p") == 0) {
-            if (i + 1 >= argc) {
-                return NULL;
-            }
-            if (!is_valid_port(argv[i + 1])) {
-                return NULL;
-            }
-            return argv[i + 1];
+void parse_arguments(int argc, char *argv[]) {   
+    int opt;
+    while ((opt = getopt(argc, argv, "-p:-n:")) != -1) {
+        switch (opt) {
+            case 'p':
+                if(!is_valid_port(optarg)) {
+                    fprintf(stderr, "Error: Invalid port number\n");
+                    exit(EXIT_FAILURE);
+                }
+               strcpy(port, optarg);
+                break;
+            case 'n':   
+                strcpy(IP, optarg);
+                break;
+            default:
+                usage(argv[0]);
+                exit(EXIT_FAILURE);
         }
     }
-    return DEFAULT_PORT;
 }
+
+
 
 int connect_tcp(char* ip, char* port) {
     struct addrinfo hints, *res;
@@ -82,12 +89,12 @@ int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
     hints.ai_socktype = SOCK_DGRAM;
 
     errcode = getaddrinfo(ip, port, &hints, &res);
-    if (errcode != 0) return -1;
+    if (errcode != 0) return ERROR;
 
     fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (fd == -1) {
         freeaddrinfo(res);
-        return -1;
+        return ERROR;
     }
 
     struct timeval timeout = {5, 0};
@@ -103,25 +110,19 @@ int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
 
 int main(int argc, char* argv[]) {
 
-    char* SERVER_IP = get_server_ip(argc, argv);
-    char* SERVER_PORT = get_server_port(argc, argv);
-    
-    if (SERVER_IP == NULL || SERVER_PORT == NULL) {
-        return -1;
-    }
+    parse_arguments(argc, argv);
 
     struct sockaddr_in server_udp_addr;
-    int udp_fd = setup_udp(SERVER_IP, SERVER_PORT, &server_udp_addr);
-    if (udp_fd == -1) {
+    int udp_fd = setup_udp(IP, port, &server_udp_addr);
+    if (udp_fd == ERROR) {
         fprintf(stderr, "UDP setup failed\n");
-        return -1;
+        return ERROR;
     }
 
     char input_buffer[256] = {0};
     char command_buffer[256] = {0};
     char command_arg_buffer[256] = {0};
 
-    fflush(stdout);
     while (1) {
         printf("> ");
         if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) break;

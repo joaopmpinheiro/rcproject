@@ -31,8 +31,6 @@
 #define ERROR -1
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
 
-#define LOGGED_IN 1
-#define LOGGED_OUT 0
 
 
 

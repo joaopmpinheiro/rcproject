@@ -45,6 +45,8 @@ typedef enum ReplyStatus {
     STATUS_ALREADY_LOGGED_IN,   // User already logged in (for login)
     STATUS_NOT_LOGGED_IN_LOCAL, // User not logged in (client-side check)
     STATUS_CUSTOM_OUTPUT,   // Handler printed its own output
+
+    STATUS_UNASSIGNED,
 } ReplyStatus;
 
 CommandType identify_command(char* command);

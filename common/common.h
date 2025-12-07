@@ -13,6 +13,9 @@
 #define COMMAND_LENGTH 3
 #define UID_LENGTH 6
 
+#define LOGGED_IN 1
+#define LOGGED_OUT 0
+
 #define SUCCESS 1
 #define FAILURE 0
 
