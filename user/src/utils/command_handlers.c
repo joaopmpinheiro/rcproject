@@ -61,6 +61,8 @@ void print_result(CommandType command, ReplyStatus status) {
                     printf("%s failed: Wrong password\n", cmd_name);
                     break;
                 case LOGOUT:
+                    printf("%s failed: User not logged in\n", cmd_name);
+                    break;
                 case UNREGISTER:
                     printf("%s failed: User not logged in\n", cmd_name);
                     break;
@@ -118,6 +120,7 @@ void print_result(CommandType command, ReplyStatus status) {
         case STATUS_CUSTOM_OUTPUT:
             break;
         default:
+            break;
     }
 }
 
@@ -155,7 +158,7 @@ ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp
     char password[32];
     ssize_t n;
 
-    //if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
+    if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
 
     if (!verify_argument_count(args, 2)) return STATUS_INVALID_ARGS;
     sscanf(args, "%31s %31s", uid, password);

@@ -8,7 +8,6 @@ RequestType identify_request_type(char* command_buff){
     else return UNKNOWN;
 }
 
-
 int verify_args_UID_password(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) return INVALID;
 

@@ -18,7 +18,7 @@ char current_uid[UID_LENGTH + 1] = "";
 char current_password[PASSWORD_LENGTH + 1] = "";
 int is_logged_in = LOGGED_OUT;
 
-char IP[INET_ADDRSTRLEN] = DEFAULT_IP;
+char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
 char port[6] = DEFAULT_PORT;
 
 
@@ -30,16 +30,30 @@ void usage(const char *prog_name) {
 
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
-    while ((opt = getopt(argc, argv, "-p:-n:")) != -1) {
+    while ((opt = getopt(argc, argv, "p:n:")) != -1) {
         switch (opt) {
             case 'p':
+                if (optarg[0] == '-') {
+                    fprintf(stderr, "Error: -p requires a port number\n");
+                    usage(argv[0]);
+                    exit(EXIT_FAILURE);
+                }
                 if(!is_valid_port(optarg)) {
                     fprintf(stderr, "Error: Invalid port number\n");
                     exit(EXIT_FAILURE);
                 }
-               strcpy(port, optarg);
+                strcpy(port, optarg);
                 break;
-            case 'n':   
+            case 'n':
+                if (optarg[0] == '-') {
+                    fprintf(stderr, "Error: -n requires a hostname or IP\n");
+                    usage(argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+                if (strlen(optarg) >= sizeof(IP)) {
+                    fprintf(stderr, "Error: Hostname too long\n");
+                    exit(EXIT_FAILURE);
+                }
                 strcpy(IP, optarg);
                 break;
             default:
@@ -48,8 +62,6 @@ void parse_arguments(int argc, char *argv[]) {
         }
     }
 }
-
-
 
 int connect_tcp(char* ip, char* port) {
     struct addrinfo hints, *res;
@@ -111,7 +123,7 @@ int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
 int main(int argc, char* argv[]) {
 
     parse_arguments(argc, argv);
-
+    
     struct sockaddr_in server_udp_addr;
     int udp_fd = setup_udp(IP, port, &server_udp_addr);
     if (udp_fd == ERROR) {

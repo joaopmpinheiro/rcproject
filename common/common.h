@@ -3,8 +3,9 @@
 
 #define BASE_PORT 58000
 #define GROUP_NUMBER 32
-#define DEFAULT_PORT "58232"
+#define DEFAULT_PORT "58032"
 #define DEFAULT_IP "127.0.0.1"
+#define MAX_HOSTNAME_LENGTH 256
 #define PORTMAX 65535
 #define PORTMIN 0 
 
