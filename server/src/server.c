@@ -8,8 +8,8 @@ EventNode *events = NULL;
 
 
 int main(int argc, char *argv[]) {
-/*     signal(SIGINT, sig_detected);
- */    signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
+    /*signal(SIGINT, sig_detected); */ // TODO
+     signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
 
     parse_arguments(argc, argv);
 

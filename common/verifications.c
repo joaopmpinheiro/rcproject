@@ -1,4 +1,5 @@
 #include "verifications.h"
+#include "common.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>

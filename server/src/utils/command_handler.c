@@ -4,37 +4,23 @@
 #include "../../common/verifications.h"
 
 RequestType identify_request_type(char* command_buff){
-    if (strncmp(command_buff, "LIN", 3) == 0) {
-        return LOGIN;
-    } else if (strncmp(command_buff, "RUR", 3) == 0) {
-        return UNREGISTER;
-    } else {
-        return UNKNOWN;
-    }
+    if (strncmp(command_buff, "LIN", 3) == 0) return LOGIN;
+    else return UNKNOWN;
 }
 
 
 int verify_args_UID_password(Request* req) {
-    if(!verify_argument_count(req->buffer, 3)) {
-        fprintf(stderr, "Invalid argument count\n");
-        return INVALID;
-    }
+    if(!verify_argument_count(req->buffer, 3)) return INVALID;
+
     char UID[UID_LENGTH + 1];
-    char command[4];
+    char command[COMMAND_LENGTH + 1];
     char password[PASSWORD_LENGTH + 1];
 
     sscanf(req->buffer, "%3s %6s %8s", command, UID, password);
-    printf("Verifying UID: %s, Password: %s\n", UID, password);
-    fflush(stdout);
 
-    if (!verify_uid_format(UID)) {
-        fprintf(stderr, "Invalid UID format\n");
-        return INVALID;
-    }
-    if (!verify_password_format(password)) {
-        fprintf(stderr, "Invalid password format\n");
-        return INVALID;
-    }
+    if (!verify_uid_format(UID)) return INVALID;
+    if (!verify_password_format(password)) return INVALID;
+    
     return VALID;
 }
 
@@ -96,15 +82,7 @@ void create_user(int UID, char* password) {
 
 
 // ------ UDP ---
-/** LIN UID password
-* Check if the user is already registered, if so, check if the password is correct.
-* If the user has not registered yet, register the user.
-* Returns:
-* RLI OK - successful login
-* RLI NOK - incorrect password
-* RLI REG - new user registered
-**/
-//TODO: o que acontece se o UID vier errado?
+
 void login_handler(Request* req) {
     int UID;
     char password[PASSWORD_LENGTH];

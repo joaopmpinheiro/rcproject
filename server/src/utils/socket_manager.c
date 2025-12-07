@@ -20,16 +20,17 @@ void udp_connection() {
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
 
-    // copia o conteudo enviado para o UDP para dentro do buffer
+    // copys the data from the UDP socket into buffer
     ssize_t len = recvfrom(settings.udp_socket, buffer, sizeof(buffer) - 1, 0,
                             (struct sockaddr *)&client_addr, &addr_len);
 
-    // se o buffer nao estiver vazio
+    // if the buffer is not empty
     if (len > 0) {
-        //acrecentar \0 para poder ser usado como string
+        // add \0 to be used as a string
         buffer[len] = '\0';
 
-        // criar um novo request para poder ser usado yay
+        // create a new request to be used by handle_request
+        // TODO: implement threading for UDP requests
         Request req = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
         strncpy(req.buffer, buffer, sizeof(req.buffer));
         handle_request(&req);
@@ -38,6 +39,7 @@ void udp_connection() {
 
 
 void send_udp_response(const char* message, struct sockaddr_in* client_addr, socklen_t addr_len, int udp_socket) {
+    // TODO: will need a lock
     sendto(udp_socket, message, strlen(message), 0, (struct sockaddr *)client_addr, addr_len);
 }
 

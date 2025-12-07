@@ -23,8 +23,6 @@
 #include "../../common/common.h"
 
 #define BUFFER_SIZE 1024 //TODO: confirmar
-#define TIMEOUT_SECONDS 5
-#define PASSWORD_LENGTH 8
 #define MAX_EVENT_NAME 10
 #define DATE_LENGTH 11
 #define TIME_LENGTH 5
@@ -32,6 +30,7 @@
 #define MAX_SEATS 999
 #define ERROR -1
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
+
 
 
 
