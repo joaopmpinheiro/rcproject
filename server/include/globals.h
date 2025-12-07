@@ -5,6 +5,6 @@
 
 extern UserNode *users;
 extern EventNode *events;
-extern Set settings;
+extern Settings set;
 
 #endif

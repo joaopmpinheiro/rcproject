@@ -2,7 +2,7 @@
 #include "../include/globals.h"
 #include "../include/utils.h"
 
-Set settings = {0};
+Settings set = {0};
 UserNode *users = NULL;
 EventNode *events = NULL;
 
@@ -22,14 +22,14 @@ int main(int argc, char *argv[]) {
         }
 
         // Check for UDP connection
-        if (FD_ISSET(settings.udp_socket, &settings.temp_fds)) {
+        if (FD_ISSET(set.udp_socket, &set.temp_fds)) {
             fprintf(stderr, "Received UDP connection\n");
             udp_connection();
             // One of the threads will handle the request, check handle_task() in threads.c
         }
 
         // Check for TCP connection
-        if (FD_ISSET(settings.tcp_socket, &settings.temp_fds)) {
+        if (FD_ISSET(set.tcp_socket, &set.temp_fds)) {
             tcp_connection();
             // One of the threads will handle the request, check handle_task() in threads.c
         }

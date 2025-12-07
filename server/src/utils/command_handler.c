@@ -39,7 +39,7 @@ void handle_UDP_request(Request* req) {
         char response[16]; 
         snprintf(response, sizeof(response), "%s ERR\n", command_buff);
 
-        send_udp_response(response, &req->client_addr, req->addr_len, settings.udp_socket);
+        send_udp_response(response, req);
         return;
     }
 
@@ -49,22 +49,19 @@ void handle_UDP_request(Request* req) {
             login_handler(req);
             break;
         default:
-            send_udp_response("ERR\n", &req->client_addr, req->addr_len, settings.udp_socket);
+            send_udp_response("ERR\n", req);
             break;
     }
 }
 
+// ------------ Data Management --------------
 
-
-
-
-
+// TODO: criar um users.c, um events.c e um reservations.c para gerir estas funções
+// ou um data_manager.c
 User* get_user_by_uid(int UID) {
     UserNode* current = users;
     while (current != NULL) {
-        if (current->user.UID == UID) {
-            return &current->user;
-        }
+        if (current->user.UID == UID) return &current->user;
         current = current->next;
     }
     return NULL;
@@ -83,30 +80,30 @@ void create_user(int UID, char* password) {
 
 
 
-// ------ UDP ---
-
+// ------------ UDP Requests ---------------
 void login_handler(Request* req) {
     int UID;
     char password[PASSWORD_LENGTH];
     sscanf(req->buffer, "LIN %d %s", &UID, password);
-    printf("Handling login for UID: %d\n", UID);
-    fflush(stdout);
+
+    if(set.verbose){
+        printf("Handling login (LIN), from user with UID %d,\
+                            using port %s\n",UID, set.port);
+    }
 
     User* user = get_user_by_uid(UID);
     if (user == NULL) {
         create_user(UID, password);
-        send_udp_response("RLI REG\n", &req->client_addr, req->addr_len, settings.udp_socket);
+        send_udp_response("RLI REG\n", req);
         return;
     }
 
     if (strcmp(user->password, password) == 0) {
-        user->status = 1; // logged in
-        send_udp_response("RLI OK\n", &req->client_addr, req->addr_len, settings.udp_socket);
+        user->status = LOGGED_IN; // logged in
+        send_udp_response("RLI OK\n", req);
     }
 
-    else {
-        send_udp_response("RLI NOK\n", &req->client_addr, req->addr_len, settings.udp_socket);
-    }
+    else send_udp_response("RLI NOK\n", req);
 }
 
 /** LOU UID password
@@ -146,7 +143,11 @@ void check_user_reservations_handler(){
 }
 
 
-// ----- TCP -----
+
+
+
+
+// ------------- TCP -------------
 /* USER: uccessful password change, unknown user, user not logged In or incorrect password. 
 */    
 void change_password_handler(){

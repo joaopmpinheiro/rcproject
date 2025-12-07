@@ -4,8 +4,8 @@
 
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
-    settings.port = DEFAULT_PORT;
-    settings.verbose = 0;
+    set.port = DEFAULT_PORT;
+    set.verbose = 0;
 
     while ((opt = getopt(argc, argv, "-p:-v")) != -1) {
         switch (opt) {
@@ -14,10 +14,10 @@ void parse_arguments(int argc, char *argv[]) {
                     fprintf(stderr, "Error: Invalid port number\n");
                     exit(EXIT_FAILURE);
                 }
-                settings.port = optarg;
+                set.port = optarg;
                 break;
             case 'v':
-                settings.verbose = 1;
+                set.verbose = 1;
                 printf("Verbose mode enabled\n");
                 break;
             default:
@@ -41,7 +41,7 @@ int socket_setup(int flag){
     hints.ai_socktype = flag; // type of socket
     hints.ai_flags = AI_PASSIVE; // server mode
     
-    int errcode = getaddrinfo(NULL, settings.port, &hints, &res);
+    int errcode = getaddrinfo(NULL, set.port, &hints, &res);
     if (errcode != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(errcode));
         close(sck);
@@ -60,28 +60,28 @@ int socket_setup(int flag){
 
 
 int udp_setup(){
-    settings.udp_socket = socket_setup(SOCK_DGRAM);
-    if(settings.udp_socket == ERROR){
+    set.udp_socket = socket_setup(SOCK_DGRAM);
+    if(set.udp_socket == ERROR){
         fprintf(stderr, "Failed to set up UDP socket\n");
         exit(EXIT_FAILURE);
     }
-    printf("Servidor UDP à espera na porta %s...\n", settings.port);
+    printf("Servidor UDP à espera na porta %s...\n", set.port);
     return 0;
 }
 
 int tcp_setup(){
-    settings.tcp_socket = socket_setup(SOCK_STREAM);
-    if(settings.tcp_socket == ERROR){
+    set.tcp_socket = socket_setup(SOCK_STREAM);
+    if(set.tcp_socket == ERROR){
         fprintf(stderr, "Failed to set up TCP socket\n");
         exit(EXIT_FAILURE);
     }
 
-    if (listen(settings.tcp_socket, MAX_TCP_CLIENTS) != 0) { // TODO: quantas connections em espera? - neste momento aceita 5
+    if (listen(set.tcp_socket, MAX_TCP_CLIENTS) != 0) { // TODO: quantas connections em espera? - neste momento aceita 5
         perror("Listen failed");
-        close(settings.tcp_socket);
+        close(set.tcp_socket);
         return ERROR;
     }
-    printf("TCP server listening on port %s...\n", settings.port);
+    printf("TCP server listening on port %s...\n", set.port);
     return SUCCESS;
 }
 
@@ -90,8 +90,8 @@ void server_setup(){
     udp_setup();
     tcp_setup();
 
-    settings.timeout = (struct timeval){.tv_sec = 10, .tv_usec = 0};
-    FD_ZERO(&settings.read_fds);
-    FD_SET(settings.udp_socket, &settings.read_fds);
-    FD_SET(settings.tcp_socket, &settings.read_fds);
+    set.timeout = (struct timeval){.tv_sec = 10, .tv_usec = 0};
+    FD_ZERO(&set.read_fds);
+    FD_SET(set.udp_socket, &set.read_fds);
+    FD_SET(set.tcp_socket, &set.read_fds);
 }

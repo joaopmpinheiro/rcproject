@@ -6,7 +6,7 @@
 int select_handler();
 void udp_connection();
 void tcp_connection();
-void send_udp_response(const char* message, struct sockaddr_in* client_addr, socklen_t addr_len, int udp_socket);   
+void send_udp_response(const char* message, Request *req);   
 
 
 //connection.c
