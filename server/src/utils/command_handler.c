@@ -5,6 +5,16 @@
 
 RequestType identify_request_type(char* command_buff){
     if (strncmp(command_buff, "LIN", 3) == 0) return LOGIN;
+    if (strncmp(command_buff, "LOU", 3) == 0) return LOGOUT;
+    if (strncmp(command_buff, "UNR", 3) == 0) return UNREGISTER;
+    if (strncmp(command_buff, "CPS", 3) == 0) return CHANGEPASS;
+    if (strncmp(command_buff, "CRE", 3) == 0) return CREATE;
+    if (strncmp(command_buff, "CLS", 3) == 0) return CLOSE;
+    if (strncmp(command_buff, "LME", 3) == 0) return MYEVENTS;
+    if (strncmp(command_buff, "LST", 3) == 0) return LIST;
+    if (strncmp(command_buff, "SED", 3) == 0) return SHOW;
+    if (strncmp(command_buff, "RID", 3) == 0) return RESERVE;
+    if (strncmp(command_buff, "LMR", 3) == 0) return MYRESERVATIONS;
     else return UNKNOWN;
 }
 
