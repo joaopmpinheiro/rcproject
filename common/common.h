@@ -9,6 +9,10 @@
 #define PORTMAX 65535
 #define PORTMIN 0 
 
+#define MAX_EVENT_NAME 10
+#define MIN_AVAIL_SEATS 10
+#define MAX_AVAIL_SEATS 999
+
 #define TIMEOUT_SECONDS 5
 #define PASSWORD_LENGTH 8
 #define COMMAND_LENGTH 3

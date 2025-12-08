@@ -86,6 +86,7 @@ void reserve_seats_handler();
 int check_file(char *fname);
 int dir_exists(const char* path);
 char* read_file(const char* filename);
+int file_exists(const char* filename);
 
 // ------------ users_manager.c ---------------
 int user_exists(char* UID);

@@ -7,6 +7,7 @@
 #include "command_handlers.h"
 #include "../../common/verifications.h"
 #include "../../common/common.h"
+
 #include "client_data.h"
 
 // Helper function to get command name string
@@ -358,6 +359,46 @@ ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_u
     return status;
 }
 
+/*
+create name event_fname event_date num_attendees – the
+User application establishes a TCP session with the ES and sends a message
+asking to create a new event, whose short description name is name, providing
+the file describing the event, stored in the file event_fname, indicating the date
+and time (dd-mm-yyyy hh:mm) of the event, event_date, and the number of
+people who can attend the event, num_attendees. the file event_fname
+should exist in the same folder.
+In reply, the ES sends a message indicating whether the request was successful,
+and the assigned event identifier, EID, which should be displayed to the user.
+After receiving the reply from the ES, the User closes the TCP connection.
+*/
+
+/**
+ * @brief Sends TCP request to create a new event.
+ * 
+ * @param args [event_name event_file_name event_date num_seats]
+ * @param udp_fd 
+ * @param server_udp_addr 
+ * @param udp_addr_len 
+ * @return ReplyStatus 
+ */
+ReplyStatus create_event_handler(char* args) {
+    char event_name[11];
+    char file_name[128]; //TODO: maximum file name length?
+    char date[32];
+    int num_seats;
+
+    if (!verify_argument_count(args, 4)) return STATUS_INVALID_ARGS;
+
+    // name event_fname event_date, num_attendees
+    sscanf(args,"%10s %127s %31s %d", event_name, file_name, date, &num_seats);
+    if (!is_valid_name(event_name) || !is_valid_file(file_name) ||
+        !is_valid_date(date) || !is_valid_seats(num_seats)) return STATUS_INVALID_ARGS;
+    
+    int tcp_fd = connect_tcp(IP, PORT);
+    if (tcp_fd == -1) return STATUS_SEND_FAILED;
+
+}
+
 void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr) {
     
@@ -388,6 +429,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
             break;
         case CREATE:
             // Handle create event
+            status = create_event_handler(args);
             break;
         case CLOSE:
             // Handle close event

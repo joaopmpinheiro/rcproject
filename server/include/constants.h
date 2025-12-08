@@ -26,13 +26,9 @@
 #define MAX_EVENT_NAME 10
 #define DATE_LENGTH 11
 #define TIME_LENGTH 5
-#define MIN_SEATS 10
-#define MAX_SEATS 999
 #define ERROR -1
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
-#define MAX_EVENTS 999
 #define EMPTY_FILE -2
-
 
 
 

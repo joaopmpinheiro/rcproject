@@ -13,13 +13,14 @@
 #include "../include/client_data.h"
 #include "../common/verifications.h"
 #include "../common/common.h"
+#include "../include/command_handlers.h"
 
 char current_uid[UID_LENGTH + 1] = "";
 char current_password[PASSWORD_LENGTH + 1] = "";
 int is_logged_in = LOGGED_OUT;
 
 char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
-char port[6] = DEFAULT_PORT;
+char PORT[6] = DEFAULT_PORT;
 
 
 void usage(const char *prog_name) {
@@ -42,7 +43,7 @@ void parse_arguments(int argc, char *argv[]) {
                     fprintf(stderr, "Error: Invalid port number\n");
                     exit(EXIT_FAILURE);
                 }
-                strcpy(port, optarg);
+                strcpy(PORT, optarg);
                 break;
             case 'n':
                 if (optarg[0] == '-') {
@@ -63,69 +64,12 @@ void parse_arguments(int argc, char *argv[]) {
     }
 }
 
-int connect_tcp(char* ip, char* port) {
-    struct addrinfo hints, *res;
-    int fd, errcode;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    errcode = getaddrinfo(ip, port, &hints, &res);
-    if (errcode != 0) return -1;
-
-    fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (fd == -1) {
-        freeaddrinfo(res);
-        perror("TCP Socket creation failed");
-        return -1;
-    }
-
-    if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) {
-        close(fd);
-        freeaddrinfo(res);
-        perror("TCP Connection failed");
-        return -1;
-    }
-
-    freeaddrinfo(res);
-    return fd;
-}
-
-int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
-    struct addrinfo hints, *res;
-    int fd, errcode;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    errcode = getaddrinfo(ip, port, &hints, &res);
-    if (errcode != 0) return ERROR;
-
-    fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (fd == -1) {
-        freeaddrinfo(res);
-        return ERROR;
-    }
-
-    struct timeval timeout = {5, 0};
-
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-    memset(server_addr, 0, sizeof(*server_addr));
-    memcpy(server_addr, res->ai_addr, res->ai_addrlen);
-
-    freeaddrinfo(res);
-    return fd;
-}
-
 int main(int argc, char* argv[]) {
 
     parse_arguments(argc, argv);
     
     struct sockaddr_in server_udp_addr;
-    int udp_fd = setup_udp(IP, port, &server_udp_addr);
+    int udp_fd = setup_udp(IP, PORT, &server_udp_addr);
     if (udp_fd == ERROR) {
         fprintf(stderr, "UDP setup failed\n");
         return ERROR;
@@ -137,16 +81,18 @@ int main(int argc, char* argv[]) {
 
     while (1) {
         printf("> ");
+        // Read user input
         if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) break;
 
+        // Clear previous command and argument buffers
         memset(command_buffer, 0, sizeof(command_buffer));
         memset(command_arg_buffer, 0, sizeof(command_arg_buffer));
 
+        // Parse command and arguments
         sscanf(input_buffer, "%s %[^\n]", command_buffer, command_arg_buffer);
 
         CommandType command = identify_command(command_buffer);
         command_handler(command, command_arg_buffer, udp_fd, &server_udp_addr);
     }
-
     return 0;
 }

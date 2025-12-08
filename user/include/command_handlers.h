@@ -68,4 +68,12 @@ ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_u
      socklen_t udp_addr_len);
 
 
+
+
+// ---------- socket_manager.c ----------
+int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr);
+int connect_tcp(const char* ip, const char* port);
+
+
+
 #endif

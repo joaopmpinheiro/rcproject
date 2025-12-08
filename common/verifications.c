@@ -70,4 +70,3 @@ int verify_password_format(char* password) {
 
     return VALID;
 }
-
