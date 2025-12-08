@@ -30,7 +30,7 @@ void usage(const char *prog_name);
  * @param req The request to verify.
  * @return int Returns VALID if both UID and password are valid, otherwise returns INVALID.
  */
-int verify_args_UID_password(Request* req);
+int verify_uid_password(Request* req);
 
 /**
  * @brief Identifies the request based on the command string.
@@ -45,7 +45,7 @@ RequestType identify_request_type(char* command);
  * 
  * @param req The request to handle.
  */
-void handle_UDP_request(Request* req);
+void handle_udp_request(Request* req);
 
 /**
  * @brief Get the user by UID.
@@ -88,7 +88,7 @@ int dir_exists(const char* path);
 char* read_file(const char* filename);
 
 // ------------ users_manager.c ---------------
-int does_user_exist(char* UID);
+int user_exists(char* UID);
 int create_new_user(char* UID, char* password);
 int create_USER_dir(char* UID);
 int write_password(char* UID, char* password);

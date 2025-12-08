@@ -31,11 +31,11 @@ void udp_connection() {
         // TODO: implement threading for UDP requests
         Request req = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
         strncpy(req.buffer, buffer, sizeof(req.buffer));
-        handle_UDP_request(&req);
+        handle_udp_request(&req);
     } 
 }
 
-
+// TODO: é preciso confirmar se deu porcaria?
 void send_udp_response(const char* message, Request *req) {
     // TODO: will need a lock
     sendto(set.udp_socket, message, strlen(message), 0,\
@@ -46,6 +46,7 @@ void tcp_connection() {
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
     int client_socket = accept(set.tcp_socket, (struct sockaddr *)&client_addr, &addr_len);
+
     /* if (client_socket >= 0) {
         Task task = {.client_socket = client_socket, .client_addr = client_addr, .addr_len = addr_len, .is_tcp = 1};
         task_queue_push(&task_queue, task);

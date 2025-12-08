@@ -8,7 +8,7 @@ RequestType identify_request_type(char* command_buff){
     else return UNKNOWN;
 }
 
-int verify_args_UID_password(Request* req) {
+int verify_uid_password(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) return INVALID;
 
     char UID[UID_LENGTH + 1];
@@ -23,7 +23,7 @@ int verify_args_UID_password(Request* req) {
     return VALID;
 }
 
-void handle_UDP_request(Request* req) {
+void handle_udp_request(Request* req) {
     char command_buff[3] = {0};
     char command_arg_buffer[BUFFER_SIZE] = {0};
 
@@ -32,12 +32,10 @@ void handle_UDP_request(Request* req) {
     RequestType command = identify_request_type(command_buff);
 
     // known command but wrong arguments
-    if (verify_args_UID_password(req) == INVALID && command != UNKNOWN) {
-
+    if (command != UNKNOWN && verify_uid_password(req) == INVALID) {
         // build error response
         char response[16]; 
         snprintf(response, sizeof(response), "%s ERR\n", command_buff);
-
         send_udp_response(response, req);
         return;
     }
@@ -76,6 +74,7 @@ void create_user(int UID, char* password) {
     new_node->next = users;
     users = new_node;
 }
+// ------------------------------------------------
 
 
 
@@ -91,7 +90,7 @@ void login_handler(Request* req) {
         printf("Handling login (LIN), from user with UID %s, using port %s\n",UID, set.port);
     }
 
-    if (!does_user_exist(UID)) {
+    if (!user_exists(UID)) {
         if (create_new_user(UID, password) == ERROR) {
             send_udp_response("RLI ERR\n", req);
             fprintf(stderr, "Error creating new user with UID %s\n", UID);
@@ -102,8 +101,6 @@ void login_handler(Request* req) {
     }
 
     get_password(UID, user_password);
-    fprintf(stderr, "Stored password: %s\n", user_password);
-    fprintf(stderr, "Provided password: %s\n", password);
     if (strcmp(password, user_password) == 0) {
         write_login(UID);
         send_udp_response("RLI OK\n", req);

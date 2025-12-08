@@ -18,6 +18,10 @@ int check_file(char *fname){
     return filestat.st_size;
 }
 
+int file_exists(const char* filename) {
+    struct stat buffer;
+    return (stat(filename, &buffer) == 0) ? VALID : INVALID;
+}
 
 int dir_exists(const char* path) {
     struct stat info;

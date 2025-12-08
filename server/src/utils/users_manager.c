@@ -3,7 +3,7 @@
 #include "../../include/utils.h"
 
 
-int does_user_exist(char* UID){
+int user_exists(char* UID){
     char UID_dirname[20];
     sprintf(UID_dirname, "USERS/%s", UID);
     return dir_exists(UID_dirname);
@@ -49,6 +49,12 @@ int create_new_user(char* UID, char* password){
     return SUCCESS;
 }
 
+int is_logged_in(char* UID){
+    char login_filename[35];
+    sprintf(login_filename, "USERS/%s/%slogin.txt", UID, UID);
+    return file_exists(login_filename);
+}
+
 int write_login(char* UID){
     char login_filename[35];
     FILE* fp;
@@ -60,6 +66,13 @@ int write_login(char* UID){
     }
     fprintf(fp, "Logged in\n");
     fclose(fp);
+    return SUCCESS;
+}
+
+int erase_login(char* UID){
+    char login_filename[35];
+    sprintf(login_filename, "USERS/%s/%slogin.txt", UID, UID);
+    unlink(login_filename);
     return SUCCESS;
 }
 
@@ -96,14 +109,10 @@ int write_password(char* UID, char* password){
     return SUCCESS;
 }
 
-int erase_Login(char* UID){
-    char login_filename[35];
-    sprintf(login_filename, "USERS/%s/%slogin.txt", UID, UID);
-    unlink(login_filename);
-    return SUCCESS;
-}
+
 
 /* int get_event_list(char *EID, EVENTLIST *list){
+    char* UID
     struct dirent **filelist;
     int n_entries, eventsID, i_ent = 0;
     char dirname[55];
