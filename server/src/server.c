@@ -11,6 +11,7 @@ EventNode *events = NULL;
 void sig_detected(int signum) {
     close(set.udp_socket);
     close(set.tcp_socket);
+    _exit(EXIT_SUCCESS);
 }
 
 
