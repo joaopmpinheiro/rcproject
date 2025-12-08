@@ -81,24 +81,31 @@ void create_user(int UID, char* password) {
 
 // ------------ UDP Requests ---------------
 void login_handler(Request* req) {
-    int UID;
-    char password[PASSWORD_LENGTH];
-    sscanf(req->buffer, "LIN %d %s", &UID, password);
+    char UID[UID_LENGTH + 1];
+    char password[PASSWORD_LENGTH + 1];
+    char user_password[PASSWORD_LENGTH + 1];
+
+    sscanf(req->buffer, "LIN %s %s", UID, password);
 
     if(set.verbose){
-        printf("Handling login (LIN), from user with UID %d,\
-                            using port %s\n",UID, set.port);
+        printf("Handling login (LIN), from user with UID %s, using port %s\n",UID, set.port);
     }
 
-    User* user = get_user_by_uid(UID);
-    if (user == NULL) {
-        create_user(UID, password);
+    if (!does_user_exist(UID)) {
+        if (create_new_user(UID, password) == ERROR) {
+            send_udp_response("RLI ERR\n", req);
+            fprintf(stderr, "Error creating new user with UID %s\n", UID);
+            return;
+        }
         send_udp_response("RLI REG\n", req);
         return;
     }
 
-    if (strcmp(user->password, password) == 0) {
-        user->status = LOGGED_IN; // logged in
+    get_password(UID, user_password);
+    fprintf(stderr, "Stored password: %s\n", user_password);
+    fprintf(stderr, "Provided password: %s\n", password);
+    if (strcmp(password, user_password) == 0) {
+        write_login(UID);
         send_udp_response("RLI OK\n", req);
     }
 
@@ -207,5 +214,4 @@ USER: s
 void reserve_seats_handler(){
 
 }
-
 

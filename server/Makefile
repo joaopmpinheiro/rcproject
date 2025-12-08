@@ -10,6 +10,8 @@ OBJS = \
 	$(UTILS)/connection.o \
 	$(UTILS)/error.o \
 	$(UTILS)/socket_manager.o \
+	$(UTILS)/file_manager.o \
+	$(UTILS)/users_manager.o \
 	$(SRCDIR)/server.o
 
 TARGET = server

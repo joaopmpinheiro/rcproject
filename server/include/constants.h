@@ -30,6 +30,8 @@
 #define MAX_SEATS 999
 #define ERROR -1
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
+#define MAX_EVENTS 999
+#define EMPTY_FILE -2
 
 
 

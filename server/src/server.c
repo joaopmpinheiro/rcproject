@@ -6,9 +6,27 @@ Settings set = {0};
 UserNode *users = NULL;
 EventNode *events = NULL;
 
+void clean_server() {
+    // Free users
+    UserNode *current_user = users;
+    while (current_user != NULL) {
+        UserNode *temp = current_user;
+        current_user = current_user->next;
+        free(temp);
+    }
+
+    // Free events
+    EventNode *current_event = events;
+    while (current_event != NULL) {
+        EventNode *temp = current_event;
+        current_event = current_event->next;
+        free(temp);
+    }
+}
 
 // POSIX async-signal safe functions
 void sig_detected(int signum) {
+    clean_server();
     close(set.udp_socket);
     close(set.tcp_socket);
     _exit(EXIT_SUCCESS);

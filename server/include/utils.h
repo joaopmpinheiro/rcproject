@@ -81,4 +81,21 @@ void close_event_handler();
 void show_event_handler();
 void reserve_seats_handler();
 
+
+// ------------- file_manager.c ---------------
+int check_file(char *fname);
+int dir_exists(const char* path);
+char* read_file(const char* filename);
+
+// ------------ users_manager.c ---------------
+int does_user_exist(char* UID);
+int create_new_user(char* UID, char* password);
+int create_USER_dir(char* UID);
+int write_password(char* UID, char* password);
+int write_login(char* UID);
+int get_password(char* UID, char* password);
+
+// ------------ events_manager.c ---------------
+// To be implemented
+
 #endif
