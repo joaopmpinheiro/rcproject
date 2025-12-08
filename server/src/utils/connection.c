@@ -87,8 +87,11 @@ int tcp_setup(){
 
 
 void server_setup(){
-    udp_setup();
-    tcp_setup();
+    if (udp_setup() == ERROR) exit(EXIT_FAILURE);
+    if (tcp_setup() == ERROR) {
+        close(set.udp_socket);
+        exit(EXIT_FAILURE);
+    }
 
     set.timeout = (struct timeval){.tv_sec = 10, .tv_usec = 0};
     FD_ZERO(&set.read_fds);

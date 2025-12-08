@@ -7,9 +7,16 @@ UserNode *users = NULL;
 EventNode *events = NULL;
 
 
+// POSIX async-signal safe functions
+void sig_detected(int signum) {
+    close(set.udp_socket);
+    close(set.tcp_socket);
+}
+
+
 int main(int argc, char *argv[]) {
-    /*signal(SIGINT, sig_detected); */ // TODO
-     signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
+    signal(SIGINT, sig_detected);
+    signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
 
     parse_arguments(argc, argv);
 
