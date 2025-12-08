@@ -9,10 +9,15 @@
 #define PORTMAX 65535
 #define PORTMIN 0 
 
+// TODO por todos os defines no mesmo sitio
 #define TIMEOUT_SECONDS 5
 #define PASSWORD_LENGTH 8
 #define COMMAND_LENGTH 3
 #define UID_LENGTH 6
+#define MAX_EVENT_NAME 10
+#define MAX_AVAIL_SEATS 999
+#define MIN_AVAIL_SEATS 10
+#define EVENT_DATE_LENGTH 16 // DD-MM-YYYY HH:MM
 
 #define LOGGED_IN 1
 #define LOGGED_OUT 0
