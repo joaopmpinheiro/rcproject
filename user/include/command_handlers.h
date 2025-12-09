@@ -26,7 +26,7 @@ typedef enum ReplyStatus {
     STATUS_REGISTERED,      // REG - new user registered (login)
     
     // Server error statuses (from protocol)
-    STATUS_NOK,             // Generic failure
+    STATUS_NOK,             // NOK - Generic failure
     STATUS_NOT_LOGGED_IN,   // NLG - user not logged in
     STATUS_WRONG_PASSWORD,  // WRP - incorrect password
     STATUS_USER_NOT_REGISTERED, // UNR - user not registered
@@ -55,7 +55,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr);
 
 // Print result message based on command and status
-void print_result(CommandType command, ReplyStatus status);
+void print_result(CommandType command, ReplyStatus status, char* extra_info);
 
 // Individual command handlers - return ReplyStatus
 ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
@@ -66,6 +66,14 @@ ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_ud
      socklen_t udp_addr_len);
 ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len);
+
+
+
+
+// ---------- socket_manager.c ----------
+int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr);
+int connect_tcp(const char* ip, const char* port);
+
 
 
 #endif

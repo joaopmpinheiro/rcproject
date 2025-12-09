@@ -1,6 +1,12 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <stddef.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+
 #define BASE_PORT 58000
 #define GROUP_NUMBER 32
 #define DEFAULT_PORT "58032"
@@ -20,6 +26,8 @@
 #define MIN_AVAIL_SEATS 10
 #define EVENT_DATE_LENGTH 16 // DD-MM-YYYY HH:MM
 #define FILE_NAME_LENGTH 24
+#define MAX_FILE_SIZE (10 * 1024 * 1024) // 10 MB
+#define TCP_BUFFER_SIZE 1024
 
 #define LOGGED_IN 1
 #define LOGGED_OUT 0
@@ -32,7 +40,8 @@
 #define VALID 1
 #define INVALID 0
 
-int is_number(const char *str);
-int is_valid_IP(const char *ip);
-int is_valid_port(const char *port_str);
+int send_tcp_message(int fd, char* message);
+int send_tcp_file(int fd, char* file_name);
+int read_tcp(int fd, void* buf, size_t len);
+
 #endif

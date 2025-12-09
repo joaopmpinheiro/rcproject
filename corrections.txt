@@ -13,3 +13,6 @@ SERVER:
 
 
 + por verifications num common
+
+DOUBT
++ udp tem q dar assure de ser tudo enviado? o while e tal

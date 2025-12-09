@@ -3,10 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>   // stat, S_ISREG
+#include <unistd.h>    // access, R_OK
 
 #include "command_handlers.h"
 #include "../../common/verifications.h"
 #include "../../common/common.h"
+
 #include "client_data.h"
 
 // Helper function to get command name string
@@ -29,7 +32,7 @@ static const char* get_command_name(CommandType command) {
 }
 
 // Centralized result printing
-void print_result(CommandType command, ReplyStatus status) {
+void print_result(CommandType command, ReplyStatus status, char* extra_info) {
     const char* cmd_name = get_command_name(command);
     
     switch (status) {
@@ -45,11 +48,15 @@ void print_result(CommandType command, ReplyStatus status) {
                 case UNREGISTER:
                     printf("%s successful: User unregistered\n", cmd_name);
                     break;
+                case CREATE:
+                    printf("%s successful: Event created with EID: %s\n", cmd_name, extra_info);
+                    break;
                 default:
                     printf("%s successful\n", cmd_name);
                     break;
             }
             break;
+
         case STATUS_REGISTERED:
             printf("%s successful: New user registered\n", cmd_name);
             break;
@@ -358,11 +365,92 @@ ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_u
     return status;
 }
 
+
+int verify_file(char* file_name) {
+    struct stat st;
+    return (stat(file_name, &st) == 0 && //Accessible file
+            S_ISREG(st.st_mode) && // Regular file
+            access(file_name, R_OK) == 0 && // Readable file 
+            st.st_size <= MAX_FILE_SIZE) ? // Size limit
+            VALID : INVALID;
+}
+
+/**
+ * @brief Sends TCP request to create a new event and handles the response.
+ * Receives:
+ * NOK - event could not be created
+ * NGL - user not logged in
+ * OK EID- event created successfully 
+ * PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
+ * 
+ * @param args [event_name event_file_name event_date num_seats]
+ * @return ReplyStatus 
+ */
+ReplyStatus create_event_handler(char* args, char** extra_info) {
+    char event_name[MAX_EVENT_NAME + 1];
+    char file_name[24 + 1]; // TODO: maximum file name length?
+    char date[EVENT_DATE_LENGTH + 1];
+    char num_seats[4];
+    *extra_info = NULL;
+
+    if (!verify_argument_count(args, 4)) return STATUS_INVALID_ARGS;
+
+    // name event_fname event_date, num_attendees
+    // TODO: corrigir tamanho do scanf
+    sscanf(args,"%10s %25s %33s %s", event_name, file_name, date, num_seats);
+    if (!verify_event_name_format(event_name) || !verify_file(file_name) ||
+        !verify_event_date_format(date) || !verify_seat_count(num_seats))
+        return STATUS_INVALID_ARGS;
+    
+    int tcp_fd = connect_tcp(IP, PORT);
+    if (tcp_fd == -1) return STATUS_SEND_FAILED;
+
+    // PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
+    // Get file size
+    struct stat st;
+    stat(file_name, &st);
+    long file_size = st.st_size;
+
+    // Prepare request header
+    char request_header[512];
+    snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld",
+             current_uid, current_password, event_name, date, num_seats, file_name, file_size);
+    
+    // Send request header
+    if (send_tcp_message(tcp_fd, request_header) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }
+
+    // Send file
+    if (send_tcp_file(tcp_fd, file_name) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }   
+
+    read_tcp(tcp_fd, request_header, sizeof(request_header));
+    close(tcp_fd);
+    char response_code[4];
+    char reply_status[4];
+    int parsed = sscanf(request_header, "%3s %3s", response_code, reply_status);
+    if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
+    if (strcmp(response_code, "NOK") != 0) return STATUS_NOK;
+    if(strcmp(response_code, "NGL") != 0) return STATUS_NOT_LOGGED_IN;
+    if (strcmp(response_code, "OK") != 0){
+        *extra_info = malloc(4 * sizeof(char));
+        sscanf(request_header, "%*s %*s %3s", *extra_info);
+        return STATUS_OK;
+    }
+    
+    return STATUS_UNASSIGNED; // TODO: handle response
+}
+
 void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr) {
     
     socklen_t udp_addr_len = sizeof(*server_udp_addr);
     ReplyStatus status = STATUS_UNASSIGNED;
+    char* extra_info = NULL;
     
     switch (command) {
         case LOGIN:
@@ -380,7 +468,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
         case EXIT:
             if (is_logged_in) {
                 status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-                print_result(LOGOUT, status);
+                print_result(LOGOUT, status, NULL);
             }
             printf("Exiting application.\n");
             close(udp_fd);
@@ -388,6 +476,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
             break;
         case CREATE:
             // Handle create event
+            status = create_event_handler(args, &extra_info);
             break;
         case CLOSE:
             // Handle close event
@@ -411,5 +500,5 @@ void command_handler(CommandType command, char* args, int udp_fd,
             printf("Unknown command\n");
             break;
     }
-    if(status != STATUS_UNASSIGNED) print_result(command, status);
+    if(status != STATUS_UNASSIGNED) print_result(command, status, extra_info);
 }

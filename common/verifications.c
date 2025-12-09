@@ -182,7 +182,7 @@ int verify_event_date_format(char* date_str) {
     return VALID;
 }
 
-int verify_attendance_count(char* count_str) {
+int verify_seat_count(char* count_str) {
     if (!is_number(count_str)) return INVALID;
 
     int count = atoi(count_str);
