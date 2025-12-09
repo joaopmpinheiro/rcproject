@@ -1,7 +1,7 @@
 #include "../../include/constants.h"
 #include "../../include/globals.h"
 
-int does_event_exist(char* EID){
+int event_exists(char* EID){
     char EID_dirname[20];
     sprintf(EID_dirname, "EVENTS/%s", EID);
     return dir_exists(EID_dirname);
@@ -13,9 +13,7 @@ int create_EVENT_dir (int EID){
     char DESC_dirname[25];
     int ret;
 
-    if (EID < 1 || EID > MAX_EVENTS){
-        return ERROR;
-    }
+    if (EID < 1 || EID > MAX_EVENTS) return ERROR;
 
     sprintf(EID_dirname, "EVENTS/%03d", EID);
 

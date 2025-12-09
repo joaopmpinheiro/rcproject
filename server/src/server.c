@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
 
         // Check for TCP connection
         else if (FD_ISSET(set.tcp_socket, &set.temp_fds)) {
+            fprintf(stderr, "Received TCP connection\n");
             tcp_connection();
             // One of the threads will handle the request, check handle_task() in threads.c
         }

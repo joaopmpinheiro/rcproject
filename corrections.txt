@@ -7,7 +7,9 @@ USER:
 COMMON:
 - algumas funcoes no connection do server podiam estar no commmon e ser usadas no user
 
+SERVER:
 
+- verbose mode printa oq? tudo? algo q o stor quer? escolha nossa?
 
 
 + por verifications num common

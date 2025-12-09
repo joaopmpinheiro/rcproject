@@ -74,4 +74,12 @@ int verify_event_date_format(char* date_str);
  */
 int verify_attendance_count(char* count_str);
 
+/**
+ * @brief Verifies if the file name format is correct (1 to FILE_NAME_LENGTH alphanumeric, dots, underscores, hyphens).
+ * 
+ * @param file_name 
+ * @return int VALID if the file name format is correct, INVALID otherwise.
+ */
+int verify_file_name_format(char* file_name);
+
 #endif

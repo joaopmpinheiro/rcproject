@@ -190,3 +190,27 @@ int verify_attendance_count(char* count_str) {
 
     return VALID;
 }
+
+int verify_file_name_format(char* file_name) {
+    if (file_name == NULL) return INVALID;
+
+    size_t len = strlen(file_name);
+    if (len > 0 && file_name[len - 1] == '\n') {
+        file_name[len - 1] = '\0';
+        len--;
+    }
+
+    if (len == 0 || len > FILE_NAME_LENGTH) return INVALID;
+
+    // Verify alphanumeric, dots, underscores, and hyphens
+    for (size_t i = 0; i < len; i++) {
+        if (!isalnum((unsigned char)file_name[i]) && 
+            file_name[i] != '_' && 
+            file_name[i] != '-' && 
+            file_name[i] != '.') {
+            return INVALID;
+        }
+    }
+
+    return VALID;
+}

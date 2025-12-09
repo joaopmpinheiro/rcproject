@@ -37,7 +37,7 @@ void handle_udp_request(Request* req) {
     char command_buff[3] = {0};
     char command_arg_buffer[BUFFER_SIZE] = {0};
 
-    // get 3-letter command
+    // Get 3-letter command
     sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
     RequestType command = identify_request_type(command_buff);
 
@@ -52,11 +52,43 @@ void handle_udp_request(Request* req) {
 
     switch (command) {
         case LOGIN:
-            // Handle login
             login_handler(req);
             break;
         default:
             send_udp_response("ERR\n", req);
+            break;
+    }
+}
+
+void handle_tcp_request(Request* req) {
+    char command_buff[3] = {0};
+    char command_arg_buffer[BUFFER_SIZE] = {0};
+
+    // Get 3-letter command
+    sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
+    RequestType command = identify_request_type(command_buff);
+
+    switch (command) {
+        case CREATE:
+            create_event_handler(req);
+            break;
+        case CLOSE:
+            // close_event_handler();
+            break;
+        case LIST:
+            // list_events_handler();
+            break;
+        case SHOW:
+            // show_events_handler();
+            break;
+        case RESERVE:
+            // reserve_seats_handler();
+            break;
+        case CHANGEPASS:
+            // change_password_handler();
+            break;
+        default:
+            write(req->client_socket, "ERR\n", strlen("ERR\n"));
             break;
     }
 }
@@ -176,7 +208,52 @@ input:
     num_attendees: interger
 USER: successful or not and EID
 */
-void create_event_handler(){
+void create_event_handler(Request* req){
+    char UID[UID_LENGTH + 1];
+    char password[PASSWORD_LENGTH + 1];
+    char event_name[MAX_EVENT_NAME + 1];
+    char event_date[EVENT_DATE_LENGTH + 1];
+    char attendance_count[MAX_AVAIL_SEATS + 1];
+    char EID[EID_LENGTH + 1];
+
+    char file_name[FILE_NAME_LENGTH + 1];
+    size_t file_size;
+    char* file_content;
+
+    // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <attendance_count> 
+    // <file_name> <file_size> <file_content>
+
+    sscanf(req->buffer, "CRE %6s %8s %10s %16s %3s %24s %zu", 
+        UID, password, event_name, event_date, attendance_count, file_name, &file_size);
+
+    if(set.verbose){
+        printf("Handling create event (CRE), from user with UID %s, using port %s\n",UID, set.port);
+    }
+
+    if (!verify_event_name_format(event_name) ||
+        !verify_uid_format(UID) ||
+        !verify_password_format(password) ||
+        !verify_event_date_format(event_date) ||
+        !verify_attendance_count(attendance_count) ||
+        !verify_file_name_format(file_name) ) {
+        // TODO FIXME: write em ciclo for para ensure que escrevemos tudo
+        write(req->client_socket, "RCE ERR\n", strlen("RCE ERR\n"));
+        close(req->client_socket);
+        return;
+    }
+
+    // TODO: ler 
+    if (find_available_eid(EID) == ERROR ||
+        create_EVENT_dir(atoi(EID)) == ERROR ||
+        write_event_start_file(EID, UID, event_name, file_name, attendance_count,
+                               event_date) == ERROR ||
+        update_reservations_file(EID, 0) == ERROR ||
+        write_description_file(EID, file_name, file_size, file_content) == ERROR) {
+        // TODO FIXME: write em ciclo for para ensure que escrevemos tudo
+        write(req->client_socket, "RCE NOK\n", strlen("RCE NOK\n"));
+        close(req->client_socket);
+        return;
+    }
 
 }
 

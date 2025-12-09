@@ -23,7 +23,7 @@
 #include "../../common/common.h"
 
 #define BUFFER_SIZE 1024 //TODO: confirmar
-#define MAX_EVENT_NAME 10
+#define MAX_EVENT_NAME 10 // TODO: já ta no common.h (?) mas é MAX_EVENT_NAME_LENGTH
 #define DATE_LENGTH 11
 #define TIME_LENGTH 5
 #define MIN_SEATS 10

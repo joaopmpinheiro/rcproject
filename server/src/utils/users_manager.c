@@ -10,8 +10,8 @@ int user_exists(char* UID){
 }
 
 int create_USER_dir (char* UID){
-    char UID_dirname[20];
-    char created_dirname[30];
+    char UID_dirname[32];
+    char created_dirname[32];
     int ret;
 
     sprintf(UID_dirname, "USERS/%s", UID);
