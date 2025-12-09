@@ -29,6 +29,7 @@ int create_USER_dir (char* UID){
     ret = mkdir(created_dirname, 0700);
     if (ret == -1){
         rmdir(UID_dirname);
+        rmdir(created_dirname);
         return ERROR;
     }
     return SUCCESS;
@@ -108,8 +109,6 @@ int write_password(char* UID, char* password){
     fclose(fp);
     return SUCCESS;
 }
-
-
 
 /* int get_event_list(char *EID, EVENTLIST *list){
     char* UID

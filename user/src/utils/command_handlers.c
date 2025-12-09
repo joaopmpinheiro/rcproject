@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>   // stat, S_ISREG
+#include <unistd.h>    // access, R_OK
 
 #include "command_handlers.h"
 #include "../../common/verifications.h"
@@ -372,31 +374,65 @@ and the assigned event identifier, EID, which should be displayed to the user.
 After receiving the reply from the ES, the User closes the TCP connection.
 */
 
+
+int verify_file(char* file_name) {
+    struct stat st;
+    return (stat(file_name, &st) == 0 && //Accessible file
+            S_ISREG(st.st_mode) && // Regular file
+            access(file_name, R_OK) == 0 && // Readable file 
+            st.st_size <= MAX_FILE_SIZE) ? // Size limit
+            VALID : INVALID;
+}
+
 /**
- * @brief Sends TCP request to create a new event.
+ * @brief Sends TCP request to create a new event and handles the response.
+ * 
+ * PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
  * 
  * @param args [event_name event_file_name event_date num_seats]
- * @param udp_fd 
- * @param server_udp_addr 
- * @param udp_addr_len 
  * @return ReplyStatus 
  */
 ReplyStatus create_event_handler(char* args) {
-    char event_name[11];
-    char file_name[128]; //TODO: maximum file name length?
-    char date[32];
-    int num_seats;
+    char event_name[MAX_EVENT_NAME + 1];
+    char file_name[24 + 1]; // TODO: maximum file name length?
+    char date[EVENT_DATE_LENGTH + 1];
+    char num_seats[4];
 
     if (!verify_argument_count(args, 4)) return STATUS_INVALID_ARGS;
 
     // name event_fname event_date, num_attendees
-    sscanf(args,"%10s %127s %31s %d", event_name, file_name, date, &num_seats);
-    if (!is_valid_name(event_name) || !is_valid_file(file_name) ||
-        !is_valid_date(date) || !is_valid_seats(num_seats)) return STATUS_INVALID_ARGS;
+    // TODO: corrigir tamanho do scanf
+    sscanf(args,"%10s %25s %33s %s", event_name, file_name, date, num_seats);
+    if (!verify_event_name_format(event_name) || !verify_file(file_name) ||
+        !verify_event_date_format(date) || !verify_seat_count(num_seats))
+        return STATUS_INVALID_ARGS;
     
     int tcp_fd = connect_tcp(IP, PORT);
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
 
+    // PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
+    // Get file size
+    struct stat st;
+    stat(file_name, &st);
+    long file_size = st.st_size;
+
+    // Prepare request header
+    char request_header[512];
+    snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld",
+             current_uid, current_password, event_name, date, num_seats, file_name, file_size);
+    
+    // Send request header
+    if (send_tcp_message(tcp_fd, request_header) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }
+
+    // Send file
+    if (send_tcp_file(tcp_fd, file_name) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }   
+    return STATUS_UNASSIGNED; // TODO: handle response
 }
 
 void command_handler(CommandType command, char* args, int udp_fd,
