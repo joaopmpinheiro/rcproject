@@ -32,7 +32,7 @@ static const char* get_command_name(CommandType command) {
 }
 
 // Centralized result printing
-void print_result(CommandType command, ReplyStatus status) {
+void print_result(CommandType command, ReplyStatus status, char* extra_info) {
     const char* cmd_name = get_command_name(command);
     
     switch (status) {
@@ -48,11 +48,15 @@ void print_result(CommandType command, ReplyStatus status) {
                 case UNREGISTER:
                     printf("%s successful: User unregistered\n", cmd_name);
                     break;
+                case CREATE:
+                    printf("%s successful: Event created with EID: %s\n", cmd_name, extra_info);
+                    break;
                 default:
                     printf("%s successful\n", cmd_name);
                     break;
             }
             break;
+
         case STATUS_REGISTERED:
             printf("%s successful: New user registered\n", cmd_name);
             break;
@@ -361,19 +365,6 @@ ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_u
     return status;
 }
 
-/*
-create name event_fname event_date num_attendees – the
-User application establishes a TCP session with the ES and sends a message
-asking to create a new event, whose short description name is name, providing
-the file describing the event, stored in the file event_fname, indicating the date
-and time (dd-mm-yyyy hh:mm) of the event, event_date, and the number of
-people who can attend the event, num_attendees. the file event_fname
-should exist in the same folder.
-In reply, the ES sends a message indicating whether the request was successful,
-and the assigned event identifier, EID, which should be displayed to the user.
-After receiving the reply from the ES, the User closes the TCP connection.
-*/
-
 
 int verify_file(char* file_name) {
     struct stat st;
@@ -386,17 +377,21 @@ int verify_file(char* file_name) {
 
 /**
  * @brief Sends TCP request to create a new event and handles the response.
- * 
+ * Receives:
+ * NOK - event could not be created
+ * NGL - user not logged in
+ * OK EID- event created successfully 
  * PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
  * 
  * @param args [event_name event_file_name event_date num_seats]
  * @return ReplyStatus 
  */
-ReplyStatus create_event_handler(char* args) {
+ReplyStatus create_event_handler(char* args, char** extra_info) {
     char event_name[MAX_EVENT_NAME + 1];
     char file_name[24 + 1]; // TODO: maximum file name length?
     char date[EVENT_DATE_LENGTH + 1];
     char num_seats[4];
+    *extra_info = NULL;
 
     if (!verify_argument_count(args, 4)) return STATUS_INVALID_ARGS;
 
@@ -432,6 +427,21 @@ ReplyStatus create_event_handler(char* args) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }   
+
+    read_tcp(tcp_fd, request_header, sizeof(request_header));
+    close(tcp_fd);
+    char response_code[4];
+    char reply_status[4];
+    int parsed = sscanf(request_header, "%3s %3s", response_code, reply_status);
+    if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
+    if (strcmp(response_code, "NOK") != 0) return STATUS_NOK;
+    if(strcmp(response_code, "NGL") != 0) return STATUS_NOT_LOGGED_IN;
+    if (strcmp(response_code, "OK") != 0){
+        *extra_info = malloc(4 * sizeof(char));
+        sscanf(request_header, "%*s %*s %3s", *extra_info);
+        return STATUS_OK;
+    }
+    
     return STATUS_UNASSIGNED; // TODO: handle response
 }
 
@@ -440,6 +450,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
     
     socklen_t udp_addr_len = sizeof(*server_udp_addr);
     ReplyStatus status = STATUS_UNASSIGNED;
+    char* extra_info = NULL;
     
     switch (command) {
         case LOGIN:
@@ -457,7 +468,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
         case EXIT:
             if (is_logged_in) {
                 status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-                print_result(LOGOUT, status);
+                print_result(LOGOUT, status, NULL);
             }
             printf("Exiting application.\n");
             close(udp_fd);
@@ -465,7 +476,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
             break;
         case CREATE:
             // Handle create event
-            status = create_event_handler(args);
+            status = create_event_handler(args, &extra_info);
             break;
         case CLOSE:
             // Handle close event
@@ -489,5 +500,5 @@ void command_handler(CommandType command, char* args, int udp_fd,
             printf("Unknown command\n");
             break;
     }
-    if(status != STATUS_UNASSIGNED) print_result(command, status);
+    if(status != STATUS_UNASSIGNED) print_result(command, status, extra_info);
 }
