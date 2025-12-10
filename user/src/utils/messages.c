@@ -1,6 +1,12 @@
 #include "../../include/command_handlers.h"
 #include <stdio.h>
 
+void usage(const char *prog_name) {
+    fprintf(stderr, "Usage: %s [-n server_ip] [-p server_port]\n", prog_name);
+    fprintf(stderr, "  -n server_ip    Specify the server IP address\n");
+    fprintf(stderr, "  -p server_port  Specify the server port number\n");
+}
+
 void print_result(CommandType command, ReplyStatus status, char* extra_info) {
     const char* cmd_name = get_command_name(command);
     

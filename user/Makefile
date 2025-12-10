@@ -6,7 +6,8 @@ SRCDIR = src
 UTILS = $(SRCDIR)/utils
 
 OBJS = \
-	$(UTILS)/command_handlers.o \
+	$(UTILS)/command_handler.o \
+	$(UTILS)/commands.o \
 	$(UTILS)/socket_manager.o \
 	$(UTILS)/messages.o \
 	$(SRCDIR)/user.o

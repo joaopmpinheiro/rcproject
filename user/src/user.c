@@ -23,11 +23,7 @@ char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
 char PORT[6] = DEFAULT_PORT;
 
 
-void usage(const char *prog_name) {
-    fprintf(stderr, "Usage: %s [-n server_ip] [-p server_port]\n", prog_name);
-    fprintf(stderr, "  -n server_ip    Specify the server IP address\n");
-    fprintf(stderr, "  -p server_port  Specify the server port number\n");
-}
+
 
 void parse_arguments(int argc, char *argv[]) {   
     int opt;

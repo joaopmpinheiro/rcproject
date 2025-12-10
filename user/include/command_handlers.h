@@ -21,6 +21,8 @@ typedef enum CommandType {
 
 // Reply status codes returned by handlers
 typedef enum ReplyStatus {
+    STATUS_ERROR,          // ERR - generic error, server wasn't able to process request
+
     // Success statuses
     STATUS_OK,              // Operation successful
     STATUS_REGISTERED,      // REG - new user registered (login)
@@ -32,7 +34,6 @@ typedef enum ReplyStatus {
     STATUS_USER_NOT_REGISTERED, // UNR - user not registered
     STATUS_USER_NOT_FOUND,  // NID - user does not exist
 
-    STATUS_ERROR,          // ERR - generic error, server wasn't able to process request
     
     // Client-side errors (before/during communication)
     STATUS_INVALID_ARGS,    // Invalid argument count or format
@@ -55,28 +56,43 @@ typedef enum ReplyStatus {
     STATUS_UNASSIGNED,
 } ReplyStatus;
 
-CommandType identify_command(char* command);
 
+// ------------ command_handler.c -------------
+ReplyStatus handle_response_code(char* resp, char* command, int parsed, int n, char* status);
+CommandType identify_command(char* command);
+const char* get_command_name(CommandType command);
+ReplyStatus parse_status_code(const char* status);
 void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr);
 
-const char* get_command_name(CommandType command);
-void print_result(CommandType command, ReplyStatus status, char* extra_info);
 
-// Print result message based on command and status
-void print_result(CommandType command, ReplyStatus status, char* extra_info);
-
-// Individual command handlers - return ReplyStatus
+// ------------ commands.c -------------
+int verify_file(char* file_name);
 ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
-     socklen_t udp_addr_len);
+            socklen_t udp_addr_len);
 ReplyStatus unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
-     socklen_t udp_addr_len);
+                                socklen_t udp_addr_len);
 ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len);
 ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
-     socklen_t udp_addr_len);
+                            socklen_t udp_addr_len);
+/**
+ * @brief Sends TCP request to create a new event and handles the response.
+ * Receives:
+ * NOK - event could not be created
+ * NGL - user not logged in
+ * OK EID- event created successfully 
+ * PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
+ * 
+ * @param args [event_name event_file_name event_date num_seats]
+ * @return ReplyStatus 
+ */
+ReplyStatus create_event_handler(char* args, char** extra_info);
 
 
+// ---------- messages.c ----------
+void usage(const char *prog_name);
+void print_result(CommandType command, ReplyStatus status, char* extra_info);
 
 
 // ---------- socket_manager.c ----------

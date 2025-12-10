@@ -12,58 +12,19 @@
 
 #include "client_data.h"
 
-// Helper function to get command name string
-const char* get_command_name(CommandType command) {
-    switch (command) {
-        case LOGIN: return "Login";
-        case CHANGEPASS: return "Change password";
-        case UNREGISTER: return "Unregister";
-        case LOGOUT: return "Logout";
-        case EXIT: return "Exit";
-        case CREATE: return "Create";
-        case CLOSE: return "Close";
-        case MYEVENTS: return "My events";
-        case LIST: return "List";
-        case SHOW: return "Show";
-        case RESERVE: return "Reserve";
-        case MYRESERVATIONS: return "My reservations";
-        default: return "Unknown";
-    }
+int verify_file(char* file_name) {
+    struct stat st;
+    return (stat(file_name, &st) == 0 && //Accessible file
+            S_ISREG(st.st_mode) && // Regular file
+            access(file_name, R_OK) == 0 && // Readable file 
+            st.st_size <= MAX_FILE_SIZE) ? // Size limit
+            VALID : INVALID;
 }
 
-
-// Helper to parse common protocol status codes
-static ReplyStatus parse_status_code(const char* status) {
-    if (strcmp(status, "OK") == 0) return STATUS_OK;
-    if (strcmp(status, "NOK") == 0) return STATUS_NOK;
-    if (strcmp(status, "REG") == 0) return STATUS_REGISTERED;
-    if (strcmp(status, "NLG") == 0) return STATUS_NOT_LOGGED_IN;
-    if (strcmp(status, "WRP") == 0) return STATUS_WRONG_PASSWORD;
-    if (strcmp(status, "UNR") == 0) return STATUS_USER_NOT_REGISTERED;
-    if (strcmp(status, "NID") == 0) return STATUS_USER_NOT_FOUND;
-    return STATUS_UNEXPECTED_RESPONSE;
-}
-
-CommandType identify_command(char* command) {
-    if (strcmp(command, "login") == 0) return LOGIN;
-    else if (strcmp(command, "changePass") == 0) return CHANGEPASS;
-    else if (strcmp(command, "unregister") == 0) return UNREGISTER;
-    else if (strcmp(command, "logout") == 0) return LOGOUT;
-    else if (strcmp(command, "exit") == 0) return EXIT;
-    else if (strcmp(command, "create") == 0) return CREATE;
-    else if (strcmp(command, "close") == 0) return CLOSE;
-    else if (strcmp(command, "myevents") == 0 || strcmp(command, "mye") == 0) return MYEVENTS;
-    else if (strcmp(command, "list") == 0) return LIST;
-    else if (strcmp(command, "show") == 0) return SHOW;
-    else if (strcmp(command, "reserve") == 0) return RESERVE;
-    else if (strcmp(command, "myreservations") == 0 || strcmp(command, "myr") == 0) return MYRESERVATIONS;
-    else return UNKNOWN;
-}
 
 ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
-     socklen_t udp_addr_len) {
-    char uid[32];
-    char password[32];
+            socklen_t udp_addr_len) {
+    char uid[32], password[32];
     ssize_t n;
 
     if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
@@ -92,11 +53,7 @@ ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp
     char reply_status[4];
 
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-
-    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-    if (strcmp(response_code, "RLI") != 0)  return STATUS_UNEXPECTED_RESPONSE;
-
-    ReplyStatus status = parse_status_code(reply_status);
+    ReplyStatus status = handle_response_code(response_code, "RLI", parsed, 2, reply_status);
 
     // Update global state on successful login
     if (status == STATUS_OK || status == STATUS_REGISTERED) {
@@ -266,27 +223,6 @@ ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_u
     return status;
 }
 
-
-int verify_file(char* file_name) {
-    struct stat st;
-    return (stat(file_name, &st) == 0 && //Accessible file
-            S_ISREG(st.st_mode) && // Regular file
-            access(file_name, R_OK) == 0 && // Readable file 
-            st.st_size <= MAX_FILE_SIZE) ? // Size limit
-            VALID : INVALID;
-}
-
-/**
- * @brief Sends TCP request to create a new event and handles the response.
- * Receives:
- * NOK - event could not be created
- * NGL - user not logged in
- * OK EID- event created successfully 
- * PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
- * 
- * @param args [event_name event_file_name event_date num_seats]
- * @return ReplyStatus 
- */
 ReplyStatus create_event_handler(char* args, char** extra_info) {
     char event_name[MAX_EVENT_NAME + 1];
     char file_name[24 + 1]; // TODO: maximum file name length?
@@ -359,60 +295,3 @@ ReplyStatus create_event_handler(char* args, char** extra_info) {
     return STATUS_UNASSIGNED; // TODO: handle response
 }
 
-void command_handler(CommandType command, char* args, int udp_fd,
-     struct sockaddr_in* server_udp_addr) {
-    
-    socklen_t udp_addr_len = sizeof(*server_udp_addr);
-    ReplyStatus status = STATUS_UNASSIGNED;
-    char* extra_info = NULL;
-    
-    switch (command) {
-        case LOGIN:
-            status = login_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-            break;
-        case CHANGEPASS:
-            // Handle change password
-            break;
-        case UNREGISTER:
-            status = unregister_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-            break;
-        case LOGOUT:
-            status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-            break;
-        case EXIT:
-            if (is_logged_in) {
-                status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-                print_result(LOGOUT, status, NULL);
-            }
-            printf("Exiting application.\n");
-            close(udp_fd);
-            exit(0);
-            break;
-        case CREATE:
-            // Handle create event
-            status = create_event_handler(args, &extra_info);
-            break;
-        case CLOSE:
-            // Handle close event
-            break;
-        case MYEVENTS:
-            status = myevent_handler(args, udp_fd, server_udp_addr, udp_addr_len);
-            break;
-        case LIST:
-            // Handle list events
-            break;
-        case SHOW:
-            // Handle show event details
-            break;
-        case RESERVE:
-            // Handle reserve event
-            break;
-        case MYRESERVATIONS:
-            // Handle my reservations
-            break;
-        default:
-            printf("Unknown command\n");
-            break;
-    }
-    if(status != STATUS_UNASSIGNED) print_result(command, status, extra_info);
-}
