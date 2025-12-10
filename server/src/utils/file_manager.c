@@ -1,6 +1,6 @@
 #include "../../include/constants.h"
 #include "../../include/globals.h"
-
+#include "../../common/verifications.h"
 
 
 /**
@@ -58,7 +58,7 @@ char* read_file(const char* filename) {
     size_t read_size = fread(buffer, 1, filesize, fp);
     fclose(fp);
 
-    if (read_size != filesize) {
+    if (read_size != (size_t)filesize) {
         free(buffer);
         return NULL; // Reading error
     }
@@ -92,7 +92,8 @@ int find_available_eid(char* eid_str) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
         // Check if entry is a directory and is a valid 3-digit number
-        if (entry->d_type == DT_DIR) {
+        struct stat st;
+        if (stat(entry->d_name, &st) == 0 && S_ISDIR(st.st_mode)) {
             if (strlen(entry->d_name) == 3 && is_number(entry->d_name)) {
                 int eid = atoi(entry->d_name);
                 if (eid >= 1 && eid <= 999) {

@@ -14,5 +14,9 @@ SERVER:
 
 + por verifications num common
 
+IDEAS:
+
++ usar uma funçao log para abstrair o verbose
+
 DOUBT
 + udp tem q dar assure de ser tudo enviado? o while e tal

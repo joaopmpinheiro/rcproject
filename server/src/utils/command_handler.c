@@ -64,8 +64,6 @@ void handle_tcp_request(Request* req) {
     char command_buff[3] = {0};
     char command_arg_buffer[BUFFER_SIZE] = {0};
 
-    // Get 3-letter command
-    sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
     RequestType command = identify_request_type(command_buff);
 
     switch (command) {
@@ -199,7 +197,6 @@ void change_password_handler(){
 
 }
 
-
 /*
 input: 
     name: string with event name
@@ -213,48 +210,147 @@ void create_event_handler(Request* req){
     char password[PASSWORD_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
     char event_date[EVENT_DATE_LENGTH + 1];
-    char attendance_count[MAX_AVAIL_SEATS + 1];
+    char seat_count[SEAT_COUNT_LENGTH + 1]; // max 999, so 3 digits + null
     char EID[EID_LENGTH + 1];
 
     char file_name[FILE_NAME_LENGTH + 1];
+    char file_size_str[FILE_SIZE_LENGTH + 1]; // max 8 digits for file size (10MB = 10000000)
     size_t file_size;
-    char* file_content;
+    char* file_content = NULL;
 
-    // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <attendance_count> 
+    int fd = req->client_socket;
+
+    // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <seat_count> 
     // <file_name> <file_size> <file_content>
+    // Note: req->buffer only contains "CRE", rest must be read from socket
 
-    sscanf(req->buffer, "CRE %6s %8s %10s %16s %3s %24s %zu", 
-        UID, password, event_name, event_date, attendance_count, file_name, &file_size);
-
-    if(set.verbose){
-        printf("Handling create event (CRE), from user with UID %s, using port %s\n",UID, set.port);
-    }
-
-    if (!verify_event_name_format(event_name) ||
-        !verify_uid_format(UID) ||
-        !verify_password_format(password) ||
-        !verify_event_date_format(event_date) ||
-        !verify_attendance_count(attendance_count) ||
-        !verify_file_name_format(file_name) ) {
-        // TODO FIXME: write em ciclo for para ensure que escrevemos tudo
-        write(req->client_socket, "RCE ERR\n", strlen("RCE ERR\n"));
-        close(req->client_socket);
+    // Read UID (6 chars)
+    if (read_tcp_field(fd, UID, UID_LENGTH) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
         return;
     }
 
-    // TODO: ler 
+    // Read password (8 chars)
+    if (read_tcp_field(fd, password, PASSWORD_LENGTH) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    // Read event_name (max 10 chars)
+    if (read_tcp_field(fd, event_name, MAX_EVENT_NAME) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    // Read event_date (16 chars: DD-MM-YYYY HH:MM)
+    // Date has a space in it, so we need to read date and time separately
+    char date_part[11]; // DD-MM-YYYY
+    char time_part[6];  // HH:MM
+    if (read_tcp_field(fd, date_part, 10) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (read_tcp_field(fd, time_part, 5) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+    snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_part, time_part);
+
+    // Read seat_count (max 3 digits)
+    if (read_tcp_field(fd, seat_count, 3) <= 0) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    // Read file_name (max 24 chars)
+    if (read_tcp_field(fd, file_name, FILE_NAME_LENGTH) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    // Read file_size (max 8 digits)
+    if (read_tcp_field(fd, file_size_str, FILE_SIZE_LENGTH) == ERROR) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+    file_size = (size_t)atol(file_size_str);
+
+    // Validate file_size
+    if (file_size == 0 || file_size > MAX_FILE_SIZE) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    if(set.verbose){
+        printf("Handling create event (CRE), from user with UID %s, using port %s\n", UID, set.port);
+    }
+
+    // Validate all fields
+    if (!verify_uid_format(UID) ||
+        !verify_password_format(password) ||
+        !verify_event_name_format(event_name) ||
+        !verify_event_date_format(event_date) ||
+        !verify_seat_count(seat_count) ||
+        !verify_file_name_format(file_name)) {
+        write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    // Allocate buffer for file content
+    file_content = (char*)malloc(file_size + 1);
+    if (file_content == NULL) {
+        write(fd, "RCE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    // Read file content (exactly file_size bytes)
+    size_t total_read = 0;
+    while (total_read < file_size) {
+        ssize_t n = read(fd, file_content + total_read, file_size - total_read);
+        if (n <= 0) {
+            free(file_content);
+            write(fd, "RCE ERR\n", 8);
+            close(fd);
+            return;
+        }
+        total_read += n;
+    }
+    file_content[file_size] = '\0';
+
+    // TODO: Check if user is logged in and password matches
+    // TODO: Add NLG (not logged in) and WRP (wrong password) responses
+
     if (find_available_eid(EID) == ERROR ||
         create_EVENT_dir(atoi(EID)) == ERROR ||
-        write_event_start_file(EID, UID, event_name, file_name, attendance_count,
+        write_event_start_file(EID, UID, event_name, file_name, seat_count,
                                event_date) == ERROR ||
         update_reservations_file(EID, 0) == ERROR ||
         write_description_file(EID, file_name, file_size, file_content) == ERROR) {
-        // TODO FIXME: write em ciclo for para ensure que escrevemos tudo
-        write(req->client_socket, "RCE NOK\n", strlen("RCE NOK\n"));
-        close(req->client_socket);
+        free(file_content);
+        write(fd, "RCE NOK\n", 8);
+        close(fd);
         return;
     }
 
+    free(file_content);
+
+    // Send success response with EID
+    char response[16];
+    snprintf(response, sizeof(response), "RCE OK %s\n", EID);
+    write(fd, response, strlen(response));
+    close(fd);
 }
 
 /*

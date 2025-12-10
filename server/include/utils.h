@@ -3,6 +3,7 @@
 
 // socket_manager.c
 
+ssize_t read_tcp_field(int fd, char* buffer, size_t max_len);
 int select_handler();
 void udp_connection();
 void tcp_connection();
@@ -20,6 +21,7 @@ void server_setup();
 void parse_arguments(int argc, char *argv[]);
 
 //error.c
+void server_log(const char* message);
 void usage(const char *prog_name);
 
 
@@ -160,6 +162,6 @@ int get_password(char* UID, char* password);
 
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);
-int create_EVENT_dir (char* EID);
+int create_EVENT_dir (int EID);
 
 #endif

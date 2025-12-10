@@ -1,5 +1,6 @@
 #include "../../include/constants.h"
 #include "../../include/globals.h"
+#include "../../include/utils.h"
 
 int event_exists(char* EID){
     char EID_dirname[20];
@@ -27,7 +28,7 @@ int create_EVENT_dir (int EID){
         return ERROR;
     }
     
-    snprintf(DESC_dirname, "EVENTS/%03d/DESCRIPTION", EID);
+    snprintf(DESC_dirname, sizeof(DESC_dirname), "EVENTS/%03d/DESCRIPTION", EID);
     ret = mkdir(DESC_dirname, 0700);
     if (ret == -1){
         rmdir(RES_dirname);

@@ -1,6 +1,7 @@
 #include "../include/constants.h"
 #include "../include/globals.h"
 #include "../../include/utils.h"
+#include "../../common/verifications.h"
 
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
