@@ -98,6 +98,8 @@ void print_result(CommandType command, ReplyStatus status, char* extra_info);
 // ---------- socket_manager.c ----------
 int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr);
 int connect_tcp(const char* ip, const char* port);
+ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
+                            socklen_t udp_addr_len, char* request, char* response);
 
 
 

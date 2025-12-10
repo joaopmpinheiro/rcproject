@@ -1,4 +1,4 @@
-#include "../../include/command_handlers.h"
+#include "../../include/utils.h"
 #include <stdio.h>
 
 void usage(const char *prog_name) {

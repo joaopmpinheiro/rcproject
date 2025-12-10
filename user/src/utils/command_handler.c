@@ -1,18 +1,23 @@
-#include "../../include/command_handlers.h"
+#include "../../include/utils.h"
 #include "../../include/client_data.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 ReplyStatus handle_response_code(char* resp, char* command, int parsed, int n, char* status) {
+    // Problem parsing response
     if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
-    if (strcmp(resp, "ERR"))  return STATUS_ERROR;
-    if (strcmp(resp, command))  return STATUS_UNEXPECTED_RESPONSE;
-    if (parsed < n) return STATUS_MALFORMED_RESPONSE;
 
-    ReplyStatus reply_status = parse_status_code(status);
-    return reply_status;
+    // Server did not even recognize the command
+    if (parse_status_code(status) == STATUS_ERROR) return STATUS_ERROR;
+
+    // Server returned the wrong command response
+    if (strcmp(resp, command)) return STATUS_UNEXPECTED_RESPONSE;
+    
+    // Not enough parts in response
+    if (parsed < n) return STATUS_MALFORMED_RESPONSE;   
+
+    return parse_status_code(status);
 }
-
 
 CommandType identify_command(char* command) {
     if (strcmp(command, "login") == 0) return LOGIN;
@@ -49,6 +54,7 @@ const char* get_command_name(CommandType command) {
 }
 
 ReplyStatus parse_status_code(const char* status) {
+    if (strcmp(status, "ERR") == 0) return STATUS_ERROR;
     if (strcmp(status, "OK") == 0) return STATUS_OK;
     if (strcmp(status, "NOK") == 0) return STATUS_NOK;
     if (strcmp(status, "REG") == 0) return STATUS_REGISTERED;
@@ -56,8 +62,6 @@ ReplyStatus parse_status_code(const char* status) {
     if (strcmp(status, "WRP") == 0) return STATUS_WRONG_PASSWORD;
     if (strcmp(status, "UNR") == 0) return STATUS_USER_NOT_REGISTERED;
     if (strcmp(status, "NID") == 0) return STATUS_USER_NOT_FOUND;
-
-    if (strcmp(status, "ERR") == 0) return STATUS_ERROR;
     return STATUS_UNEXPECTED_RESPONSE;
 }
 

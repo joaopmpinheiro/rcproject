@@ -9,10 +9,11 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include "../include/client_data.h"
+#include "../../include/utils.h"
 #include "../../common/common.h"
 
 
-int connect_tcp(char* ip, char* port) {
+int connect_tcp(const char* ip, const char* port) {
     struct addrinfo hints, *res;
     int fd, errcode;
 
@@ -41,7 +42,7 @@ int connect_tcp(char* ip, char* port) {
     return fd;
 }
 
-int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
+int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr) {
     struct addrinfo hints, *res;
     int fd, errcode;
 
@@ -67,4 +68,19 @@ int setup_udp(char* ip, char* port, struct sockaddr_in* server_addr) {
 
     freeaddrinfo(res);
     return fd;
+}
+
+
+ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
+                            socklen_t udp_addr_len, char* request, char* response) {
+    ssize_t n;
+    // Send request to server
+    if (sendto(udp_fd, request, strlen(request), 0, (struct sockaddr*)server_udp_addr,\
+        udp_addr_len) == ERROR) return STATUS_SEND_FAILED;
+    
+    // Read server response
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
+    if (n == ERROR) return STATUS_RECV_FAILED;
+    response[n] = '\0';
+    return STATUS_UNASSIGNED;
 }

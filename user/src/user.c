@@ -9,11 +9,10 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 
-#include "../include/command_handlers.h"
+#include "../include/utils.h"
 #include "../include/client_data.h"
 #include "../common/verifications.h"
 #include "../common/common.h"
-#include "../include/command_handlers.h"
 
 char current_uid[UID_LENGTH + 1] = "";
 char current_password[PASSWORD_LENGTH + 1] = "";
@@ -21,8 +20,6 @@ int is_logged_in = LOGGED_OUT;
 
 char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
 char PORT[6] = DEFAULT_PORT;
-
-
 
 
 void parse_arguments(int argc, char *argv[]) {   
