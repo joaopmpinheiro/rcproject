@@ -8,6 +8,7 @@ UTILS = $(SRCDIR)/utils
 OBJS = \
 	$(UTILS)/command_handlers.o \
 	$(UTILS)/socket_manager.o \
+	$(UTILS)/messages.o \
 	$(SRCDIR)/user.o
 
 TARGET = user

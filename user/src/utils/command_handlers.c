@@ -13,7 +13,7 @@
 #include "client_data.h"
 
 // Helper function to get command name string
-static const char* get_command_name(CommandType command) {
+const char* get_command_name(CommandType command) {
     switch (command) {
         case LOGIN: return "Login";
         case CHANGEPASS: return "Change password";
@@ -31,105 +31,6 @@ static const char* get_command_name(CommandType command) {
     }
 }
 
-// Centralized result printing
-void print_result(CommandType command, ReplyStatus status, char* extra_info) {
-    const char* cmd_name = get_command_name(command);
-    
-    switch (status) {
-        // Success cases
-        case STATUS_OK:
-            switch (command) {
-                case LOGIN:
-                    printf("%s successful: User logged in\n", cmd_name);
-                    break;
-                case LOGOUT:
-                    printf("%s successful: User logged out\n", cmd_name);
-                    break;
-                case UNREGISTER:
-                    printf("%s successful: User unregistered\n", cmd_name);
-                    break;
-                case CREATE:
-                    printf("%s successful: Event created with EID: %s\n", cmd_name, extra_info);
-                    break;
-                default:
-                    printf("%s successful\n", cmd_name);
-                    break;
-            }
-            break;
-
-        case STATUS_REGISTERED:
-            printf("%s successful: New user registered\n", cmd_name);
-            break;
-            
-        // Server error cases
-        case STATUS_NOK:
-            switch (command) {
-                case LOGIN:
-                    printf("%s failed: Wrong password\n", cmd_name);
-                    break;
-                case LOGOUT:
-                    printf("%s failed: User not logged in\n", cmd_name);
-                    break;
-                case UNREGISTER:
-                    printf("%s failed: User not logged in\n", cmd_name);
-                    break;
-                case MYEVENTS:
-                    printf("%s: User has no events\n", cmd_name);
-                    break;
-                default:
-                    printf("%s failed\n", cmd_name);
-                    break;
-            }
-            break;
-        case STATUS_NOT_LOGGED_IN:
-            printf("%s failed: User not logged in\n", cmd_name);
-            break;
-        case STATUS_WRONG_PASSWORD:
-            printf("%s failed: Wrong password\n", cmd_name);
-            break;
-        case STATUS_USER_NOT_REGISTERED:
-            printf("%s failed: User not registered\n", cmd_name);
-            break;
-        case STATUS_USER_NOT_FOUND:
-            printf("%s failed: User does not exist\n", cmd_name);
-            break;
-            
-        // Client-side errors
-        case STATUS_INVALID_ARGS:
-            printf("%s failed: Invalid argument count\n", cmd_name);
-            break;
-        case STATUS_INVALID_UID:
-            printf("%s failed: Invalid UID format (must be 6 digits)\n", cmd_name);
-            break;
-        case STATUS_INVALID_PASSWORD:
-            printf("%s failed: Invalid password format (must be 8 alphanumeric characters)\n", cmd_name);
-            break;
-        case STATUS_NOT_LOGGED_IN_LOCAL:
-            printf("%s failed: User not logged in\n", cmd_name);
-            break;
-        case STATUS_SEND_FAILED:
-            printf("%s failed: Failed to send request\n", cmd_name);
-            break;
-        case STATUS_RECV_FAILED:
-            printf("%s failed: Failed to receive response\n", cmd_name);
-            break;
-        case STATUS_MALFORMED_RESPONSE:
-            printf("%s failed: Malformed server response\n", cmd_name);
-            break;
-        case STATUS_UNEXPECTED_RESPONSE:
-            printf("%s failed: Unexpected response code\n", cmd_name);
-            break;
-        case STATUS_ALREADY_LOGGED_IN:
-            printf("%s failed: User already logged in\n", cmd_name);
-            break;
-            
-        // Special cases - no printing needed
-        case STATUS_CUSTOM_OUTPUT:
-            break;
-        default:
-            break;
-    }
-}
 
 // Helper to parse common protocol status codes
 static ReplyStatus parse_status_code(const char* status) {
@@ -389,18 +290,24 @@ int verify_file(char* file_name) {
 ReplyStatus create_event_handler(char* args, char** extra_info) {
     char event_name[MAX_EVENT_NAME + 1];
     char file_name[24 + 1]; // TODO: maximum file name length?
-    char date[EVENT_DATE_LENGTH + 1];
+    char date[10 + 1];
+    char time[6 + 1];
+    char real_date[30 + 1];
     char num_seats[4];
     *extra_info = NULL;
 
-    if (!verify_argument_count(args, 4)) return STATUS_INVALID_ARGS;
+    if (!verify_argument_count(args, 5)) return STATUS_INVALID_ARGS;
 
     // name event_fname event_date, num_attendees
     // TODO: corrigir tamanho do scanf
-    sscanf(args,"%10s %25s %33s %s", event_name, file_name, date, num_seats);
-    if (!verify_event_name_format(event_name) || !verify_file(file_name) ||
-        !verify_event_date_format(date) || !verify_seat_count(num_seats))
-        return STATUS_INVALID_ARGS;
+    sscanf(args,"%10s %24s %10s %6s %s", event_name, file_name, date, time, num_seats);
+    snprintf(real_date, sizeof(real_date), "%s %s", date, time);
+    printf("Creating event: %s on %s with %s seats, file: %s\n", 
+            event_name, real_date, num_seats, file_name);
+    if (!verify_event_name_format(event_name)) return STATUS_INVALID_EVENT_NAME;
+    if (!verify_file(file_name)) return STATUS_INVALID_FILE;
+    if (!verify_event_date_format(real_date)) return STATUS_INVALID_EVENT_DATE;
+    if (!verify_seat_count(num_seats)) return STATUS_INVALID_SEAT_COUNT;
     
     int tcp_fd = connect_tcp(IP, PORT);
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
@@ -410,17 +317,20 @@ ReplyStatus create_event_handler(char* args, char** extra_info) {
     struct stat st;
     stat(file_name, &st);
     long file_size = st.st_size;
+    printf("File size: %ld bytes\n", file_size);
 
     // Prepare request header
     char request_header[512];
-    snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld",
-             current_uid, current_password, event_name, date, num_seats, file_name, file_size);
+    snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld ",
+             current_uid, current_password, event_name, real_date, num_seats, file_name, file_size);
     
+    printf("Sending create event request: %s\n", request_header);
     // Send request header
     if (send_tcp_message(tcp_fd, request_header) == ERROR) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }
+
 
     // Send file
     if (send_tcp_file(tcp_fd, file_name) == ERROR) {
@@ -431,16 +341,20 @@ ReplyStatus create_event_handler(char* args, char** extra_info) {
     read_tcp(tcp_fd, request_header, sizeof(request_header));
     close(tcp_fd);
     char response_code[4];
-    char reply_status[4];
-    int parsed = sscanf(request_header, "%3s %3s", response_code, reply_status);
+    char status[4];
+    char eid[4];
+    int parsed = sscanf(request_header, "%3s %3s %3s", response_code, status, eid);
     if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
-    if (strcmp(response_code, "NOK") != 0) return STATUS_NOK;
-    if(strcmp(response_code, "NGL") != 0) return STATUS_NOT_LOGGED_IN;
-    if (strcmp(response_code, "OK") != 0){
+    printf("Create event response: %s\n", request_header);
+    if (!strcmp(response_code, "ERR")) return STATUS_UNEXPECTED_RESPONSE;
+    if (strcmp(response_code, "RCE")) return STATUS_UNEXPECTED_RESPONSE;
+    if(!strcmp(status, "NGL")) return STATUS_NOT_LOGGED_IN;
+    if (!strcmp(status, "OK")){
         *extra_info = malloc(4 * sizeof(char));
         sscanf(request_header, "%*s %*s %3s", *extra_info);
         return STATUS_OK;
     }
+    if (!strcmp(response_code, "NOK")) return STATUS_NOK;
     
     return STATUS_UNASSIGNED; // TODO: handle response
 }

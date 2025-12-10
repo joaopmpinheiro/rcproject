@@ -31,11 +31,17 @@ typedef enum ReplyStatus {
     STATUS_WRONG_PASSWORD,  // WRP - incorrect password
     STATUS_USER_NOT_REGISTERED, // UNR - user not registered
     STATUS_USER_NOT_FOUND,  // NID - user does not exist
+
+    STATUS_ERROR,          // ERR - generic error, server wasn't able to process request
     
     // Client-side errors (before/during communication)
     STATUS_INVALID_ARGS,    // Invalid argument count or format
     STATUS_INVALID_UID,     // Invalid UID format
     STATUS_INVALID_PASSWORD,// Invalid password format
+    STATUS_INVALID_EVENT_NAME, // Invalid event name format
+    STATUS_INVALID_EVENT_DATE, // Invalid event date format
+    STATUS_INVALID_SEAT_COUNT, // Invalid seat count
+    STATUS_INVALID_FILE,    // Invalid file format or size
     STATUS_SEND_FAILED,     // Failed to send request
     STATUS_RECV_FAILED,     // Failed to receive response
     STATUS_MALFORMED_RESPONSE, // Could not parse server response
@@ -53,6 +59,9 @@ CommandType identify_command(char* command);
 
 void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr);
+
+const char* get_command_name(CommandType command);
+void print_result(CommandType command, ReplyStatus status, char* extra_info);
 
 // Print result message based on command and status
 void print_result(CommandType command, ReplyStatus status, char* extra_info);
