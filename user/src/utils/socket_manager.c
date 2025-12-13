@@ -25,13 +25,13 @@ int connect_tcp(const char* ip, const char* port) {
     if (errcode != 0) return ERROR;
 
     fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (fd == -1) {
+    if (fd < 0) {
         freeaddrinfo(res);
         perror("TCP Socket creation failed");
         return ERROR;
     }
 
-    if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) {
+    if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
         close(fd);
         freeaddrinfo(res);
         perror("TCP Connection failed");
@@ -54,7 +54,7 @@ int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr)
     if (errcode != 0) return ERROR;
 
     fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (fd == -1) {
+    if (fd < 0) {
         freeaddrinfo(res);
         return ERROR;
     }
@@ -70,17 +70,21 @@ int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr)
     return fd;
 }
 
-
 ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len, char* request, char* response) {
     ssize_t n;
+    fprintf(stderr, "Preparing to send to server:%ld", sizeof(response));
     // Send request to server
+    fprintf(stderr, "Sending to server:%s", request);
     if (sendto(udp_fd, request, strlen(request), 0, (struct sockaddr*)server_udp_addr,\
         udp_addr_len) == ERROR) return STATUS_SEND_FAILED;
     
     // Read server response
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
+    fprintf(stderr, "Received form server:%s\n", response);
     if (n == ERROR) return STATUS_RECV_FAILED;
     response[n] = '\0';
     return STATUS_UNASSIGNED;
 }
+
+
