@@ -2,6 +2,28 @@
 #include "../../include/utils.h"
 #include "../../include/globals.h"
 
+// Reliable helper that keeps reading until the requested number of bytes arrive
+ssize_t tcp_read_all(int fd, char* buffer, size_t length) {
+    size_t total = 0;
+    while (total < length) {
+        ssize_t n = read(fd, buffer + total, length - total);
+        if (n <= 0) return n;
+        total += (size_t)n;
+    }
+    return (ssize_t)total;
+}
+
+// Reliable helper that keeps writing until everything is sent
+ssize_t tcp_write_all(int fd, const char* buffer, size_t length) {
+    size_t total = 0;
+    while (total < length) {
+        ssize_t n = write(fd, buffer + total, length - total);
+        if (n <= 0) return n;
+        total += (size_t)n;
+    }
+    return (ssize_t)total;
+}
+
 // Helper function to read a single space-delimited field from TCP socket
 ssize_t read_tcp_field(int fd, char* buffer, size_t max_len) {
     size_t i = 0;

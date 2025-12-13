@@ -4,6 +4,8 @@
 // socket_manager.c
 
 ssize_t read_tcp_field(int fd, char* buffer, size_t max_len);
+ssize_t tcp_read_all(int fd, char* buffer, size_t length);
+ssize_t tcp_write_all(int fd, const char* buffer, size_t length);
 int select_handler();
 void udp_connection();
 void tcp_connection();
@@ -159,6 +161,9 @@ int create_USER_dir(char* UID);
 int write_password(char* UID, char* password);
 int write_login(char* UID);
 int get_password(char* UID, char* password);
+int is_logged_in(char* UID);
+
+int verify_correct_password(char* UID, char* password);
 
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);

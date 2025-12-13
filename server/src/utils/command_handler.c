@@ -86,7 +86,7 @@ void handle_tcp_request(Request* req) {
             // change_password_handler();
             break;
         default:
-            write(req->client_socket, "ERR\n", strlen("ERR\n"));
+            tcp_write_all(req->client_socket, "ERR\n", strlen("ERR\n"));
             break;
     }
 }
@@ -95,6 +95,8 @@ void handle_tcp_request(Request* req) {
 
 // TODO: criar um users.c, um events.c e um reservations.c para gerir estas funções
 // ou um data_manager.c
+
+// TODO: ignorar o que a marta pos em cima e mandar isto com o boda #adoro não ter threads
 User* get_user_by_uid(int UID) {
     UserNode* current = users;
     while (current != NULL) {
@@ -114,6 +116,7 @@ void create_user(int UID, char* password) {
     new_node->next = users;
     users = new_node;
 }
+
 // ------------------------------------------------
 
 
@@ -197,6 +200,16 @@ void change_password_handler(){
 
 }
 
+// Helper function to read a field or send a error and close connection in create_event_handler
+static int read_field_or_error(int fd, char* dst, size_t len) {
+    if (read_tcp_field(fd, dst, len) == ERROR) {
+        tcp_write_all(fd, "RCE ERR\n", 8);
+        close(fd);
+        return ERROR;
+    }
+    return SUCCESS;
+}
+
 /*
 input: 
     name: string with event name
@@ -224,85 +237,56 @@ void create_event_handler(Request* req){
     // <file_name> <file_size> <file_content>
     // Note: req->buffer only contains "CRE", rest must be read from socket
 
-    // Read UID (6 chars)
-    if (read_tcp_field(fd, UID, UID_LENGTH) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
-
-    // Read password (8 chars)
-    if (read_tcp_field(fd, password, PASSWORD_LENGTH) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
-
-    // Read event_name (max 10 chars)
-    if (read_tcp_field(fd, event_name, MAX_EVENT_NAME) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
+    if (read_field_or_error(fd, UID, UID_LENGTH) == ERROR) return;
+    if (read_field_or_error(fd, password, PASSWORD_LENGTH) == ERROR) return;
+    if (read_field_or_error(fd, event_name, MAX_EVENT_NAME) == ERROR) return;
 
     // Read event_date (16 chars: DD-MM-YYYY HH:MM)
     // Date has a space in it, so we need to read date and time separately
     char date_part[11]; // DD-MM-YYYY
     char time_part[6];  // HH:MM
-    if (read_tcp_field(fd, date_part, 10) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
-
-    if (read_tcp_field(fd, time_part, 5) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
+    if (read_field_or_error(fd, date_part, 10) == ERROR) return;
+    if (read_field_or_error(fd, time_part, 5) == ERROR) return;
     snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_part, time_part);
 
     // Read seat_count (max 3 digits)
-    if (read_tcp_field(fd, seat_count, 3) <= 0) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
-
-    // Read file_name (max 24 chars)
-    if (read_tcp_field(fd, file_name, FILE_NAME_LENGTH) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
-
-    // Read file_size (max 8 digits)
-    if (read_tcp_field(fd, file_size_str, FILE_SIZE_LENGTH) == ERROR) {
-        write(fd, "RCE ERR\n", 8);
-        close(fd);
-        return;
-    }
+    if (read_field_or_error(fd, seat_count, 3) == ERROR) return;
+    if (read_field_or_error(fd, file_name, FILE_NAME_LENGTH) == ERROR) return;
+    if (read_field_or_error(fd, file_size_str, FILE_SIZE_LENGTH) == ERROR) return;
     file_size = (size_t)atol(file_size_str);
 
     // Validate file_size
     if (file_size == 0 || file_size > MAX_FILE_SIZE) {
-        write(fd, "RCE ERR\n", 8);
+        tcp_write_all(fd, "RCE ERR\n", 8);
         close(fd);
         return;
     }
 
-    if(set.verbose){
+    if(set.verbose) {
+        // FIXME TODO: criar log_server e mudar TODAS as mensagens de debug para UID e IP não port (dito pelo branquinho)
         printf("Handling create event (CRE), from user with UID %s, using port %s\n", UID, set.port);
     }
-
+    
     // Validate all fields
     if (!verify_uid_format(UID) ||
-        !verify_password_format(password) ||
-        !verify_event_name_format(event_name) ||
-        !verify_event_date_format(event_date) ||
-        !verify_seat_count(seat_count) ||
-        !verify_file_name_format(file_name)) {
-        write(fd, "RCE ERR\n", 8);
+    !verify_password_format(password) ||
+    !verify_event_name_format(event_name) ||
+    !verify_event_date_format(event_date) ||
+    !verify_seat_count(seat_count) ||
+    !verify_file_name_format(file_name)) {
+        tcp_write_all(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!is_logged_in(UID)) {
+        tcp_write_all(fd, "RCE NLG\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!verify_correct_password(UID, password)) {
+        tcp_write_all(fd, "RCE WRP\n", 8);
         close(fd);
         return;
     }
@@ -310,7 +294,7 @@ void create_event_handler(Request* req){
     // Allocate buffer for file content
     file_content = (char*)malloc(file_size + 1);
     if (file_content == NULL) {
-        write(fd, "RCE NOK\n", 8);
+        tcp_write_all(fd, "RCE NOK\n", 8);
         close(fd);
         return;
     }
@@ -321,7 +305,7 @@ void create_event_handler(Request* req){
         ssize_t n = read(fd, file_content + total_read, file_size - total_read);
         if (n <= 0) {
             free(file_content);
-            write(fd, "RCE ERR\n", 8);
+            tcp_write_all(fd, "RCE ERR\n", 8);
             close(fd);
             return;
         }
@@ -329,17 +313,13 @@ void create_event_handler(Request* req){
     }
     file_content[file_size] = '\0';
 
-    // TODO: Check if user is logged in and password matches
-    // TODO: Add NLG (not logged in) and WRP (wrong password) responses
-
     if (find_available_eid(EID) == ERROR ||
-        create_EVENT_dir(atoi(EID)) == ERROR ||
         write_event_start_file(EID, UID, event_name, file_name, seat_count,
                                event_date) == ERROR ||
         update_reservations_file(EID, 0) == ERROR ||
         write_description_file(EID, file_name, file_size, file_content) == ERROR) {
         free(file_content);
-        write(fd, "RCE NOK\n", 8);
+        tcp_write_all(fd, "RCE NOK\n", 8);
         close(fd);
         return;
     }
@@ -349,7 +329,7 @@ void create_event_handler(Request* req){
     // Send success response with EID
     char response[16];
     snprintf(response, sizeof(response), "RCE OK %s\n", EID);
-    write(fd, response, strlen(response));
+    tcp_write_all(fd, response, strlen(response));
     close(fd);
 }
 

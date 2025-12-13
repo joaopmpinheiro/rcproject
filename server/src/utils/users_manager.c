@@ -2,6 +2,15 @@
 #include "../../include/globals.h"
 #include "../../include/utils.h"
 
+int verify_correct_password(char* UID, char* password){
+    char stored_password[PASSWORD_LENGTH + 1];
+
+    if (get_password(UID, stored_password) == ERROR) return ERROR;
+
+    if (strcmp(stored_password, password) == 0) return VALID;
+
+    return INVALID;
+}
 
 int user_exists(char* UID){
     char UID_dirname[20];
