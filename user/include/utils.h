@@ -58,12 +58,14 @@ typedef enum ReplyStatus {
 
 
 // ------------ command_handler.c -------------
-ReplyStatus handle_response_code(char* resp, char* command, int parsed, int n, char* status);
+ReplyStatus handle_response_code(char* resp, CommandType command, int parsed, int n, char* status);
 CommandType identify_command(char* command);
 const char* get_command_name(CommandType command);
 ReplyStatus parse_status_code(const char* status);
 void command_handler(CommandType command, char* args, int udp_fd,
      struct sockaddr_in* server_udp_addr);
+const char* get_command_response_code(CommandType command);
+const char* get_command_code(CommandType command);
 
 
 // ------------ commands.c -------------

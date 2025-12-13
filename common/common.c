@@ -15,6 +15,7 @@ int send_tcp_message(int fd, char* message) {
     return SUCCESS;
 }
 
+
 int send_tcp_file(int fd, char* file_name) {
     // Open file for byte reading
     FILE* file = fopen(file_name, "rb");
@@ -22,14 +23,14 @@ int send_tcp_file(int fd, char* file_name) {
         perror("ERROR: Failed to open file");
         return ERROR;
     }
-
     // Read and send file in chunks of 1024 bytes
     char buffer[TCP_BUFFER_SIZE];
     size_t bytes_read;
+    ssize_t bytes_sent;
     while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
         size_t total_sent = 0;
         while (total_sent < bytes_read) {
-            ssize_t bytes_sent = write(fd, buffer + total_sent, bytes_read - total_sent);
+            bytes_sent = write(fd, buffer + total_sent, bytes_read - total_sent);
             if (bytes_sent < 0) {
                 perror("ERROR: Failed to send file data");
                 fclose(file);
@@ -37,6 +38,10 @@ int send_tcp_file(int fd, char* file_name) {
             }
             total_sent += bytes_sent;
         }
+    }
+    bytes_sent = write(fd,"\n",1); // Indicate end of file transfer
+    if (bytes_sent < 0) {
+        perror("ERROR: Failed to send end of file indicator");
     }
     fclose(file);
     return SUCCESS;

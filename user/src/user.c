@@ -21,7 +21,7 @@ int is_logged_in = LOGGED_OUT;
 char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
 char PORT[6] = DEFAULT_PORT;
 
-
+    
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
     while ((opt = getopt(argc, argv, "p:n:")) != -1) {

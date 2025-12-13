@@ -3,15 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-ReplyStatus handle_response_code(char* resp, char* command, int parsed, int n, char* status) {
+ReplyStatus handle_response_code(char* resp, CommandType command, int parsed, int n, char* status) {
     // Problem parsing response
     if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
-
+    
     // Server did not even recognize the command
     if (parse_status_code(status) == STATUS_ERROR) return STATUS_ERROR;
-
+    
     // Server returned the wrong command response
-    if (strcmp(resp, command)) return STATUS_UNEXPECTED_RESPONSE;
+    const char* command_response = get_command_response_code(command);
+    if (strcmp(resp, command_response)) return STATUS_UNEXPECTED_RESPONSE;
     
     // Not enough parts in response
     if (parsed < n) return STATUS_MALFORMED_RESPONSE;   
@@ -50,6 +51,40 @@ const char* get_command_name(CommandType command) {
         case RESERVE: return "Reserve";
         case MYRESERVATIONS: return "My reservations";
         default: return "Unknown";
+    }
+}
+
+const char* get_command_code(CommandType command) {
+    switch (command) {
+        case LOGIN: return "LIN";
+        case CHANGEPASS: return "CPS";
+        case UNREGISTER: return "UNR";
+        case LOGOUT: return "LOU";
+        case CREATE: return "CRE";
+        case CLOSE: return "CLS";
+        case MYEVENTS: return "LME";
+        case LIST: return "LST";
+        case SHOW: return "SED";
+        case RESERVE: return "RID";
+        case MYRESERVATIONS: return "LMR";
+        default: return "UNK";
+    }
+}
+
+const char* get_command_response_code(CommandType command) {
+    switch (command) {
+        case LOGIN: return "RLI";
+        case CHANGEPASS: return "RCP";
+        case UNREGISTER: return "RUR";
+        case LOGOUT: return "RLO";
+        case CREATE: return "RCE";
+        case MYEVENTS: return "RME";
+        case MYRESERVATIONS: return "RMR";
+        case CLOSE: return "RCL";
+        case LIST: return "RLS";
+        case SHOW: return "RSE";
+        case RESERVE: return "RRI";
+        default: return "UNK";
     }
 }
 
