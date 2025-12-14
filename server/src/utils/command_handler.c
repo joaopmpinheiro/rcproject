@@ -61,9 +61,9 @@ void handle_udp_request(Request* req) {
 }
 
 void handle_tcp_request(Request* req) {
-    char command_buff[3] = {0};
-    char command_arg_buffer[BUFFER_SIZE] = {0};
+    char command_buff[COMMAND_LENGTH + 1] = {0};
 
+    strncpy(command_buff, req->buffer, COMMAND_LENGTH);
     RequestType command = identify_request_type(command_buff);
 
     switch (command) {
@@ -313,16 +313,38 @@ void create_event_handler(Request* req){
     }
     file_content[file_size] = '\0';
 
-    if (find_available_eid(EID) == ERROR ||
-        write_event_start_file(EID, UID, event_name, file_name, seat_count,
-                               event_date) == ERROR ||
-        update_reservations_file(EID, 0) == ERROR ||
-        write_description_file(EID, file_name, file_size, file_content) == ERROR) {
-        free(file_content);
-        tcp_write_all(fd, "RCE NOK\n", 8);
-        close(fd);
-        return;
-    }
+    // TODO CLEAN UP ESTE DEBUGGING
+    int which_error = 0;
+    if (find_available_eid(EID) == ERROR) which_error = 1;
+    printf("EID found: %s\n", EID);
+
+    if (create_eid_dir(atoi(EID)) == ERROR) which_error = 5;
+    printf("EID directory created: %s\n", EID);
+
+    if (write_event_start_file(EID, UID, event_name, file_name, seat_count,
+                               event_date) == ERROR) which_error = 2;
+    printf("Event start file written for EID %s\n", EID);
+    if (update_reservations_file(EID, 0) == ERROR) which_error = 3;
+    printf("Reservations file updated for EID %s\n", EID);
+    if (write_description_file(EID, file_name, file_size, file_content) == ERROR) which_error = 4;
+        if (which_error != 0) {
+            printf("Error %d occurred while creating event for UID %s\n", which_error, UID);
+            free(file_content);
+            tcp_write_all(fd, "RCE NOK\n", 8);
+            close(fd);
+            return;
+        }
+
+//    if (find_available_eid(EID) == ERROR ||
+//        write_event_start_file(EID, UID, event_name, file_name, seat_count,
+//                               event_date) == ERROR ||
+//        update_reservations_file(EID, 0) == ERROR ||
+//        write_description_file(EID, file_name, file_size, file_content) == ERROR) {
+//        free(file_content);
+//        tcp_write_all(fd, "RCE NOK\n", 8);
+//        close(fd);
+//        return;
+//    }
 
     free(file_content);
 

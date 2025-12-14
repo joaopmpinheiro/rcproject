@@ -8,7 +8,7 @@ int event_exists(char* EID){
     return dir_exists(EID_dirname);
 }
 
-int create_EVENT_dir (int EID){
+int create_eid_dir (int EID){
     char EID_dirname[15];
     char RES_dirname[25];
     char DESC_dirname[25];

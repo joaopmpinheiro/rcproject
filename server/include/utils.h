@@ -112,7 +112,7 @@ int file_exists(const char* filename);
  * @brief Finds the first available EID (001-999) by scanning the EVENTS directory.
  * 
  * @param eid_str Buffer to store the 3-digit EID string (e.g., "001", "042")
- * @return int VALID if an available EID was found, INVALID if all EIDs are taken
+ * @return int SUCCESS if an available EID was found, ERROR if all EIDs are taken
  */
 int find_available_eid(char* eid_str);
 
@@ -125,7 +125,7 @@ int find_available_eid(char* eid_str);
  * @param desc_fname Description filename
  * @param event_attend Total attendance/seats (as string)
  * @param event_date Event date and time (DD-MM-YYYY HH:MM)
- * @return int VALID if file was written successfully, INVALID otherwise
+ * @return int SUCCESS if file was written successfully, ERROR otherwise
  */
 int write_event_start_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
@@ -139,7 +139,7 @@ int write_event_start_file(const char* eid, const char* uid, const char* event_n
  * 
  * @param eid Event ID (3-digit string, e.g., "001")
  * @param reserved_seats Number of seats to add to the reservation count
- * @return int VALID if file was created/updated successfully, INVALID otherwise
+ * @return int SUCCESS if file was created/updated successfully, ERROR otherwise
  */
 int update_reservations_file(const char* eid, int reserved_seats);
 
@@ -167,6 +167,6 @@ int verify_correct_password(char* UID, char* password);
 
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);
-int create_EVENT_dir (int EID);
+int create_eid_dir (int EID);
 
 #endif
