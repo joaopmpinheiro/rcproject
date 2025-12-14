@@ -10,9 +10,15 @@ server/server
 # Ignore PDFs
 *.pdf
 *.jpg
+
+# Ignore files 
 *.png
 *.txt
 !corrections.txt
+
+# Ignore USERS and ENVENTS
+/EVENTS/*
+/USERS/*
 
 # Ignore Markdown
 *.md

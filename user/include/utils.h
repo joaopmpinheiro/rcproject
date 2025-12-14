@@ -54,5 +54,8 @@ ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
                             size_t response_size);
 
 
+// ---------- user_parser.c ---------- 
+ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
+                            char* date, char* num_seats);                            
 
 #endif

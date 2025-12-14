@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include "data.h"
 
 #define BASE_PORT 58000
 #define GROUP_NUMBER 32
@@ -22,6 +23,8 @@
 #define UID_LENGTH 6
 #define EID_LENGTH 3
 #define SEAT_COUNT_LENGTH 3
+#define DAY_STR_SIZE 10
+#define TIME_STR_SIZE 5
 #define EVENT_DATE_LENGTH 16 // DD-MM-YYYY HH:MM
 #define FILE_NAME_LENGTH 24
 #define FILE_SIZE_LENGTH 8
@@ -29,8 +32,10 @@
 #define MAX_EVENT_NAME 10
 #define MAX_AVAIL_SEATS 999
 #define MIN_AVAIL_SEATS 10
+
 #define MAX_FILE_SIZE (1024 * 1024 * 10) // 10 MB
 #define TCP_BUFFER_SIZE 1024
+#define BUFFER_SIZE 256
 
 #define LOGGED_IN 1
 #define LOGGED_OUT 0
@@ -42,6 +47,9 @@
 
 #define VALID 1
 #define INVALID 0
+
+#define EOM '\n'
+
 
 int send_tcp_message(int fd, char* message);
 int send_tcp_file(int fd, char* file_name);

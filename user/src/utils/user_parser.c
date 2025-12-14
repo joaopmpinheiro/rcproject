@@ -1,0 +1,23 @@
+#include "common.h"
+#include "verifications.h"
+#include "parser.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
+                            char* date, char* num_seats) {
+    ReplyStatus status;
+    status = parse_event_name(cursor, event_name);
+    if (status != STATUS_UNASSIGNED) return status;
+    status = parse_file_name(cursor, file_name);
+    if (status != STATUS_UNASSIGNED) return status;
+    status = parse_datetime(cursor, date);
+    if (status != STATUS_UNASSIGNED) return status;
+    status = parse_total_seat(cursor, num_seats);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    return STATUS_UNASSIGNED;
+}

@@ -211,34 +211,20 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     return status;
 }
 
-/*ReplyStatus create_event_handler(char** cursor, char** extra_info) {
+ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     char event_name[MAX_EVENT_NAME + 1];
     char file_name[FILE_NAME_LENGTH + 1]; // TODO: maximum file name length?
-    char real_date[EVENT_DATE_LENGTH + 1]; //TODO: change this 
-    char date[10 + 1];
-    char time[5 + 1];
+    char date[EVENT_DATE_LENGTH + 1]; //TODO: change this 
     char num_seats[4];
     *extra_info = NULL;
-
-    char* args;
-    if (!verify_argument_count(*cursor, 5)) return STATUS_INVALID_ARGS;
-
-    // Verify arguments
-    sscanf(args, "%10s %24s %10s %5s %3s", event_name, file_name, date, time, num_seats);
     
-    // TODO: delete mas para isso é preciso trocar a funcao de verificar data
-    snprintf(real_date, sizeof(real_date), "%s %s", date, time);
-   
-    if (!verify_event_name_format(event_name)) return STATUS_INVALID_EVENT_NAME;
-    if (!verify_file(file_name)) return STATUS_INVALID_FILE;
-    if (!verify_event_date_format(real_date)) return STATUS_INVALID_EVENT_DATE;
-    if (!verify_seat_count(num_seats)) return STATUS_INVALID_SEAT_COUNT;
+    ReplyStatus status = parse_create_event(cursor, event_name, file_name, date, num_seats);
+    if (status != STATUS_UNASSIGNED) return status;
     
     int tcp_fd = connect_tcp(IP, PORT);
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
 
     // PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
-    
     // Get file size
     struct stat st;
     stat(file_name, &st);
@@ -247,7 +233,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     // Prepare request header
     char request_header[512];
     snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld ",
-             current_uid, current_password, event_name, real_date, num_seats, file_name, file_size);
+             current_uid, current_password, event_name, date, num_seats, file_name, file_size);
     
     // Send request header to server
     if (send_tcp_message(tcp_fd, request_header) == ERROR) {
@@ -266,8 +252,9 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     close(tcp_fd);
     char response_code[4], reply_status[4], eid[4];
     fprintf(stderr, "Create event response: %s\n", request_header);
+    
     int parsed = sscanf(request_header, "%3s %3s %3s", response_code, reply_status, eid);
-    ReplyStatus status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
+    status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
 
     if (status == STATUS_OK){
         *extra_info = malloc(4 * sizeof(char));
@@ -275,5 +262,3 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     }    
     return status; // TODO: handle response
 }
-
-  */

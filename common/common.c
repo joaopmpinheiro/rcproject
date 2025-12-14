@@ -15,7 +15,6 @@ int send_tcp_message(int fd, char* message) {
     return SUCCESS;
 }
 
-
 int send_tcp_file(int fd, char* file_name) {
     // Open file for byte reading
     FILE* file = fopen(file_name, "rb");

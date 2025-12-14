@@ -132,7 +132,7 @@ void command_handler(CommandType command, char** cursor, int udp_fd,
             break;
         case CREATE:
             // Handle create event
-            /* status = create_event_handler(cursor, &extra_info); */
+            status = create_event_handler(cursor, &extra_info);
             break;
         case CLOSE:
             // Handle close event
