@@ -7,8 +7,7 @@
 #include <unistd.h>    // access, R_OK
 
 #include "utils.h"
-#include "../../common/verifications.h"
-#include "../../common/common.h"
+#include "../../common/parser.h"
 
 #include "client_data.h"
 
@@ -28,18 +27,21 @@ int verify_file(char* file_name) {
 }
 
 
-ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
             socklen_t udp_addr_len) {
 
     if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
                 
     // Verify arguments
+    ReplyStatus status;
     char uid[32], password[32];
-    if (!verify_argument_count(args, 2)) return STATUS_INVALID_ARGS;
-    sscanf(args, "%31s %31s", uid, password);
 
-    if (!verify_uid_format(uid)) return STATUS_INVALID_UID;
-    if (!verify_password_format(password)) return STATUS_INVALID_PASSWORD;
+    status = parse_uid(cursor, uid);
+    if (status != STATUS_UNASSIGNED) return status;
+
+    status = parse_password(cursor, password);
+    if (status != STATUS_UNASSIGNED) return status;
+    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
 
     
     // PROTOCOL: LIN <uid> <password>
@@ -47,7 +49,7 @@ ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp
     snprintf(request, sizeof(request), "LIN %s %s\n", uid, password);
 
     // Send request to server and receive response
-    ReplyStatus status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
+    status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
                                 request, response);
     if (status != STATUS_UNASSIGNED) return status;
     
@@ -67,10 +69,10 @@ ReplyStatus login_handler(char* args, int udp_fd, struct sockaddr_in* server_udp
     return status;
 }
 
-ReplyStatus unregister_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {
     // Verify arguments
-    if (!verify_argument_count(args, 0)) return STATUS_INVALID_ARGS;
+    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: UNR <uid> <password>
@@ -97,6 +99,7 @@ ReplyStatus unregister_handler(char* args, int udp_fd, struct sockaddr_in* serve
     return status;
 }
 
+/*
 ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
 
@@ -130,7 +133,7 @@ ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_ud
     return status;
 }
 
-ReplyStatus myevent_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+ReplyStatus myevent_handler(char** args, int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len) {
     ssize_t n;
     if (!verify_argument_count(args, 0)) return STATUS_INVALID_ARGS;
@@ -267,3 +270,4 @@ ReplyStatus create_event_handler(char* args, char** extra_info) {
     return status; // TODO: handle response
 }
 
+ */

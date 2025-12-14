@@ -1,4 +1,6 @@
 #include "../../include/utils.h"
+#include "../../common/data.h"
+
 #include <stdio.h>
 
 void usage(const char *prog_name) {
@@ -78,7 +80,7 @@ void print_result(CommandType command, ReplyStatus status, char* extra_info) {
             
         // Client-side errors
         case STATUS_INVALID_ARGS:
-            printf("%s failed: Invalid argument count\n", cmd_name);
+            printf("%s failed: Invalid argument format\n", cmd_name);
             break;
         case STATUS_INVALID_UID:
             printf("%s failed: Invalid UID format (must be 6 digits)\n", cmd_name);

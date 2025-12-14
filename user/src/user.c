@@ -11,8 +11,7 @@
 
 #include "../include/utils.h"
 #include "../include/client_data.h"
-#include "../common/verifications.h"
-#include "../common/common.h"
+#include "../common/parser.h"
 
 char current_uid[UID_LENGTH + 1] = "";
 char current_password[PASSWORD_LENGTH + 1] = "";
@@ -68,24 +67,24 @@ int main(int argc, char* argv[]) {
         return ERROR;
     }
 
-    char input_buffer[256] = {0};
-    char command_buffer[256] = {0};
-    char command_arg_buffer[256] = {0};
+    char input_buffer[1024] = {0};
+    char cmd[36] = {0};
 
     while (1) {
         printf("> ");
         // Read user input
         if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) break;
 
-        // Clear previous command and argument buffers
-        memset(command_buffer, 0, sizeof(command_buffer));
-        memset(command_arg_buffer, 0, sizeof(command_arg_buffer));
+        memset(cmd, 0, sizeof(cmd));
 
         // Parse command and arguments
-        sscanf(input_buffer, "%s %[^\n]", command_buffer, command_arg_buffer);
+        //sscanf(input_buffer, "%s %[^\n]", command_buffer, command_arg_buffer);
 
-        CommandType command = identify_command(command_buffer);
-        command_handler(command, command_arg_buffer, udp_fd, &server_udp_addr);
+        char* cursor = input_buffer;
+        if (parse_cmd(&cursor, cmd) == ERROR) continue;
+        fprintf(stdout, "Command received: %s\n", cmd);
+        CommandType command = identify_command(cmd);
+        command_handler(command, &cursor, udp_fd, &server_udp_addr);
     }
     return 0;
 }

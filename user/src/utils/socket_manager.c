@@ -11,6 +11,8 @@
 #include "../include/client_data.h"
 #include "../../include/utils.h"
 #include "../../common/common.h"
+#include "../../common/data.h"
+
 
 
 int connect_tcp(const char* ip, const char* port) {
@@ -73,9 +75,8 @@ int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr)
 ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len, char* request, char* response) {
     ssize_t n;
-    fprintf(stderr, "Preparing to send to server:%ld", sizeof(response));
     // Send request to server
-    fprintf(stderr, "Sending to server:%s", request);
+    fprintf(stderr, "Sending to server:%s\n", request);
     if (sendto(udp_fd, request, strlen(request), 0, (struct sockaddr*)server_udp_addr,\
         udp_addr_len) == ERROR) return STATUS_SEND_FAILED;
     

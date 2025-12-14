@@ -100,7 +100,7 @@ ReplyStatus parse_status_code(const char* status) {
     return STATUS_UNEXPECTED_RESPONSE;
 }
 
-void command_handler(CommandType command, char* args, int udp_fd,
+void command_handler(CommandType command, char** cursor, int udp_fd,
      struct sockaddr_in* server_udp_addr) {
     
     socklen_t udp_addr_len = sizeof(*server_udp_addr);
@@ -109,20 +109,21 @@ void command_handler(CommandType command, char* args, int udp_fd,
     
     switch (command) {
         case LOGIN:
-            status = login_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = login_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case CHANGEPASS:
             // Handle change password
             break;
         case UNREGISTER:
-            status = unregister_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = unregister_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
+        /*
         case LOGOUT:
-            status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = logout_handler(&cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case EXIT:
             if (is_logged_in) {
-                status = logout_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+                status = logout_handler(&cursor, udp_fd, server_udp_addr, udp_addr_len);
                 print_result(LOGOUT, status, NULL);
             }
             printf("Exiting application.\n");
@@ -131,13 +132,13 @@ void command_handler(CommandType command, char* args, int udp_fd,
             break;
         case CREATE:
             // Handle create event
-            status = create_event_handler(args, &extra_info);
+            status = create_event_handler(&cursor, &extra_info);
             break;
         case CLOSE:
             // Handle close event
             break;
         case MYEVENTS:
-            status = myevent_handler(args, udp_fd, server_udp_addr, udp_addr_len);
+            status = myevent_handler(&cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case LIST:
             // Handle list events
@@ -150,7 +151,7 @@ void command_handler(CommandType command, char* args, int udp_fd,
             break;
         case MYRESERVATIONS:
             // Handle my reservations
-            break;
+            break; */
         default:
             printf("Unknown command\n");
             break;
