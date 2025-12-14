@@ -9,6 +9,10 @@ server/server
 
 # Ignore PDFs
 *.pdf
+*.jpg
+*.png
+*.txt
+!corrections.txt
 
 # Ignore Markdown
 *.md

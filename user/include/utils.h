@@ -43,6 +43,9 @@ typedef enum ReplyStatus {
     STATUS_INVALID_EVENT_DATE, // Invalid event date format
     STATUS_INVALID_SEAT_COUNT, // Invalid seat count
     STATUS_INVALID_FILE,    // Invalid file format or size
+    STATUS_FILE_NOT_FOUND,  // File does not exist
+    STATUS_FILE_READ_ERROR, // Error reading file
+    STATUS_FILE_SIZE_EXCEEDED, // File size exceeds limit
     STATUS_SEND_FAILED,     // Failed to send request
     STATUS_RECV_FAILED,     // Failed to receive response
     STATUS_MALFORMED_RESPONSE, // Could not parse server response

@@ -15,11 +15,16 @@
 // TODO: arranjar um sitio para esta funcao
 int verify_file(char* file_name) {
     struct stat st;
-    return (stat(file_name, &st) == 0 && //Accessible file
-            S_ISREG(st.st_mode) && // Regular file
-            access(file_name, R_OK) == 0 && // Readable file 
-            st.st_size <= MAX_FILE_SIZE) ? // Size limit
-            VALID : INVALID;
+    if (stat(file_name, &st) != 0) {
+        return STATUS_FILE_NOT_FOUND;
+    }
+    if (access(file_name, R_OK) != 0) {
+        return STATUS_FILE_READ_ERROR;
+    }
+    if (st.st_size > MAX_FILE_SIZE) {
+        return STATUS_FILE_SIZE_EXCEEDED;
+    }
+    return VALID;
 }
 
 

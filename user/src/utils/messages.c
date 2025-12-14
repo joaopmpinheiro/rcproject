@@ -98,6 +98,15 @@ void print_result(CommandType command, ReplyStatus status, char* extra_info) {
         case STATUS_INVALID_FILE:
             printf("%s failed: Invalid file format or size\n", cmd_name);
             break;
+        case STATUS_FILE_NOT_FOUND:
+            printf("%s failed: File not found\n", cmd_name);
+            break;
+        case STATUS_FILE_READ_ERROR:
+            printf("%s failed: Error reading file\n", cmd_name);
+            break;
+        case STATUS_FILE_SIZE_EXCEEDED:
+            printf("%s failed: File size exceeds limit\n", cmd_name);
+            break;
         case STATUS_NOT_LOGGED_IN_LOCAL:
             printf("%s failed: User not logged in\n", cmd_name);
             break;
