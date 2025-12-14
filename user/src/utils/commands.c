@@ -292,3 +292,23 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     }    
     return status; // TODO: handle response
 }
+
+ReplyStatus close_event_handler(char** cursor) {
+    char eid[4];
+    ReplyStatus status = parse_close(cursor, eid);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
+
+    // PROTOCOL: CLO <uid> <password> <eid>
+    char request[256], response[256];
+    snprintf(request, sizeof(request), "CLS %s %s %s\n", current_uid, current_password, eid);
+
+    status = tcp_send_receive(request, response);
+    if(status != STATUS_UNASSIGNED) return status;
+
+    char response_code[4], reply_status[4];
+    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
+    status = handle_response_code(response_code, CLOSE, parsed, 2, reply_status);
+
+    return status;
+}

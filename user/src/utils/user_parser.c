@@ -35,3 +35,11 @@ ReplyStatus parse_change_password(char **cursor, char* old_password,
     return STATUS_UNASSIGNED;
 
 }
+
+ReplyStatus parse_close(char **cursor, char* eid) {
+    ReplyStatus status;
+    status = parse_eid(cursor, eid);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    return STATUS_UNASSIGNED;    
+}

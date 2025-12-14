@@ -43,25 +43,11 @@ ReplyStatus parse_password(char **cursor, char* password) {
 	return STATUS_UNASSIGNED;
 }
 
-/* ReplyStatus parse_eid(char **cursor, EID *eid) {
-	char eid_str[EID_STR_SIZE] = {0};
-
-	bool err = get_next_arg(cursor, eid_str, EID_FORMAT "%n", 1);
-
-	if (err) {
-		return true;
-	}
-
-	// Validate UID format
-	if (!is_valid_uid(eid_str)) {
-		errno = EINVAL;
-		return true;
-	}
-
-	*eid = atoi(eid_str);
-	return false;
+ReplyStatus parse_eid(char **cursor, char* eid) {
+	if (get_next_arg(cursor, eid) == ERROR) return STATUS_INVALID_ARGS;
+	if (verify_eid_format(eid) == INVALID) return STATUS_INVALID_EID;
+	return STATUS_UNASSIGNED;
 }
- */
 
 ReplyStatus parse_datetime(char **cursor, char *date) {
 	char day_str[DAY_STR_SIZE + 1] = {0};

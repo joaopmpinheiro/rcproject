@@ -30,6 +30,11 @@ typedef enum ReplyStatus {
     STATUS_WRONG_PASSWORD,  // WRP - incorrect password
     STATUS_USER_NOT_REGISTERED, // UNR - user not registered
     STATUS_USER_NOT_FOUND,  // NID - user does not exist
+    STATUS_NO_EVENT_ID,      // NOE - event ID does not exist
+    STATUS_EVENT_WRONG_USER,    // EOW - wrong user for this operation
+    STATUS_EVENT_SOLD_OUT,    // SLD - event is sold out
+    STATUS_PAST_EVENT,    // PST - event date has already passed
+    STATUS_EVENT_CLOSED, // CLO - event was already closed
 
     STATUS_MALFORMED_COMMAND, // Command not recognized
     
@@ -41,6 +46,7 @@ typedef enum ReplyStatus {
     STATUS_INVALID_EVENT_DATE, // Invalid event date format
     STATUS_INVALID_SEAT_COUNT, // Invalid seat count
     STATUS_INVALID_FILE,    // Invalid file format or size
+    STATUS_INVALID_EID,     // Invalid event ID
     STATUS_FILE_NOT_FOUND,  // File does not exist
     STATUS_FILE_READ_ERROR, // Error reading file
     STATUS_FILE_SIZE_EXCEEDED, // File size exceeds limit

@@ -31,6 +31,9 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                 case CREATE:
                     printf("%s successful: Event created with EID: %s\n", cmd_name, extra_info);
                     break;
+                case CLOSE:
+                    printf("%s successful: Event closed\n", cmd_name);
+                    break;
                 default:
                     printf("%s successful\n", cmd_name);
                     break;
@@ -47,6 +50,9 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                 case LOGIN:
                     printf("%s failed: Wrong password\n", cmd_name);
                     break;
+                case CHANGEPASS:
+                    printf("%s failed: Wrong password\n", cmd_name);
+                    break;
                 case LOGOUT:
                     printf("%s failed: User not logged in\n", cmd_name);
                     break;
@@ -59,8 +65,8 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                 case CREATE:
                     printf("%s failed: Event could not be created\n", cmd_name);
                     break;
-                case CHANGEPASS:
-                    printf("%s failed: Wrong password\n", cmd_name);
+                case CLOSE:
+                    printf("%s failed: Event does not exist or wrong password\n", cmd_name);
                     break;
                 default:
                     printf("%s failed\n", cmd_name);
@@ -79,6 +85,22 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
         case STATUS_USER_NOT_FOUND:
             printf("%s failed: User does not exist\n", cmd_name);
             break;
+        case STATUS_NO_EVENT_ID:
+            printf("%s failed: Event ID does not exist\n", cmd_name);
+            break;
+        case STATUS_EVENT_WRONG_USER:
+            printf("%s failed: Event not created by this user\n", cmd_name);
+            break;
+        case STATUS_EVENT_SOLD_OUT:
+            printf("%s failed: Event has already sold out\n", cmd_name);
+            break;
+        case STATUS_PAST_EVENT:
+            printf("%s failed: Event date has already passed\n", cmd_name);
+            break;
+        case STATUS_EVENT_CLOSED:
+            printf("%s failed: Event was already closed\n", cmd_name);
+            break;      
+        case STATUS_MALFORMED_COMMAND:
 
         case STATUS_ERROR:
             printf("%s failed: Server was unable to process the request\n", cmd_name);

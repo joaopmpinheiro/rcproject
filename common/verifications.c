@@ -62,6 +62,14 @@ int verify_uid_format(char* uid) {
     return VALID;
 }
 
+int verify_eid_format(char* eid) {
+    if (eid == NULL) return INVALID;
+    if(!is_number(eid)) return INVALID;
+    int eid_num = atoi(eid);
+    if (eid_num < 1 || eid_num > MAX_EVENTS) return INVALID;
+    return VALID;
+}
+
 int verify_password_format(char* password) {
     if (password == NULL) return INVALID;
 

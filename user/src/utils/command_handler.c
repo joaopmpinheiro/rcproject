@@ -135,7 +135,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = create_event_handler(cursor, &extra_info);
             break;
         case CLOSE:
-            // Handle close event
+            status = close_event_handler(cursor);
             break;
         case MYEVENTS:
             status = myevent_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);

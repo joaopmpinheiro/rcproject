@@ -34,6 +34,14 @@ int is_valid_seat_count(const char *seat_str);
 int verify_uid_format(char* uid);
 
 /**
+ * @brief Verifies if the event ID format is correct (number between 1 and 999).
+ * 
+ * @param eid 
+ * @return int VALID if the event ID format is correct, INVALID otherwise.
+ */
+int verify_eid_format(char* eid);
+
+/**
  * @brief Verifies if the password format is correct (8 alphanumeric characters).
  * 
  * @param pass 
