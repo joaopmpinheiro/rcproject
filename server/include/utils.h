@@ -1,6 +1,17 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "globals.h"
+
 // socket_manager.c
 
 ssize_t read_tcp_field(int fd, char* buffer, size_t max_len);
@@ -58,13 +69,6 @@ void handle_udp_request(Request* req);
  */
 void handle_tcp_request(Request* req);
 
-/**
- * @brief Get the user by UID.
- * 
- * @param UID int
- * @return User* 
- */
-User* get_user_by_uid(int UID);
 
 /**
  * @brief Creates a new user with the given UID and password.

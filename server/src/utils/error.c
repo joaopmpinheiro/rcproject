@@ -1,4 +1,3 @@
-#include "../include/constants.h"
 #include "../include/globals.h"
 
 void server_log(const char* message) {

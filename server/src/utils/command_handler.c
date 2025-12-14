@@ -1,4 +1,3 @@
-#include "../../include/constants.h"
 #include "../../include/utils.h"
 #include "../../include/globals.h"
 #include "../../common/verifications.h"
@@ -90,34 +89,6 @@ void handle_tcp_request(Request* req) {
             break;
     }
 }
-
-// ------------ Data Management --------------
-
-// TODO: criar um users.c, um events.c e um reservations.c para gerir estas funções
-// ou um data_manager.c
-
-// TODO: ignorar o que a marta pos em cima e mandar isto com o boda #adoro não ter threads
-User* get_user_by_uid(int UID) {
-    UserNode* current = users;
-    while (current != NULL) {
-        if (current->user.UID == UID) return &current->user;
-        current = current->next;
-    }
-    return NULL;
-}
-
-void create_user(int UID, char* password) {
-    UserNode* new_node = (UserNode*)malloc(sizeof(UserNode));
-    new_node->user.UID = UID;
-    strncpy(new_node->user.password, password, PASSWORD_LENGTH);
-    new_node->user.status = 1; // logged in
-    new_node->user.created_events = NULL;
-    new_node->user.reserved_events = NULL;
-    new_node->next = users;
-    users = new_node;
-}
-
-// ------------------------------------------------
 
 
 
