@@ -90,4 +90,10 @@ int verify_seat_count(char* count_str);
  */
 int verify_file_name_format(char* file_name);
 
+/**
+ * @brief Verifies if the file size is within valid range. Number and less than MAX_FILE_SIZE.
+ * @param file_size
+ * @return int VALID if the file size is valid, INVALID otherwise.
+ */
+int verify_file_size(char* file_size);
 #endif

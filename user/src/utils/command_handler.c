@@ -36,6 +36,7 @@ RequestType identify_command(char* command) {
     return UNKNOWN;
 }
 
+
 const char* get_command_name(RequestType command) {
     switch (command) {
         case LOGIN: return "Login";
@@ -86,6 +87,23 @@ const char* get_command_response_code(RequestType command) {
         case RESERVE: return "RRI";
         default: return "UNK";
     }
+}
+
+RequestType identify_command_response(char* command) {
+    if (strcmp(command, "RLI") == 0) return LOGIN;
+    if (strcmp(command, "RCP") == 0) return CHANGEPASS;
+    if (strcmp(command, "RUR") == 0) return UNREGISTER;
+    if (strcmp(command, "RLO") == 0) return LOGOUT;
+    if (strcmp(command, "REX") == 0) return EXIT;
+    if (strcmp(command, "RCE") == 0) return CREATE;
+    if (strcmp(command, "RCL") == 0) return CLOSE;
+    if (strcmp(command, "RME") == 0) return MYEVENTS;
+    if (strcmp(command, "RLS") == 0) return LIST;
+    if (strcmp(command, "RSE") == 0) return SHOW;
+    if (strcmp(command, "RRI") == 0) return RESERVE;
+    if (strcmp(command, "RMR") == 0) return MYRESERVATIONS;
+    if(strcmp(command, "ERR") == 0) return ERROR_REQUEST;
+    return UNKNOWN;
 }
 
 ReplyStatus parse_status_code(const char* status) {
@@ -145,10 +163,10 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = myevent_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break; 
         case LIST:
-            status = list_handler(cursor);
-            break;
+/*             status = list_handler(cursor);
+ */            break;
         case SHOW:
-            // Handle show event details
+            status = show_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case RESERVE:
             // Handle reserve event

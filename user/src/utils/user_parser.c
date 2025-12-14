@@ -44,10 +44,21 @@ ReplyStatus parse_close(char **cursor, char* eid) {
     return STATUS_UNASSIGNED;    
 }
 
-ReplyStatus parse_events_list(char* event_list, char* eid, char* name, int* state, char* event_date){
+ReplyStatus parse_events_list(char** event_list, char* eid, char* name, char state, char* event_day, char* event_time) {
     if(get_next_arg(event_list, eid) == ERROR) return STATUS_MALFORMED_RESPONSE;
     if(get_next_arg(event_list, name) == ERROR) return STATUS_MALFORMED_RESPONSE;
-    if(get_next_arg(event_list, state) == ERROR) return STATUS_MALFORMED_RESPONSE;
-    if(get_next_arg(event_list, event_date) == ERROR) return STATUS_MALFORMED_RESPONSE;   
+    if(get_next_arg(event_list, &state) == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(get_next_arg(event_list, event_day) == ERROR) return STATUS_MALFORMED_RESPONSE;   
+    if(get_next_arg(event_list, event_time) == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(is_end_of_message(event_list) == SUCCESS) return STATUS_EOM;
     return STATUS_UNASSIGNED;
 }
+
+ReplyStatus parse_show(char **cursor, char* eid) {
+    ReplyStatus status = parse_eid(cursor, eid);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    return STATUS_UNASSIGNED;
+}
+
+

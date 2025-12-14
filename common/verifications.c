@@ -222,3 +222,9 @@ int verify_file_name_format(char* file_name) {
 
     return VALID;
 }
+
+int verify_file_size(char* file_size) {
+    if (!is_number(file_size)) return INVALID;
+    if (file_size == 0 || file_size > MAX_FILE_SIZE) return INVALID;
+    return VALID;
+}

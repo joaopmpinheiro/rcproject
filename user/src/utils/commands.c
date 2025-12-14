@@ -313,7 +313,7 @@ ReplyStatus close_event_handler(char** cursor) {
     return status;
 }
 
-ReplyStatus list_handler(char** cursor) {
+/* ReplyStatus list_handler(char** cursor) {
     if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
 
     // PROTOCOL: LST <uid> <password>
@@ -321,40 +321,99 @@ ReplyStatus list_handler(char** cursor) {
     snprintf(request, sizeof(request), "LST\n");
 
     // Send request to server and receive response
-    ReplyStatus status = tcp_send_receive(request, response, 8192);
-    if (status != STATUS_UNASSIGNED) return status;
+    int tcp_fd = connect_tcp(IP, PORT);
+    if (tcp_fd == -1) return STATUS_SEND_FAILED;
+    
+    // Send request header to server
+    if (send_tcp_message(tcp_fd, request) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }
 
+    // Read server response
+    ssize_t n = read_tcp(tcp_fd, response, (3 + 3 + 1));
     char response_code[4], reply_status[4];
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    
-    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-    status = handle_response_code(response_code, LIST, parsed, 2, reply_status);
-
-    status = parse_status_code(reply_status);
+    ReplyStatus status = handle_response_code(response_code, LIST, parsed, 2, reply_status);
 
     char* event_list = response + 7;
     if (status == STATUS_OK) {
-        printf("%-5s %-20s %-10s %-17s\n", "EID", "Name", "State", "Date");
+        printf("%s %s %s %s\n", "EID", "Name", "State", "Day");
         printf("-------------------------------------------------------------\n");
 
-        char eid[4], name[MAX_EVENT_NAME + 1], event_date[EVENT_DATE_LENGTH + 1];
-        int state;
+        char eid[4], name[MAX_EVENT_NAME + 1], state;
+        char event_day[EVENT_DATE_LENGTH + 1], event_time[EVENT_DATE_LENGTH + 1];
         int offset = 0, chars_read;
 
-        while (parse_events_list(&event_list, eid, name, state, event_date) == STATUS_UNASSIGNED) {
-            const char* state_str;
-            switch (state) {
-                case 0: state_str = "Past"; break;
-                case 1: state_str = "Active"; break;
-                case 2: state_str = "Sold out"; break;
-                case 3: state_str = "Closed"; break;
-                default: state_str = "Unknown"; break;
+        while(is_end_of_message(&event_list) != SUCCESS) {
+            read_tcp(tcp_fd, response, 256);
+            while (parse_events_list(&event_list, eid, name, state, event_day, event_time) == STATUS_UNASSIGNED) {
+                const char* state_str;
+                switch (state) {
+                    case 0: state_str = "Past"; break;
+                    case 1: state_str = "Active"; break;
+                    case 2: state_str = "Sold out"; break;
+                    case 3: state_str = "Closed"; break;
+                    default: state_str = "Unknown"; break;
+                }
+                printf("%s %s %s %s %s\n", eid, name, state_str, event_day, event_time);
+                offset += chars_read;
             }
-            printf("%s %s %s %s\n", eid, name, state_str, event_date);
-            offset += chars_read;
-        }
         return STATUS_CUSTOM_OUTPUT;
+        }
+    }
+    return status;
+} */
+
+
+ReplyStatus show_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
+                            socklen_t udp_addr_len){
+    char eid[4];
+    ReplyStatus status = parse_show(cursor, eid);
+    if (status != STATUS_UNASSIGNED) return status;
+    char request[256], response[SHOW_BUFFER_SIZE];
+    snprintf(request, sizeof(request), "SED %s\n", eid);
+    
+    // Send request to server and receive response
+    int tcp_fd = connect_tcp(IP, PORT);
+    if (tcp_fd == -1) return STATUS_SEND_FAILED;
+    
+    // Send request header to server
+    if (send_tcp_message(tcp_fd, request) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
     }
 
-    return status;
+    // Read server response header
+    if (read_tcp(tcp_fd, response, sizeof(response)) == ERROR) {
+        close(tcp_fd);
+        return STATUS_RECV_FAILED;
+    }
+
+    // PROTOCOl: RSE status [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
+    char response_code[4], reply_status[4];
+    char uid[UID_LENGTH + 1];
+    char event_name[MAX_EVENT_NAME + 1];
+    char event_date[EVENT_DATE_LENGTH + 1];
+    char total_seats[SEAT_COUNT_LENGTH + 1];
+    char reserved_seats[SEAT_COUNT_LENGTH + 1];
+    char file_name[FILE_NAME_LENGTH + 1];
+    char file_size[FILE_SIZE_LENGTH + 1];
+
+    status = read_show_response_header(response, tcp_fd,
+                                       response_code, reply_status,
+                                       uid, event_name, event_date,
+                                       total_seats, reserved_seats,
+                                       file_name, file_size);
+    if (status != STATUS_OK) return status;
+    if(read_tcp_file(tcp_fd, file_name, file_size) == ERROR) {
+        close(tcp_fd);
+        return STATUS_RECV_FAILED;
+    }
+    close(tcp_fd);
+    // Display event details
+    show_event_details(eid, uid, event_name, event_date,
+                      total_seats, reserved_seats,
+                      file_name, file_size);
+    return STATUS_CUSTOM_OUTPUT;
 }

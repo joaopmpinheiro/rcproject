@@ -60,3 +60,30 @@ int read_tcp(int fd, void* buf, size_t len) {
     ((char*)buf)[bytes_read] = '\0'; // Null-terminate the string 
     return SUCCESS;
 }
+
+int read_tcp_file(int fd, char* file_name, long file_size) {
+    FILE* file = fopen(file_name, "wb");
+    if (!file) {
+        perror("ERROR: Failed to open file for writing");
+        return ERROR;
+    }
+
+    char buffer[TCP_BUFFER_SIZE];
+    long total_received = 0;
+    ssize_t n;
+
+    while (total_received < file_size) {
+        size_t to_read = (file_size - total_received) < TCP_BUFFER_SIZE ? (file_size - total_received) : TCP_BUFFER_SIZE;
+        n = read(fd, buffer, to_read);
+        if (n <= 0) {
+            perror("ERROR: Failed to read file data from socket");
+            fclose(file);
+            return ERROR;
+        }
+        fwrite(buffer, 1, n, file);
+        total_received += n;
+    }
+
+    fclose(file);
+    return SUCCESS;
+}

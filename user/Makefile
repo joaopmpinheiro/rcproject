@@ -11,6 +11,7 @@ OBJS = \
 	$(UTILS)/commands.o \
 	$(UTILS)/socket_manager.o \
 	$(UTILS)/messages.o \
+	$(UTILS)/server_response_parser.o \
 	$(SRCDIR)/user.o
 
 TARGET = user

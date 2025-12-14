@@ -68,6 +68,9 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                 case CLOSE:
                     printf("%s failed: Event does not exist or wrong password\n", cmd_name);
                     break;
+                case LIST:
+                    printf("%s: No event was created\n", cmd_name);
+                    break;
                 default:
                     printf("%s failed\n", cmd_name);
                     break;
@@ -162,4 +165,18 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
         default:
             break;
     }
+}
+
+void show_event_details(char* eid, char* uid, char* event_name, char* event_date,
+                        char* total_seats, char* reserved_seats,
+                        char* file_name, char* file_size) {
+    printf("Event Details:\n");
+    printf("EID: %s\n", eid);
+    printf("Event Name: %s\n", event_name);
+    printf("Event Date: %s\n", event_date);
+    printf("Created by UID: %s\n", uid);
+    printf("Total Seats: %s\n", total_seats);
+    printf("Reserved Seats: %s\n", reserved_seats);
+    printf("File Name: %s\n", file_name);
+    printf("File Size: %s bytes\n", file_size);
 }

@@ -32,6 +32,10 @@
 #define MAX_EVENT_NAME 10
 #define MAX_AVAIL_SEATS 999
 #define MIN_AVAIL_SEATS 10
+#define MAX_EVENT_NAME 10 // TODO: já ta no common.h (?) mas é MAX_EVENT_NAME_LENGTH
+#define DATE_LENGTH 11
+#define TIME_LENGTH 5
+#define SHOW_BUFFER_SIZE (EID_LENGTH + MAX_EVENT_NAME + EVENT_DATE_LENGTH + SEAT_COUNT_LENGTH*2 + FILE_NAME_LENGTH + 36)
 
 #define MAX_FILE_SIZE (1024 * 1024 * 10) // 10 MB
 #define TCP_BUFFER_SIZE 1024
@@ -54,5 +58,6 @@
 int send_tcp_message(int fd, char* message);
 int send_tcp_file(int fd, char* file_name);
 int read_tcp(int fd, void* buf, size_t len);
-
+int read_tcp_argument(int fd, char* arg, size_t max_len);
+int read_tcp_file(int fd, char* file_name, long file_size);
 #endif

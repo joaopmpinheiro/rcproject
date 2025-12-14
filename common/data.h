@@ -15,6 +15,7 @@ typedef enum RequestType {
     RESERVE,
     MYRESERVATIONS,
     UNKNOWN,
+    ERROR_REQUEST,
 } RequestType;
 
 typedef enum ReplyStatus {
@@ -60,6 +61,7 @@ typedef enum ReplyStatus {
     STATUS_NOT_LOGGED_IN_LOCAL, // User not logged in (client-side check)
     STATUS_CUSTOM_OUTPUT,   // Handler printed its own output
 
+    STATUS_EOM,              // End of message reached
     STATUS_UNASSIGNED,
 } ReplyStatus;
 

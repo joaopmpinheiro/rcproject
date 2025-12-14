@@ -15,6 +15,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
      struct sockaddr_in* server_udp_addr);
 const char* get_command_response_code(RequestType command);
 const char* get_command_code(RequestType command);
+RequestType identify_command_response(char* command);
 
 
 // ------------ commands.c -------------
@@ -44,11 +45,16 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 ReplyStatus create_event_handler(char** cursor, char** extra_info);
 ReplyStatus close_event_handler(char** cursor);
 ReplyStatus list_handler(char** cursor);
+ReplyStatus show_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
+                            socklen_t udp_addr_len);
 
 
 // ---------- messages.c ----------
 void usage(const char *prog_name);
 void print_result(RequestType command, ReplyStatus status, char* extra_info);
+void show_event_details(char* eid, char* uid, char* event_name, char* event_date,
+                        char* total_seats, char* reserved_seats,
+                        char* file_name, char* file_size);
 
 
 // ---------- socket_manager.c ----------
@@ -66,5 +72,14 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
 ReplyStatus parse_close(char** cursor,  char* eid);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
                                  char* new_password, char* current_password);                         
-ReplyStatus parse_events_list(char* event_list, char* eid, char* name, int* state, char* event_date);
+ReplyStatus parse_events_list(char** event_list, char* eid, char* name, char state, char* event_day, char* event_time);
+ReplyStatus parse_show(char** cursor, char* eid);
+
+// ---------- server_response_parser.c ----------
+ReplyStatus read_show_response_header(char* response, int tcp_fd,
+                                       char* resp_code, char* rep_status, 
+                                       char* uid, char* event_name, char* event_date,
+                                       char* total_seats, char* reserved_seats,
+                                       char* file_name, char* file_size);
+
 #endif
