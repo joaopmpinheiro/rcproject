@@ -117,13 +117,13 @@ void command_handler(CommandType command, char** cursor, int udp_fd,
         case UNREGISTER:
             status = unregister_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
-        /*
+        
         case LOGOUT:
-            status = logout_handler(&cursor, udp_fd, server_udp_addr, udp_addr_len);
+            status = logout_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case EXIT:
             if (is_logged_in) {
-                status = logout_handler(&cursor, udp_fd, server_udp_addr, udp_addr_len);
+                status = logout_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
                 print_result(LOGOUT, status, NULL);
             }
             printf("Exiting application.\n");
@@ -132,14 +132,14 @@ void command_handler(CommandType command, char** cursor, int udp_fd,
             break;
         case CREATE:
             // Handle create event
-            status = create_event_handler(&cursor, &extra_info);
+            /* status = create_event_handler(cursor, &extra_info); */
             break;
         case CLOSE:
             // Handle close event
             break;
         case MYEVENTS:
-            status = myevent_handler(&cursor, udp_fd, server_udp_addr, udp_addr_len);
-            break;
+            status = myevent_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
+            break; 
         case LIST:
             // Handle list events
             break;
@@ -151,7 +151,7 @@ void command_handler(CommandType command, char** cursor, int udp_fd,
             break;
         case MYRESERVATIONS:
             // Handle my reservations
-            break; */
+            break; 
         default:
             printf("Unknown command\n");
             break;

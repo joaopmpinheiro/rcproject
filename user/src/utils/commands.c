@@ -46,11 +46,12 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     
     // PROTOCOL: LIN <uid> <password>
     char request[256], response[256];
+    ssize_t response_size = 256;
     snprintf(request, sizeof(request), "LIN %s %s\n", uid, password);
 
     // Send request to server and receive response
     status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
-                                request, response);
+                                request, response, response_size);
     if (status != STATUS_UNASSIGNED) return status;
     
     // Parse response
@@ -73,15 +74,17 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
                                 socklen_t udp_addr_len) {
     // Verify arguments
     if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: UNR <uid> <password>
     char request[256], response[256];
+    ssize_t response_size = 256;
     snprintf(request, sizeof(request), "UNR %s %s\n", current_uid, current_password);
 
     // Send request to server and receive response
     ReplyStatus status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
-                                request, response);
+                                request, response, response_size);
     if (status != STATUS_UNASSIGNED) return status;
     
     // Parse response
@@ -99,15 +102,16 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     return status;
 }
 
-/*
-ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_udp_addr,
+
+ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
 
     // Verify arguments
-    if (!verify_argument_count(args, 0)) return STATUS_INVALID_ARGS;
+    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     char request[256], response[256];
+    ssize_t response_size = 256;
 
     // PROTOCOL: LOU <uid> <password>
     snprintf(request, sizeof(request), "LOU %s %s\n", current_uid, current_password);
@@ -115,7 +119,7 @@ ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_ud
 
     // Send request to server and receive response
     ReplyStatus status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
-                                request, response);
+                                request, response, response_size);
     if (status != STATUS_UNASSIGNED) return status;
 
     // Parse response
@@ -133,10 +137,11 @@ ReplyStatus logout_handler(char* args, int udp_fd, struct sockaddr_in* server_ud
     return status;
 }
 
-ReplyStatus myevent_handler(char** args, int udp_fd, struct sockaddr_in* server_udp_addr,
+
+ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len) {
     ssize_t n;
-    if (!verify_argument_count(args, 0)) return STATUS_INVALID_ARGS;
+    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     char request[256];
@@ -206,7 +211,7 @@ ReplyStatus myevent_handler(char** args, int udp_fd, struct sockaddr_in* server_
     return status;
 }
 
-ReplyStatus create_event_handler(char* args, char** extra_info) {
+/*ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     char event_name[MAX_EVENT_NAME + 1];
     char file_name[FILE_NAME_LENGTH + 1]; // TODO: maximum file name length?
     char real_date[EVENT_DATE_LENGTH + 1]; //TODO: change this 
@@ -215,7 +220,8 @@ ReplyStatus create_event_handler(char* args, char** extra_info) {
     char num_seats[4];
     *extra_info = NULL;
 
-    if (!verify_argument_count(args, 5)) return STATUS_INVALID_ARGS;
+    char* args;
+    if (!verify_argument_count(*cursor, 5)) return STATUS_INVALID_ARGS;
 
     // Verify arguments
     sscanf(args, "%10s %24s %10s %5s %3s", event_name, file_name, date, time, num_seats);
@@ -270,4 +276,4 @@ ReplyStatus create_event_handler(char* args, char** extra_info) {
     return status; // TODO: handle response
 }
 
- */
+  */

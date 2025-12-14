@@ -73,7 +73,8 @@ int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr)
 }
 
 ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
-                            socklen_t udp_addr_len, char* request, char* response) {
+                            socklen_t udp_addr_len, char* request, char* response, 
+                            size_t response_size) {
     ssize_t n;
     // Send request to server
     fprintf(stderr, "Sending to server:%s\n", request);
@@ -81,7 +82,7 @@ ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
         udp_addr_len) == ERROR) return STATUS_SEND_FAILED;
     
     // Read server response
-    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
+    n = recvfrom(udp_fd, response, response_size - 1, 0, NULL, NULL);
     fprintf(stderr, "Received form server:%s\n", response);
     if (n == ERROR) return STATUS_RECV_FAILED;
     response[n] = '\0';

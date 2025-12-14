@@ -38,7 +38,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
  * @param args [event_name event_file_name event_date num_seats]
  * @return ReplyStatus 
  */
-ReplyStatus create_event_handler(char** args, char** extra_info);
+ReplyStatus create_event_handler(char** cursor, char** extra_info);
 
 
 // ---------- messages.c ----------
@@ -50,7 +50,8 @@ void print_result(CommandType command, ReplyStatus status, char* extra_info);
 int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr);
 int connect_tcp(const char* ip, const char* port);
 ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
-                            socklen_t udp_addr_len, char* request, char* response);
+                            socklen_t udp_addr_len, char* request, char* response, 
+                            size_t response_size);
 
 
 
