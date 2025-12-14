@@ -7,14 +7,14 @@
 
 
 // ------------ command_handler.c -------------
-ReplyStatus handle_response_code(char* resp, CommandType command, int parsed, int n, char* status);
-CommandType identify_command(char* command);
-const char* get_command_name(CommandType command);
+ReplyStatus handle_response_code(char* resp, RequestType command, int parsed, int n, char* status);
+RequestType identify_command(char* command);
+const char* get_command_name(RequestType command);
 ReplyStatus parse_status_code(const char* status);
-void command_handler(CommandType command, char** cursor, int udp_fd,
+void command_handler(RequestType command, char** cursor, int udp_fd,
      struct sockaddr_in* server_udp_addr);
-const char* get_command_response_code(CommandType command);
-const char* get_command_code(CommandType command);
+const char* get_command_response_code(RequestType command);
+const char* get_command_code(RequestType command);
 
 
 // ------------ commands.c -------------
@@ -43,7 +43,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info);
 
 // ---------- messages.c ----------
 void usage(const char *prog_name);
-void print_result(CommandType command, ReplyStatus status, char* extra_info);
+void print_result(RequestType command, ReplyStatus status, char* extra_info);
 
 
 // ---------- socket_manager.c ----------

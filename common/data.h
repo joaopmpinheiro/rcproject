@@ -1,7 +1,7 @@
 #ifndef COMMON_DATA_H
 #define COMMON_DATA_H
 
-typedef enum CommandType {
+typedef enum RequestType {
     LOGIN,
     CHANGEPASS,
     UNREGISTER,
@@ -15,7 +15,7 @@ typedef enum CommandType {
     RESERVE,
     MYRESERVATIONS,
     UNKNOWN,
-} CommandType;
+} RequestType;
 
 typedef enum ReplyStatus {
     STATUS_ERROR,          // ERR - generic error, server wasn't able to process request

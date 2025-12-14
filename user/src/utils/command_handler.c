@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-ReplyStatus handle_response_code(char* resp, CommandType command, int parsed, int n, char* status) {
+ReplyStatus handle_response_code(char* resp, RequestType command, int parsed, int n, char* status) {
     // Problem parsing response
     if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
     
@@ -20,7 +20,7 @@ ReplyStatus handle_response_code(char* resp, CommandType command, int parsed, in
     return parse_status_code(status);
 }
 
-CommandType identify_command(char* command) {
+RequestType identify_command(char* command) {
     if (strcmp(command, "login") == 0) return LOGIN;
     if (strcmp(command, "changePass") == 0) return CHANGEPASS;
     if (strcmp(command, "unregister") == 0) return UNREGISTER;
@@ -36,7 +36,7 @@ CommandType identify_command(char* command) {
     return UNKNOWN;
 }
 
-const char* get_command_name(CommandType command) {
+const char* get_command_name(RequestType command) {
     switch (command) {
         case LOGIN: return "Login";
         case CHANGEPASS: return "Change password";
@@ -54,7 +54,7 @@ const char* get_command_name(CommandType command) {
     }
 }
 
-const char* get_command_code(CommandType command) {
+const char* get_command_code(RequestType command) {
     switch (command) {
         case LOGIN: return "LIN";
         case CHANGEPASS: return "CPS";
@@ -71,7 +71,7 @@ const char* get_command_code(CommandType command) {
     }
 }
 
-const char* get_command_response_code(CommandType command) {
+const char* get_command_response_code(RequestType command) {
     switch (command) {
         case LOGIN: return "RLI";
         case CHANGEPASS: return "RCP";
@@ -100,7 +100,7 @@ ReplyStatus parse_status_code(const char* status) {
     return STATUS_UNEXPECTED_RESPONSE;
 }
 
-void command_handler(CommandType command, char** cursor, int udp_fd,
+void command_handler(RequestType command, char** cursor, int udp_fd,
      struct sockaddr_in* server_udp_addr) {
     
     socklen_t udp_addr_len = sizeof(*server_udp_addr);
