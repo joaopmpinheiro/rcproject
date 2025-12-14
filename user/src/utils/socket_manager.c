@@ -90,7 +90,8 @@ ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
 }
 
 
-ReplyStatus tcp_send_receive(char* message, char* response) {
+ReplyStatus tcp_send_receive(char* message, char* response, 
+                            size_t response_size) {
     int tcp_fd = connect_tcp(IP, PORT);
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
     
@@ -101,7 +102,7 @@ ReplyStatus tcp_send_receive(char* message, char* response) {
     }
 
     // Read server response
-    if (read_tcp(tcp_fd, response, sizeof(response)) == ERROR) {
+    if (read_tcp(tcp_fd, response, response_size) == ERROR) {
         close(tcp_fd);
         return STATUS_RECV_FAILED;
     }

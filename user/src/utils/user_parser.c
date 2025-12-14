@@ -43,3 +43,11 @@ ReplyStatus parse_close(char **cursor, char* eid) {
     if (is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
     return STATUS_UNASSIGNED;    
 }
+
+ReplyStatus parse_events_list(char* event_list, char* eid, char* name, int* state, char* event_date){
+    if(get_next_arg(event_list, eid) == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(get_next_arg(event_list, name) == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(get_next_arg(event_list, state) == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(get_next_arg(event_list, event_date) == ERROR) return STATUS_MALFORMED_RESPONSE;   
+    return STATUS_UNASSIGNED;
+}

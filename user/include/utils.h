@@ -43,6 +43,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
  */
 ReplyStatus create_event_handler(char** cursor, char** extra_info);
 ReplyStatus close_event_handler(char** cursor);
+ReplyStatus list_handler(char** cursor);
 
 
 // ---------- messages.c ----------
@@ -56,7 +57,7 @@ int connect_tcp(const char* ip, const char* port);
 ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len, char* request, char* response, 
                             size_t response_size);
-ReplyStatus tcp_send_receive(char* request,  char* response);
+ReplyStatus tcp_send_receive(char* request,  char* response, size_t response_size);
 
 
 // ---------- user_parser.c ---------- 
@@ -65,5 +66,5 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
 ReplyStatus parse_close(char** cursor,  char* eid);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
                                  char* new_password, char* current_password);                         
-
+ReplyStatus parse_events_list(char* event_list, char* eid, char* name, int* state, char* event_date);
 #endif

@@ -86,7 +86,7 @@ ReplyStatus changepass_handler(char** cursor) {
     char response_code[4], reply_status[4];
     
     // Send request to server and receive response
-    status = tcp_send_receive(request, response);
+    status = tcp_send_receive(request, response, 256);
     if (status != STATUS_UNASSIGNED) return status;
     
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
@@ -303,12 +303,58 @@ ReplyStatus close_event_handler(char** cursor) {
     char request[256], response[256];
     snprintf(request, sizeof(request), "CLS %s %s %s\n", current_uid, current_password, eid);
 
-    status = tcp_send_receive(request, response);
+    status = tcp_send_receive(request, response, 256);
     if(status != STATUS_UNASSIGNED) return status;
 
     char response_code[4], reply_status[4];
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
     status = handle_response_code(response_code, CLOSE, parsed, 2, reply_status);
+
+    return status;
+}
+
+ReplyStatus list_handler(char** cursor) {
+    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+
+    // PROTOCOL: LST <uid> <password>
+    char request[256], response[8192];
+    snprintf(request, sizeof(request), "LST\n");
+
+    // Send request to server and receive response
+    ReplyStatus status = tcp_send_receive(request, response, 8192);
+    if (status != STATUS_UNASSIGNED) return status;
+
+    char response_code[4], reply_status[4];
+    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
+    
+    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
+    status = handle_response_code(response_code, LIST, parsed, 2, reply_status);
+
+    status = parse_status_code(reply_status);
+
+    char* event_list = response + 7;
+    if (status == STATUS_OK) {
+        printf("%-5s %-20s %-10s %-17s\n", "EID", "Name", "State", "Date");
+        printf("-------------------------------------------------------------\n");
+
+        char eid[4], name[MAX_EVENT_NAME + 1], event_date[EVENT_DATE_LENGTH + 1];
+        int state;
+        int offset = 0, chars_read;
+
+        while (parse_events_list(&event_list, eid, name, state, event_date) == STATUS_UNASSIGNED) {
+            const char* state_str;
+            switch (state) {
+                case 0: state_str = "Past"; break;
+                case 1: state_str = "Active"; break;
+                case 2: state_str = "Sold out"; break;
+                case 3: state_str = "Closed"; break;
+                default: state_str = "Unknown"; break;
+            }
+            printf("%s %s %s %s\n", eid, name, state_str, event_date);
+            offset += chars_read;
+        }
+        return STATUS_CUSTOM_OUTPUT;
+    }
 
     return status;
 }

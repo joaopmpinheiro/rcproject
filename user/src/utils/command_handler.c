@@ -97,6 +97,10 @@ ReplyStatus parse_status_code(const char* status) {
     if (strcmp(status, "WRP") == 0) return STATUS_WRONG_PASSWORD;
     if (strcmp(status, "UNR") == 0) return STATUS_USER_NOT_REGISTERED;
     if (strcmp(status, "NID") == 0) return STATUS_USER_NOT_FOUND;
+    if (strcmp(status, "NOE") == 0) return STATUS_NO_EVENT_ID;
+    if (strcmp(status, "SLD") == 0) return STATUS_EVENT_SOLD_OUT;
+    if (strcmp(status, "PST") == 0) return STATUS_PAST_EVENT;
+    if (strcmp(status, "CLO") == 0) return STATUS_EVENT_CLOSED;
     return STATUS_UNEXPECTED_RESPONSE;
 }
 
@@ -141,7 +145,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = myevent_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break; 
         case LIST:
-            // Handle list events
+            status = list_handler(cursor);
             break;
         case SHOW:
             // Handle show event details

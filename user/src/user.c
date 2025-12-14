@@ -82,7 +82,6 @@ int main(int argc, char* argv[]) {
 
         char* cursor = input_buffer;
         if (parse_cmd(&cursor, cmd) == ERROR) continue;
-        fprintf(stdout, "Command received: %s\n", cmd);
         RequestType command = identify_command(cmd);
         command_handler(command, &cursor, udp_fd, &server_udp_addr);
     }
