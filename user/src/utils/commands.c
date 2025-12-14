@@ -70,6 +70,36 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     return status;
 }
 
+ReplyStatus changepass_handler(char** cursor) {
+    // Verify arguments
+    char new_password[PASSWORD_LENGTH + 1], old_password[PASSWORD_LENGTH + 1];
+    ReplyStatus status = parse_change_password(cursor, old_password, new_password,
+                                               current_password);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
+
+    char request[256], response[256];
+    // PROTOCOL: CHP <uid> <old_password> <new_password>
+    snprintf(request, sizeof(request), "CPS %s %s %s\n", current_uid, current_password, new_password);
+
+    // Parse response
+    char response_code[4], reply_status[4];
+    
+    // Send request to server and receive response
+    status = tcp_send_receive(request, response);
+    if (status != STATUS_UNASSIGNED) return status;
+    
+    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
+    status = handle_response_code(response_code, CHANGEPASS, parsed, 2, reply_status);
+
+    // Update global state on successful password change
+    if (status == STATUS_OK) {
+        strcpy(current_password, new_password);
+    }
+
+    return status;
+}
+
 ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {
     // Verify arguments

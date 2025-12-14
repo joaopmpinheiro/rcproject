@@ -21,3 +21,17 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
     if (is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
     return STATUS_UNASSIGNED;
 }
+
+
+ReplyStatus parse_change_password(char **cursor, char* old_password,
+                                  char* new_password, char* current_password) {
+    ReplyStatus status;
+    status = parse_password(cursor, old_password);
+    if (status != STATUS_UNASSIGNED) return status;
+    status = parse_password(cursor, new_password);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if(strcmp(old_password, current_password) != 0) return STATUS_WRONG_PASSWORD;
+    return STATUS_UNASSIGNED;
+
+}

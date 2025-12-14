@@ -112,7 +112,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = login_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
         case CHANGEPASS:
-            // Handle change password
+            status = changepass_handler(cursor);
             break;
         case UNREGISTER:
             status = unregister_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);

@@ -21,6 +21,9 @@ const char* get_command_code(RequestType command);
 int verify_file(char* file_name);
 ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
             socklen_t udp_addr_len);
+
+ReplyStatus changepass_handler(char** cursor);
+
 ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len);
 ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
@@ -52,6 +55,7 @@ int connect_tcp(const char* ip, const char* port);
 ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len, char* request, char* response, 
                             size_t response_size);
+ReplyStatus tcp_send_receive(char* request,  char* response);
 
 
 // ---------- user_parser.c ---------- 

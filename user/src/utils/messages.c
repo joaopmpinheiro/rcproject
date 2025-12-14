@@ -19,6 +19,9 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                 case LOGIN:
                     printf("%s successful: User logged in\n", cmd_name);
                     break;
+                case CHANGEPASS:
+                    printf("%s successful: Password changed\n", cmd_name);
+                    break;
                 case LOGOUT:
                     printf("%s successful: User logged out\n", cmd_name);
                     break;
@@ -55,6 +58,9 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                     break;
                 case CREATE:
                     printf("%s failed: Event could not be created\n", cmd_name);
+                    break;
+                case CHANGEPASS:
+                    printf("%s failed: Wrong password\n", cmd_name);
                     break;
                 default:
                     printf("%s failed\n", cmd_name);

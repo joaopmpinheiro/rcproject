@@ -90,3 +90,21 @@ ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
 }
 
 
+ReplyStatus tcp_send_receive(char* message, char* response) {
+    int tcp_fd = connect_tcp(IP, PORT);
+    if (tcp_fd == -1) return STATUS_SEND_FAILED;
+    
+    // Send request header to server
+    if (send_tcp_message(tcp_fd, message) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }
+
+    // Read server response
+    if (read_tcp(tcp_fd, response, sizeof(response)) == ERROR) {
+        close(tcp_fd);
+        return STATUS_RECV_FAILED;
+    }
+    close(tcp_fd);
+    return STATUS_UNASSIGNED;
+}
