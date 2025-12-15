@@ -82,4 +82,20 @@ ReplyStatus read_show_response_header(char* response, int tcp_fd,
                                        char* total_seats, char* reserved_seats,
                                        char* file_name, char* file_size);
 
+
+                                       
+// ---------- read_from_server.c ----------
+
+ReplyStatus read_command(int tcp_fd, char* command, RequestType expected_command);
+ReplyStatus read_status(int tcp_fd, char* status);
+ReplyStatus read_uid(int tcp_fd, char* uid);
+ReplyStatus read_eid(int tcp_fd, char* eid);
+ReplyStatus read_event_name(int tcp_fd, char* event_name);
+ReplyStatus read_event_date(int tcp_fd, char* event_date);
+ReplyStatus read_show_response_header(char* response, int tcp_fd,
+                                       char* resp_code, char* rep_status, 
+                                       char* uid, char* event_name, char* event_date,
+                                       char* total_seats, char* reserved_seats,
+                                       char* file_name, char* file_size);                                       
+
 #endif

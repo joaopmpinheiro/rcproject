@@ -67,8 +67,8 @@ int main(int argc, char* argv[]) {
         return ERROR;
     }
 
-    char input_buffer[1024] = {0};
-    char cmd[36] = {0};
+    char input_buffer[1024] = {0}; //FIXME: tamanho do buffer
+    char cmd[64] = {0};
 
     while (1) {
         printf("> ");

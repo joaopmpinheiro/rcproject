@@ -114,3 +114,38 @@ ReplyStatus read_show_response_header(char* response, int tcp_fd,
 }
 
 
+ReplyStatus read_show_response_header(char* response, int tcp_fd,
+                                       char* resp_code, char* rep_status, 
+                                       char* uid, char* event_name, char* event_date,
+                                       char* total_seats, char* reserved_seats,
+                                       char* file_name, char* file_size) {
+    // RESPONSE CODE
+    if(read_tcp_argument(tcp_fd, resp_code, 4) != SUCCESS) {
+        close(tcp_fd);
+        return STATUS_RECV_FAILED;
+    }
+    ReplyStatus status;
+    status = read_command(tcp_fd, resp_code, SHOW);
+    if(status != STATUS_OK) {
+        close(tcp_fd);
+        return status;
+    }
+    status = read_status(tcp_fd, rep_status);
+    if (status != STATUS_OK) {
+        close(tcp_fd);
+        return status;
+    }
+
+    // EID EVENT_NAME EVENT_DATE UID TOTAL_SEATS RESERVED_SEATS FILE_NAME FILE_SIZE
+    if( read_uid(tcp_fd, uid) != STATUS_OK ||
+        read_event_name(tcp_fd, event_name) != STATUS_OK ||
+        read_event_date(tcp_fd, event_date) != STATUS_OK ||
+        read_seat_count(tcp_fd, total_seats) != STATUS_OK ||
+        read_seat_count(tcp_fd, reserved_seats) != STATUS_OK ||
+        read_file_name(tcp_fd, file_name) != STATUS_OK ||
+        read_file_size(tcp_fd, file_size) != STATUS_OK) {
+        close(tcp_fd);
+        return STATUS_RECV_FAILED;
+    }   
+    return STATUS_OK;
+}
