@@ -24,5 +24,6 @@ server/server
 *.md
 
 # Ignore IDE settings
+.DS_Store
 .vscode/
 .idea/
