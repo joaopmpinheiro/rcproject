@@ -1,55 +1,6 @@
 #include "../../include/utils.h"
 #include "../../include/globals.h"
 
-// Reliable helper that keeps reading until the requested number of bytes arrive
-ssize_t tcp_read_all(int fd, char* buffer, size_t length) {
-    size_t total = 0;
-    while (total < length) {
-        ssize_t n = read(fd, buffer + total, length - total);
-        if (n <= 0) return n;
-        total += (size_t)n;
-    }
-    return (ssize_t)total;
-}
-
-// Reliable helper that keeps writing until everything is sent
-ssize_t tcp_write_all(int fd, const char* buffer, size_t length) {
-    size_t total = 0;
-    while (total < length) {
-        ssize_t n = write(fd, buffer + total, length - total);
-        if (n <= 0) return n;
-        total += (size_t)n;
-    }
-    return (ssize_t)total;
-}
-
-// Helper function to read a single space-delimited field from TCP socket
-ssize_t read_tcp_field(int fd, char* buffer, size_t max_len) {
-    size_t i = 0;
-    char c;
-    ssize_t n;
-    
-    // Skip leading space if present
-    n = read(fd, &c, 1);
-    if (n <= 0) return ERROR;
-    if (c != ' ') {
-        buffer[i++] = c;
-    }
-    
-    // Read until space or newline
-    while (i < max_len) {
-        n = read(fd, &c, 1);
-        if (n <= 0) return ERROR;
-        if (c == ' ' || c == '\n') {
-            buffer[i] = '\0';
-            return i;
-        }
-        buffer[i++] = c;
-    }
-    buffer[max_len] = '\0';
-    return i;
-}
-
 int select_handler() {
     int max_fd = set.udp_socket > set.tcp_socket ? set.udp_socket : set.tcp_socket;
     set.temp_fds = set.read_fds;
@@ -62,9 +13,7 @@ int select_handler() {
     return SUCCESS;
 }
 
-// TODO: é preciso confirmar se deu porcaria?
 void send_udp_response(const char* message, Request *req) {
-    // TODO: will need a lock
     sendto(set.udp_socket, message, strlen(message), 0,\
             (struct sockaddr *)&req->client_addr, req->addr_len);
 }
@@ -112,7 +61,7 @@ void tcp_connection() {
     }
 
     // Read only the 3-letter command using the helper that handles delimiters
-    ssize_t cmd_len = read_tcp_field(client_socket, request_type, 3);
+    ssize_t cmd_len = tcp_read_field(client_socket, request_type, 3);
     if (cmd_len <= 0) {
         // é supost printar aqui tbm? FIXME TODO
         server_log("TCP Read failed or connection closed");

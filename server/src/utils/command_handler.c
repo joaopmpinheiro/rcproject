@@ -1,6 +1,7 @@
 #include "../../include/utils.h"
 #include "../../include/globals.h"
 #include "../../common/verifications.h"
+#include "../../common/common.h"
 
 RequestType identify_request_type(char* command_buff){
     if (strncmp(command_buff, "LIN", 3) == 0) return LOGIN;
@@ -85,7 +86,7 @@ void handle_tcp_request(Request* req) {
             // change_password_handler();
             break;
         default:
-            tcp_write_all(req->client_socket, "ERR\n", strlen("ERR\n"));
+            tcp_write(req->client_socket, "ERR\n", strlen("ERR\n"));
             break;
     }
 }
@@ -173,8 +174,8 @@ void change_password_handler(){
 
 // Helper function to read a field or send a error and close connection in create_event_handler
 static int read_field_or_error(int fd, char* dst, size_t len) {
-    if (read_tcp_field(fd, dst, len) == ERROR) {
-        tcp_write_all(fd, "RCE ERR\n", 8);
+    if (tcp_read_field(fd, dst, len) == ERROR) {
+        tcp_write(fd, "RCE ERR\n", 8);
         close(fd);
         return ERROR;
     }
@@ -228,7 +229,7 @@ void create_event_handler(Request* req){
 
     // Validate file_size
     if (file_size == 0 || file_size > MAX_FILE_SIZE) {
-        tcp_write_all(fd, "RCE ERR\n", 8);
+        tcp_write(fd, "RCE ERR\n", 8);
         close(fd);
         return;
     }
@@ -245,19 +246,19 @@ void create_event_handler(Request* req){
     !verify_event_date_format(event_date) ||
     !verify_seat_count(seat_count) ||
     !verify_file_name_format(file_name)) {
-        tcp_write_all(fd, "RCE ERR\n", 8);
+        tcp_write(fd, "RCE ERR\n", 8);
         close(fd);
         return;
     }
 
     if (!is_logged_in(UID)) {
-        tcp_write_all(fd, "RCE NLG\n", 8);
+        tcp_write(fd, "RCE NLG\n", 8);
         close(fd);
         return;
     }
 
     if (!verify_correct_password(UID, password)) {
-        tcp_write_all(fd, "RCE WRP\n", 8);
+        tcp_write(fd, "RCE WRP\n", 8);
         close(fd);
         return;
     }
@@ -265,18 +266,19 @@ void create_event_handler(Request* req){
     // Allocate buffer for file content
     file_content = (char*)malloc(file_size + 1);
     if (file_content == NULL) {
-        tcp_write_all(fd, "RCE NOK\n", 8);
+        tcp_write(fd, "RCE NOK\n", 8);
         close(fd);
         return;
     }
 
     // Read file content (exactly file_size bytes)
+    // TODO: abstrair
     size_t total_read = 0;
     while (total_read < file_size) {
         ssize_t n = read(fd, file_content + total_read, file_size - total_read);
         if (n <= 0) {
             free(file_content);
-            tcp_write_all(fd, "RCE ERR\n", 8);
+            tcp_write(fd, "RCE ERR\n", 8);
             close(fd);
             return;
         }
@@ -301,7 +303,7 @@ void create_event_handler(Request* req){
         if (which_error != 0) {
             printf("Error %d occurred while creating event for UID %s\n", which_error, UID);
             free(file_content);
-            tcp_write_all(fd, "RCE NOK\n", 8);
+            tcp_write(fd, "RCE NOK\n", 8);
             close(fd);
             return;
         }
@@ -312,7 +314,7 @@ void create_event_handler(Request* req){
 //        update_reservations_file(EID, 0) == ERROR ||
 //        write_description_file(EID, file_name, file_size, file_content) == ERROR) {
 //        free(file_content);
-//        tcp_write_all(fd, "RCE NOK\n", 8);
+//        tcp_write(fd, "RCE NOK\n", 8);
 //        close(fd);
 //        return;
 //    }
@@ -322,7 +324,7 @@ void create_event_handler(Request* req){
     // Send success response with EID
     char response[16];
     snprintf(response, sizeof(response), "RCE OK %s\n", EID);
-    tcp_write_all(fd, response, strlen(response));
+    tcp_write(fd, response, strlen(response));
     close(fd);
 }
 

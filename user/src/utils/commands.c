@@ -266,19 +266,19 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
              current_uid, current_password, event_name, date, num_seats, file_name, file_size);
     
     // Send request header to server
-    if (send_tcp_message(tcp_fd, request_header) == ERROR) {
+    if (tcp_send_message(tcp_fd, request_header) == ERROR) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }
 
     // Send file to server
-    if (send_tcp_file(tcp_fd, file_name) == ERROR) {
+    if (tcp_send_file(tcp_fd, file_name) == ERROR) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }   
 
     // Read server response
-    read_tcp(tcp_fd, request_header, sizeof(request_header));
+    tcp_read(tcp_fd, request_header, sizeof(request_header));
     close(tcp_fd);
     char response_code[4], reply_status[4], eid[4];
     fprintf(stderr, "Create event response: %s\n", request_header);
@@ -325,13 +325,13 @@ ReplyStatus close_event_handler(char** cursor) {
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
     
     // Send request header to server
-    if (send_tcp_message(tcp_fd, request) == ERROR) {
+    if (tcp_send_message(tcp_fd, request) == ERROR) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }
 
     // Read server response
-    ssize_t n = read_tcp(tcp_fd, response, (3 + 3 + 1));
+    ssize_t n = tcp_read(tcp_fd, response, (3 + 3 + 1));
     char response_code[4], reply_status[4];
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
     ReplyStatus status = handle_response_code(response_code, LIST, parsed, 2, reply_status);
@@ -346,7 +346,7 @@ ReplyStatus close_event_handler(char** cursor) {
         int offset = 0, chars_read;
 
         while(is_end_of_message(&event_list) != SUCCESS) {
-            read_tcp(tcp_fd, response, 256);
+            tcp_read(tcp_fd, response, 256);
             while (parse_events_list(&event_list, eid, name, state, event_day, event_time) == STATUS_UNASSIGNED) {
                 const char* state_str;
                 switch (state) {
@@ -379,13 +379,13 @@ ReplyStatus show_handler(char** cursor, int udp_fd, struct sockaddr_in* server_u
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
     
     // Send request header to server
-    if (send_tcp_message(tcp_fd, request) == ERROR) {
+    if (tcp_send_message(tcp_fd, request) == ERROR) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }
 
     // Read server response header
-    if (read_tcp(tcp_fd, response, sizeof(response)) == ERROR) {
+    if (tcp_read(tcp_fd, response, sizeof(response)) == ERROR) {
         close(tcp_fd);
         return STATUS_RECV_FAILED;
     }

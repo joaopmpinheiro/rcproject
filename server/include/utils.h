@@ -13,10 +13,6 @@
 #include "globals.h"
 
 // socket_manager.c
-
-ssize_t read_tcp_field(int fd, char* buffer, size_t max_len);
-ssize_t tcp_read_all(int fd, char* buffer, size_t length);
-ssize_t tcp_write_all(int fd, const char* buffer, size_t length);
 int select_handler();
 void udp_connection();
 void tcp_connection();

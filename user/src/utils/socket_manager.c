@@ -96,13 +96,13 @@ ReplyStatus tcp_send_receive(char* message, char* response,
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
     
     // Send request header to server
-    if (send_tcp_message(tcp_fd, message) == ERROR) {
+    if (tcp_send_message(tcp_fd, message) == ERROR) {
         close(tcp_fd);
         return STATUS_SEND_FAILED;
     }
 
     // Read server response
-    if (read_tcp(tcp_fd, response, response_size) == ERROR) {
+    if (tcp_read(tcp_fd, response, response_size) == ERROR) {
         close(tcp_fd);
         return STATUS_RECV_FAILED;
     }

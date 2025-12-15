@@ -1,6 +1,6 @@
 #include "common.h"
 
-int send_tcp_message(int fd, char* message) {
+int tcp_send_message(int fd, char* message) {
     size_t total_written = 0;
     size_t message_length = strlen(message);
 
@@ -15,7 +15,7 @@ int send_tcp_message(int fd, char* message) {
     return SUCCESS;
 }
 
-int send_tcp_file(int fd, char* file_name) {
+int tcp_send_file(int fd, char* file_name) {
     // Open file for byte reading
     FILE* file = fopen(file_name, "rb");
     if (!file) {
@@ -46,7 +46,8 @@ int send_tcp_file(int fd, char* file_name) {
     return SUCCESS;
 }
 
-int read_tcp(int fd, void* buf, size_t len) {
+// TODO FIXME: olhadela wtf void* buf typecast ?!?!?!
+int tcp_read(int fd, void* buf, size_t len) {
     ssize_t bytes_read = 0;
     ssize_t n;
     while (bytes_read < len - 1) {
@@ -61,7 +62,48 @@ int read_tcp(int fd, void* buf, size_t len) {
     return SUCCESS;
 }
 
-int read_tcp_file(int fd, char* file_name, long file_size) {
+// Reliable helper that keeps writing until everything is sent
+int tcp_write(int fd, const char* buffer, size_t length) {
+    size_t total = 0;
+    while (total < length) {
+        ssize_t n = write(fd, buffer + total, length - total);
+        if (n <= 0) return ERROR;
+        total += (size_t)n;
+    }
+    return SUCCESS;
+}
+
+// Helper function to read a single space-delimited field from TCP socket
+int tcp_read_field(int fd, char* buffer, size_t max_len) {
+    size_t i = 0;
+    char c;
+    ssize_t n;
+
+    // Skip leading space if present
+    n = read(fd, &c, 1);
+    if (n <= 0) return ERROR;
+    if (c != ' ') {
+        buffer[i++] = c;
+    }
+
+    // Read until space or newline
+    while (i < max_len) {
+        n = read(fd, &c, 1);
+        if (n <= 0) return ERROR;
+        if (c == ' ') {
+            buffer[i] = '\0';
+            return SUCCESS;
+        } else if (c == '\n') {
+            buffer[i] = '\0';
+            return EOM;
+        }
+        buffer[i++] = c;
+    }
+    buffer[max_len] = '\0';
+    return SUCCESS;
+}
+
+/*int read_tcp_file(int fd, char* file_name, long file_size) {
     FILE* file = fopen(file_name, "wb");
     if (!file) {
         perror("ERROR: Failed to open file for writing");
