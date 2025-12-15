@@ -10,8 +10,8 @@ OBJS = \
 	$(UTILS)/command_handler.o \
 	$(UTILS)/commands.o \
 	$(UTILS)/socket_manager.o \
+	$(UTILS)/read_from_server.o \
 	$(UTILS)/messages.o \
-	$(UTILS)/read_from_server.o \	
 	$(SRCDIR)/user.o
 
 TARGET = user

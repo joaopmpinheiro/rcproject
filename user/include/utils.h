@@ -45,9 +45,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 ReplyStatus create_event_handler(char** cursor, char** extra_info);
 ReplyStatus close_event_handler(char** cursor);
 ReplyStatus list_handler(char** cursor);
-ReplyStatus show_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
-                            socklen_t udp_addr_len);
-
+ReplyStatus show_handler(char** cursor);
 
 // ---------- messages.c ----------
 void usage(const char *prog_name);
@@ -75,13 +73,6 @@ ReplyStatus parse_change_password(char** cursor, char* old_password,
 ReplyStatus parse_events_list(char** event_list, char* eid, char* name, char state, char* event_day, char* event_time);
 ReplyStatus parse_show(char** cursor, char* eid);
 
-// ---------- server_response_parser.c ----------
-ReplyStatus read_show_response_header(char* response, int tcp_fd,
-                                       char* resp_code, char* rep_status, 
-                                       char* uid, char* event_name, char* event_date,
-                                       char* total_seats, char* reserved_seats,
-                                       char* file_name, char* file_size);
-
 
                                        
 // ---------- read_from_server.c ----------
@@ -92,8 +83,7 @@ ReplyStatus read_uid(int tcp_fd, char* uid);
 ReplyStatus read_eid(int tcp_fd, char* eid);
 ReplyStatus read_event_name(int tcp_fd, char* event_name);
 ReplyStatus read_event_date(int tcp_fd, char* event_date);
-ReplyStatus read_show_response_header(char* response, int tcp_fd,
-                                       char* resp_code, char* rep_status, 
+ReplyStatus read_show_response_header(int tcp_fd, char* resp_code, char* rep_status, 
                                        char* uid, char* event_name, char* event_date,
                                        char* total_seats, char* reserved_seats,
                                        char* file_name, char* file_size);                                       

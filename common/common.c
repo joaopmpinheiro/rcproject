@@ -103,7 +103,7 @@ int tcp_read_field(int fd, char* buffer, size_t max_len) {
     return SUCCESS;
 }
 
-/*int read_tcp_file(int fd, char* file_name, long file_size) {
+int tcp_read_file(int fd, char* file_name, long file_size) {
     FILE* file = fopen(file_name, "wb");
     if (!file) {
         perror("ERROR: Failed to open file for writing");
@@ -127,19 +127,5 @@ int tcp_read_field(int fd, char* buffer, size_t max_len) {
     }
 
     fclose(file);
-    return SUCCESS;
-}
-*/
-
-int read_tcp_argument(int tcp_fd, char* argument, size_t arg_length) {
-    // Read argument from TCP socket
-    if (read_tcp(tcp_fd, argument, arg_length + 1) != SUCCESS) {
-        return ERROR;
-    }
-    // Remove trailing newline if present
-    size_t len = strlen(argument);
-    if (len > 0 && argument[len - 1] == '\n') {
-        argument[len - 1] = '\0';
-    }
     return SUCCESS;
 }

@@ -166,7 +166,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
 /*             status = list_handler(cursor);
  */            break;
         case SHOW:
-            status = show_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
+            status = show_handler(cursor);
             break;
         case RESERVE:
             // Handle reserve event

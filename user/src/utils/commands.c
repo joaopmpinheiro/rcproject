@@ -8,6 +8,7 @@
 
 #include "utils.h"
 #include "../../common/parser.h"
+#include "../../common/common.h"
 
 #include "client_data.h"
 
@@ -366,8 +367,7 @@ ReplyStatus close_event_handler(char** cursor) {
 } */
 
 
-ReplyStatus show_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
-                            socklen_t udp_addr_len){
+ReplyStatus show_handler(char** cursor){
     char eid[4];
     ReplyStatus status = parse_show(cursor, eid);
     if (status != STATUS_UNASSIGNED) return status;
@@ -400,13 +400,13 @@ ReplyStatus show_handler(char** cursor, int udp_fd, struct sockaddr_in* server_u
     char file_name[FILE_NAME_LENGTH + 1];
     char file_size[FILE_SIZE_LENGTH + 1];
 
-    status = read_show_response_header(response, tcp_fd,
-                                       response_code, reply_status,
+    status = read_show_response_header(tcp_fd, response_code, reply_status,
                                        uid, event_name, event_date,
                                        total_seats, reserved_seats,
                                        file_name, file_size);
     if (status != STATUS_OK) return status;
-    if(read_tcp_file(tcp_fd, file_name, file_size) == ERROR) {
+    long file_size_long = atol(file_size);
+    if(tcp_read_file(tcp_fd, file_name, file_size_long) == ERROR) {
         close(tcp_fd);
         return STATUS_RECV_FAILED;
     }

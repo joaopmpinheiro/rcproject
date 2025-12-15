@@ -57,9 +57,8 @@
 int tcp_send_message(int fd, char *message);
 int tcp_send_file(int fd, char *file_name);
 int tcp_read(int fd, void *buf, size_t len);
-int read_tcp_argument(int fd, char *arg, size_t max_len);
-int read_tcp_file(int fd, char *file_name, long file_size);
-/*int tcp_read_field(int fd, char* buffer, size_t max_len);*/
 int tcp_write(int fd, const char* buffer, size_t length);
+int tcp_read_field(int fd, char* buffer, size_t max_len);
+int tcp_read_file(int fd, char *file_name, long file_size);
 
 #endif
