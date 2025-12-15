@@ -66,12 +66,6 @@ char* read_file(const char* filename) {
     return buffer;
 }
 
-/**
- * @brief Finds the first available EID (001-999) by checking the EVENTS directory.
- * 
- * @param eid_str Buffer to store the 3-digit EID string (e.g., "001", "042")
- * @return int SUCCESS if an available EID was found, ERROR if all EIDs are taken or error occurs
- */
 int find_available_eid(char* eid_str) {
     if (eid_str == NULL) return ERROR;
 
@@ -91,8 +85,10 @@ int find_available_eid(char* eid_str) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
         // Check if entry is a directory and is a valid 3-digit number
+        char full_path[256];
+        snprintf(full_path, sizeof(full_path), "EVENTS/%s", entry->d_name);
         struct stat st;
-        if (stat(entry->d_name, &st) == 0 && S_ISDIR(st.st_mode)) {
+        if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) {
             if (strlen(entry->d_name) == 3 && is_number(entry->d_name)) {
                 int eid = atoi(entry->d_name);
                 if (eid >= 1 && eid <= 999) {
@@ -115,17 +111,6 @@ int find_available_eid(char* eid_str) {
     return ERROR;
 }
 
-/**
- * @brief Writes event metadata to START_{EID}.txt file in the event directory.
- * 
- * @param eid Event ID (3-digit string, e.g., "001")
- * @param uid User ID (6-digit string)
- * @param event_name Event name
- * @param desc_fname Description filename
- * @param event_attend Total attendance/seats (as string)
- * @param event_date Event date and time (DD-MM-YYYY HH:MM)
- * @return int SUCCESS if file was written successfully, ERROR otherwise
- */
 int write_event_start_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
                            const char* event_date) {
@@ -137,6 +122,34 @@ int write_event_start_file(const char* eid, const char* uid, const char* event_n
     // Create file path: EVENTS/{EID}/START_{EID}.txt
     char file_path[256];
     snprintf(file_path, sizeof(file_path), "EVENTS/%s/START_%s.txt", eid, eid);
+
+    FILE* fp = fopen(file_path, "w");
+    if (fp == NULL) {
+        return ERROR;
+    }
+
+    // Write single line: UID event_name desc_fname event_attend event_date
+    int ret = fprintf(fp, "%s %s %s %s %s\n", uid, event_name, desc_fname, 
+                      event_attend, event_date);
+    
+    fclose(fp);
+
+    return (ret > 0) ? SUCCESS : ERROR;
+}
+
+int write_event_information_file(const char* eid, const char* uid, const char* event_name,
+                           const char* desc_fname, const char* event_attend,
+                           const char* event_date) {
+    
+    if (eid == NULL || uid == NULL || event_name == NULL || desc_fname == NULL || 
+        event_attend == NULL || event_date == NULL) {
+        return ERROR;
+    }
+
+    // Create file path: USER/CREATED/{EID}.txt
+    char file_path[256];
+    snprintf(file_path, sizeof(file_path), "USERS/%s/CREATED/%s.txt", uid, eid);
+    printf("Writing event information to file: %s\n", file_path);
 
     FILE* fp = fopen(file_path, "w");
     if (fp == NULL) {

@@ -24,8 +24,9 @@
 #include "../../common/common.h"
 
 #define ERROR -1
-#define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena?
 #define EMPTY_FILE -2
+#define DIR_ALREADY_EXISTS -3
+#define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena? TODO: tirar esta cena (lmao)
 
 
 typedef struct {

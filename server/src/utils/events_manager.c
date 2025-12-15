@@ -18,7 +18,10 @@ int create_eid_dir (int EID){
     sprintf(EID_dirname, "EVENTS/%03d", EID);
 
     ret = mkdir(EID_dirname, 0700);
-    if (ret == -1) return ERROR;
+    if (ret == -1) {
+        if (errno == EEXIST) return DIR_ALREADY_EXISTS;
+        return ERROR;   
+    }
 
     snprintf(RES_dirname, sizeof(RES_dirname), "EVENTS/%03d/RESERVATIONS", EID);
     ret = mkdir(RES_dirname, 0700);

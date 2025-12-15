@@ -33,7 +33,7 @@ int create_USER_dir (char* UID){
         return ERROR;
     }
 
-    snprintf(created_dirname, sizeof(created_dirname), "USERS/%s/EVENTS", UID);
+    snprintf(created_dirname, sizeof(created_dirname), "USERS/%s/RESERVED", UID);
     ret = mkdir(created_dirname, 0700);
     if (ret == -1){
         rmdir(UID_dirname);

@@ -117,7 +117,7 @@ int file_exists(const char* filename);
 int find_available_eid(char* eid_str);
 
 /**
- * @brief Writes event metadata to START_{EID}.txt file in the event directory.
+ * @brief Writes event metadata to EVENTS/{EID}/START_{EID}.txt file
  * 
  * @param eid Event ID (3-digit string, e.g., "001")
  * @param uid User ID (6-digit string)
@@ -128,6 +128,21 @@ int find_available_eid(char* eid_str);
  * @return int SUCCESS if file was written successfully, ERROR otherwise
  */
 int write_event_start_file(const char* eid, const char* uid, const char* event_name,
+                           const char* desc_fname, const char* event_attend,
+                           const char* event_date);
+
+/**
+ * @brief Writes event metadata to USERS/CREATED/{EID}.txt file
+ * 
+ * @param eid Event ID (3-digit string, e.g., "001")
+ * @param uid User ID (6-digit string)
+ * @param event_name Event name
+ * @param desc_fname Description filename
+ * @param event_attend Total attendance/seats (as string)
+ * @param event_date Event date and time (DD-MM-YYYY HH:MM)
+ * @return int SUCCESS if file was written successfully, ERROR otherwise
+ */
+int write_event_information_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
                            const char* event_date);
 
