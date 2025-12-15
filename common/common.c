@@ -129,6 +129,7 @@ int tcp_read_field(int fd, char* buffer, size_t max_len) {
     fclose(file);
     return SUCCESS;
 }
+*/
 
 int read_tcp_argument(int tcp_fd, char* argument, size_t arg_length) {
     // Read argument from TCP socket
