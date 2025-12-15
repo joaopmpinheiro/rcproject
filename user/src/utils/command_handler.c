@@ -163,8 +163,8 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = myevent_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break; 
         case LIST:
-/*             status = list_handler(cursor);
- */            break;
+            status = list_handler(cursor);
+            break;
         case SHOW:
             status = show_handler(cursor);
             break;

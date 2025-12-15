@@ -77,24 +77,29 @@ ReplyStatus read_file_size(int tcp_fd, char* file_size) {
     return STATUS_OK;
 }
 
-ReplyStatus read_show_response_header(int tcp_fd, char* command, char* rep_status, 
-                                       char* uid, char* event_name,
-                                       char* event_date, char* attendance_size,
-                                       char* reserved_seats, char* file_name,
-                                       char* file_size) {
+ReplyStatus read_cmd_status(int tcp_fd, RequestType expected_command) {
+    char command[COMMAND_LENGTH + 1];
+    char rep_status[4];
     // Response command
-    if(tcp_read_field(tcp_fd, command, COMMAND_LENGTH + 1) != SUCCESS) return STATUS_RECV_FAILED;
+    if(tcp_read_field(tcp_fd, command, COMMAND_LENGTH + 1) != SUCCESS)
+        return STATUS_RECV_FAILED;
 
     // Confirm command
     RequestType req = identify_command_response(command);
     if (req == ERROR_REQUEST) return CMD_ERROR;
-    if (req != SHOW) return STATUS_UNEXPECTED_RESPONSE;
+    if (req != expected_command) return STATUS_UNEXPECTED_RESPONSE;
 
     // Response status
-    ReplyStatus status;
     if(tcp_read_field(tcp_fd, rep_status, 3) != SUCCESS) return STATUS_RECV_FAILED;
-    
-    status = parse_status_code(rep_status);
+    return parse_status_code(rep_status);
+}
+
+ReplyStatus read_show_response_header(int tcp_fd,
+                                       char* uid, char* event_name,
+                                       char* event_date, char* attendance_size,
+                                       char* reserved_seats, char* file_name,
+                                       char* file_size) {
+    ReplyStatus status = read_cmd_status(tcp_fd, SHOW);
     if (status != STATUS_OK) return status;
     
     char str_day[DAY_STR_SIZE + 1], str_time[TIME_STR_SIZE + 1];
@@ -119,3 +124,17 @@ ReplyStatus read_show_response_header(int tcp_fd, char* command, char* rep_statu
     if (!verify_file_size(file_size)) return STATUS_INVALID_FILE;
     return STATUS_OK;
 }    
+
+ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
+                              char* event_day, char* event_time) {
+    int is_end = tcp_read_field(fd_tcp, eid, EID_LENGTH + 1);
+    if(is_end == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(is_end == EOM) return STATUS_EOM;
+    if(tcp_read_field(fd_tcp, name, MAX_EVENT_NAME + 1) != SUCCESS) return STATUS_MALFORMED_RESPONSE;
+    if(tcp_read_field(fd_tcp, state, 2) != SUCCESS) return STATUS_MALFORMED_RESPONSE;
+    if(tcp_read_field(fd_tcp, event_day, DAY_STR_SIZE + 1) != SUCCESS) return STATUS_MALFORMED_RESPONSE;   
+    is_end = tcp_read_field(fd_tcp, event_time, TIME_STR_SIZE + 1);
+    if(is_end == ERROR) return STATUS_MALFORMED_RESPONSE;
+    if(is_end == EOM) return STATUS_EOM;
+    return STATUS_UNASSIGNED;
+}

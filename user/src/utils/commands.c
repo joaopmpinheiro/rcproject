@@ -313,11 +313,11 @@ ReplyStatus close_event_handler(char** cursor) {
     return status;
 }
 
-/* ReplyStatus list_handler(char** cursor) {
+ReplyStatus list_handler(char** cursor) {
     if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
 
     // PROTOCOL: LST <uid> <password>
-    char request[256], response[8192];
+    char request[256];
     snprintf(request, sizeof(request), "LST\n");
 
     // Send request to server and receive response
@@ -330,40 +330,36 @@ ReplyStatus close_event_handler(char** cursor) {
         return STATUS_SEND_FAILED;
     }
 
-    // Read server response
-    ssize_t n = tcp_read(tcp_fd, response, (3 + 3 + 1));
-    char response_code[4], reply_status[4];
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    ReplyStatus status = handle_response_code(response_code, LIST, parsed, 2, reply_status);
-
-    char* event_list = response + 7;
-    if (status == STATUS_OK) {
-        printf("%s %s %s %s\n", "EID", "Name", "State", "Day");
-        printf("-------------------------------------------------------------\n");
-
-        char eid[4], name[MAX_EVENT_NAME + 1], state;
-        char event_day[EVENT_DATE_LENGTH + 1], event_time[EVENT_DATE_LENGTH + 1];
-        int offset = 0, chars_read;
-
-        while(is_end_of_message(&event_list) != SUCCESS) {
-            tcp_read(tcp_fd, response, 256);
-            while (parse_events_list(&event_list, eid, name, state, event_day, event_time) == STATUS_UNASSIGNED) {
-                const char* state_str;
-                switch (state) {
-                    case 0: state_str = "Past"; break;
-                    case 1: state_str = "Active"; break;
-                    case 2: state_str = "Sold out"; break;
-                    case 3: state_str = "Closed"; break;
-                    default: state_str = "Unknown"; break;
-                }
-                printf("%s %s %s %s %s\n", eid, name, state_str, event_day, event_time);
-                offset += chars_read;
-            }
-        return STATUS_CUSTOM_OUTPUT;
-        }
+    // Read server response command and status
+    ReplyStatus status = read_cmd_status(tcp_fd, LIST);
+    if (status != STATUS_OK){
+        close(tcp_fd);
+        return status;  
     }
-    return status;
-} */
+    
+    // Print list 
+    char eid[4], name[MAX_EVENT_NAME + 1];
+    char state = 0;
+    char event_day[EVENT_DATE_LENGTH + 1], event_time[EVENT_DATE_LENGTH + 1];
+    
+    printf("%s %s %s %s\n", "EID", "Name", "State", "Day");
+    printf("-------------------------------------------------------------\n");
+    status = parse_events_list(tcp_fd, eid, name, &state, event_day, event_time);
+    while (status == STATUS_UNASSIGNED) {
+        const char* state_str;
+        switch (state) {
+            case '0': state_str = "Past"; break;
+            case '1': state_str = "Active"; break;
+            case '2': state_str = "Sold out"; break;
+            case '3': state_str = "Closed"; break;
+            default: state_str = "Unknown"; break;
+        }
+        printf("%s %s %s %s %s\n", eid, name, state_str, event_day, event_time);
+        status = parse_events_list(tcp_fd, eid, name, &state, event_day, event_time);
+    }
+    close(tcp_fd);
+    return STATUS_CUSTOM_OUTPUT;
+}
 
 
 ReplyStatus show_handler(char** cursor){
@@ -386,7 +382,6 @@ ReplyStatus show_handler(char** cursor){
     }
 
      // PROTOCOl: RSE status [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
-    char command[4], rep_status[4];
     char uid[UID_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
     char event_date[EVENT_DATE_LENGTH + 1];
@@ -394,7 +389,7 @@ ReplyStatus show_handler(char** cursor){
     char reserved_seats[SEAT_COUNT_LENGTH + 1];
     char file_name[FILE_NAME_LENGTH + 1];
     char file_size[FILE_SIZE_LENGTH + 1];
-    status = read_show_response_header(tcp_fd, command, rep_status, 
+    status = read_show_response_header(tcp_fd,
                                        uid, event_name,
                                        event_date, attendance_size,
                                        reserved_seats, file_name,

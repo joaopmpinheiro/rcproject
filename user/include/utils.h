@@ -79,7 +79,8 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
 ReplyStatus parse_close(char** cursor,  char* eid);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
                                  char* new_password, char* current_password);                         
-ReplyStatus parse_events_list(char** event_list, char* eid, char* name, char state, char* event_day, char* event_time);
+ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
+                              char* event_day, char* event_time);                              
 ReplyStatus parse_show(char** cursor, char* eid);
 
 
@@ -92,7 +93,17 @@ ReplyStatus read_uid(int tcp_fd, char* uid);
 ReplyStatus read_eid(int tcp_fd, char* eid);
 ReplyStatus read_event_name(int tcp_fd, char* event_name);
 ReplyStatus read_event_date(int tcp_fd, char* event_date);
-ReplyStatus read_show_response_header(int tcp_fd, char* command, char* rep_status, 
+
+/**
+ * @brief Reads the command and status from the server. Verifies they match the~
+ * expected command and if so the status is parsed and returned.
+ * 
+ * @param tcp_fd int
+ * @param expected_command RequestType
+ * @return ReplyStatus given by server or STATUS_UNEXPECTED_RESPONSE
+ */
+ReplyStatus read_cmd_status(int tcp_fd, RequestType expected_command);
+ReplyStatus read_show_response_header(int tcp_fd,
                                        char* uid, char* event_name,
                                        char* event_date, char* attendance_size,
                                        char* reserved_seats, char* file_name,
