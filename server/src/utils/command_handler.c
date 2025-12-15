@@ -262,7 +262,7 @@ void create_event_handler(Request* req){
         close(fd);
         return;
     }
-
+    
     // Allocate buffer for file content
     file_content = (char*)malloc(file_size + 1);
     if (file_content == NULL) {
@@ -277,7 +277,6 @@ void create_event_handler(Request* req){
     while (total_read < file_size) {
         ssize_t n = read(fd, file_content + total_read, file_size - total_read);
         if (n <= 0) {
-            free(file_content);
             tcp_write(fd, "RCE ERR\n", 8);
             close(fd);
             return;
@@ -302,7 +301,6 @@ void create_event_handler(Request* req){
     if (write_description_file(EID, file_name, file_size, file_content) == ERROR) which_error = 4;
         if (which_error != 0) {
             printf("Error %d occurred while creating event for UID %s\n", which_error, UID);
-            free(file_content);
             tcp_write(fd, "RCE NOK\n", 8);
             close(fd);
             return;
@@ -313,13 +311,10 @@ void create_event_handler(Request* req){
 //                               event_date) == ERROR ||
 //        update_reservations_file(EID, 0) == ERROR ||
 //        write_description_file(EID, file_name, file_size, file_content) == ERROR) {
-//        free(file_content);
 //        tcp_write(fd, "RCE NOK\n", 8);
 //        close(fd);
 //        return;
 //    }
-
-    free(file_content);
 
     // Send success response with EID
     char response[16];

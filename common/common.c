@@ -106,7 +106,8 @@ int tcp_read_field(int fd, char* buffer, size_t max_len) {
 int tcp_read_file(int fd, char* file_name, long file_size) {
     FILE* file = fopen(file_name, "wb");
     if (!file) {
-        perror("ERROR: Failed to open file for writing");
+        // TODO FIXME olhar para isto
+        // perror("ERROR: Failed to open file for writing");
         return ERROR;
     }
 
@@ -115,10 +116,11 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
     ssize_t n;
 
     while (total_received < file_size) {
-        size_t to_read = (file_size - total_received) < TCP_BUFFER_SIZE ? (file_size - total_received) : TCP_BUFFER_SIZE;
+        size_t to_read = (file_size - total_received) < TCP_BUFFER_SIZE ?
+                         (file_size - total_received) : TCP_BUFFER_SIZE;
         n = read(fd, buffer, to_read);
+        // FIXME TODO: ver se é melhor separar n==0 e n<0 para disconnect e erro respetivamente
         if (n <= 0) {
-            perror("ERROR: Failed to read file data from socket");
             fclose(file);
             return ERROR;
         }
@@ -127,5 +129,19 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
     }
 
     fclose(file);
+    return SUCCESS;
+}
+*/
+
+int read_tcp_argument(int tcp_fd, char* argument, size_t arg_length) {
+    // Read argument from TCP socket
+    if (read_tcp(tcp_fd, argument, arg_length + 1) != SUCCESS) {
+        return ERROR;
+    }
+    // Remove trailing newline if present
+    size_t len = strlen(argument);
+    if (len > 0 && argument[len - 1] == '\n') {
+        argument[len - 1] = '\0';
+    }
     return SUCCESS;
 }
