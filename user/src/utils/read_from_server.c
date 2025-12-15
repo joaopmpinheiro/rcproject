@@ -77,37 +77,45 @@ ReplyStatus read_file_size(int tcp_fd, char* file_size) {
     return STATUS_OK;
 }
 
-ReplyStatus read_show_response_header(int tcp_fd, char* resp_code, char* rep_status, 
-                                       char* uid, char* event_name, char* event_date,
-                                       char* total_seats, char* reserved_seats,
-                                       char* file_name, char* file_size) {
-    // RESPONSE CODE
-    if(tcp_read_field(tcp_fd, resp_code, 4) != SUCCESS) {
-        close(tcp_fd);
-        return STATUS_RECV_FAILED;
-    }
-    ReplyStatus status;
-    status = read_command(tcp_fd, resp_code, SHOW);
-    if(status != STATUS_OK) {
-        close(tcp_fd);
-        return status;
-    }
-    status = read_status(tcp_fd, rep_status);
-    if (status != STATUS_OK) {
-        close(tcp_fd);
-        return status;
-    }
+ReplyStatus read_show_response_header(int tcp_fd, char* command, char* rep_status, 
+                                       char* uid, char* event_name,
+                                       char* event_date, char* attendance_size,
+                                       char* reserved_seats, char* file_name,
+                                       char* file_size) {
+    // Response command
+    if(tcp_read_field(tcp_fd, command, COMMAND_LENGTH + 1) != SUCCESS) return STATUS_RECV_FAILED;
 
-    // EID EVENT_NAME EVENT_DATE UID TOTAL_SEATS RESERVED_SEATS FILE_NAME FILE_SIZE
-    if( read_uid(tcp_fd, uid) != STATUS_OK ||
-        read_event_name(tcp_fd, event_name) != STATUS_OK ||
-        read_event_date(tcp_fd, event_date) != STATUS_OK ||
-        read_seat_count(tcp_fd, total_seats) != STATUS_OK ||
-        read_seat_count(tcp_fd, reserved_seats) != STATUS_OK ||
-        read_file_name(tcp_fd, file_name) != STATUS_OK ||
-        read_file_size(tcp_fd, file_size) != STATUS_OK) {
-        close(tcp_fd);
+    // Confirm command
+    RequestType req = identify_command_response(command);
+    if (req == ERROR_REQUEST) return CMD_ERROR;
+    if (req != SHOW) return STATUS_UNEXPECTED_RESPONSE;
+
+    // Response status
+    ReplyStatus status;
+    if(tcp_read_field(tcp_fd, rep_status, 3) != SUCCESS) return STATUS_RECV_FAILED;
+    
+    status = parse_status_code(rep_status);
+    if (status != STATUS_OK) return status;
+    
+    char str_day[DAY_STR_SIZE + 1], str_time[TIME_STR_SIZE + 1];
+    // Read remaining fields
+    if(tcp_read_field(tcp_fd, uid, UID_LENGTH) != SUCCESS ||
+       tcp_read_field(tcp_fd, event_name, MAX_EVENT_NAME) != SUCCESS ||
+       tcp_read_field(tcp_fd, str_day, DAY_STR_SIZE) != SUCCESS ||
+       tcp_read_field(tcp_fd, str_time, TIME_STR_SIZE) != SUCCESS ||
+       tcp_read_field(tcp_fd, attendance_size, SEAT_COUNT_LENGTH) != SUCCESS ||
+       tcp_read_field(tcp_fd, reserved_seats, SEAT_COUNT_LENGTH) != SUCCESS ||
+       tcp_read_field(tcp_fd, file_name, FILE_NAME_LENGTH) != SUCCESS ||
+       tcp_read_field(tcp_fd, file_size, FILE_SIZE_LENGTH) != SUCCESS){
         return STATUS_RECV_FAILED;
-    }   
+    }
+    snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", str_day, str_time);
+    if (!verify_uid_format(uid)) return STATUS_INVALID_UID;
+    if (!verify_event_name_format(event_name)) return STATUS_INVALID_EVENT_NAME;
+    if (!verify_event_date_format(event_date)) return STATUS_INVALID_EVENT_DATE;
+    if (!verify_seat_count(attendance_size)) return STATUS_INVALID_SEAT_COUNT;
+    if (!verify_reserved_seats(reserved_seats, attendance_size)) return STATUS_INVALID_SEAT_COUNT;
+    if (!verify_file_name_format(file_name)) return STATUS_INVALID_FILE;
+    if (!verify_file_size(file_size)) return STATUS_INVALID_FILE;
     return STATUS_OK;
-}
+}    

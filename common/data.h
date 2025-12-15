@@ -19,6 +19,7 @@ typedef enum RequestType {
 } RequestType;
 
 typedef enum ReplyStatus {
+    CMD_ERROR,              // ERR - command not recognized by server
     STATUS_ERROR,          // ERR - generic error, server wasn't able to process request
 
     // Success statuses

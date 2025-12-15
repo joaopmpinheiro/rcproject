@@ -30,7 +30,6 @@ int verify_file(char* file_name) {
 
 ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
             socklen_t udp_addr_len) {
-
     if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
                 
     // Verify arguments
@@ -371,7 +370,9 @@ ReplyStatus show_handler(char** cursor){
     char eid[4];
     ReplyStatus status = parse_show(cursor, eid);
     if (status != STATUS_UNASSIGNED) return status;
-    char request[256], response[SHOW_BUFFER_SIZE];
+
+    // PROTOCOL: SED <eid>
+    char request[256];
     snprintf(request, sizeof(request), "SED %s\n", eid);
     
     // Send request to server and receive response
@@ -384,27 +385,25 @@ ReplyStatus show_handler(char** cursor){
         return STATUS_SEND_FAILED;
     }
 
-    // Read server response header
-    if (tcp_read(tcp_fd, response, sizeof(response)) == ERROR) {
-        close(tcp_fd);
-        return STATUS_RECV_FAILED;
-    }
-
-    // PROTOCOl: RSE status [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
-    char response_code[4], reply_status[4];
+     // PROTOCOl: RSE status [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
+    char command[4], rep_status[4];
     char uid[UID_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
     char event_date[EVENT_DATE_LENGTH + 1];
-    char total_seats[SEAT_COUNT_LENGTH + 1];
+    char attendance_size[SEAT_COUNT_LENGTH + 1];
     char reserved_seats[SEAT_COUNT_LENGTH + 1];
     char file_name[FILE_NAME_LENGTH + 1];
     char file_size[FILE_SIZE_LENGTH + 1];
+    status = read_show_response_header(tcp_fd, command, rep_status, 
+                                       uid, event_name,
+                                       event_date, attendance_size,
+                                       reserved_seats, file_name,
+                                       file_size);
+    if (status != STATUS_OK){
+        close(tcp_fd);       
+        return status;
+    }
 
-    status = read_show_response_header(tcp_fd, response_code, reply_status,
-                                       uid, event_name, event_date,
-                                       total_seats, reserved_seats,
-                                       file_name, file_size);
-    if (status != STATUS_OK) return status;
     long file_size_long = atol(file_size);
     if(tcp_read_file(tcp_fd, file_name, file_size_long) == ERROR) {
         close(tcp_fd);
@@ -413,7 +412,7 @@ ReplyStatus show_handler(char** cursor){
     close(tcp_fd);
     // Display event details
     show_event_details(eid, uid, event_name, event_date,
-                      total_seats, reserved_seats,
+                      attendance_size, reserved_seats,
                       file_name, file_size);
     return STATUS_CUSTOM_OUTPUT;
-}
+} 

@@ -108,6 +108,10 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
         case STATUS_ERROR:
             printf("%s failed: Server was unable to process the request\n", cmd_name);
             break;
+
+        case CMD_ERROR:
+            printf("%s failed: Command not recognized by server\n", cmd_name);
+            break;
             
         // Client-side errors
         case STATUS_INVALID_ARGS:
@@ -170,13 +174,16 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
 void show_event_details(char* eid, char* uid, char* event_name, char* event_date,
                         char* total_seats, char* reserved_seats,
                         char* file_name, char* file_size) {
-    printf("Event Details:\n");
-    printf("EID: %s\n", eid);
-    printf("Event Name: %s\n", event_name);
-    printf("Event Date: %s\n", event_date);
-    printf("Created by UID: %s\n", uid);
-    printf("Total Seats: %s\n", total_seats);
-    printf("Reserved Seats: %s\n", reserved_seats);
-    printf("File Name: %s\n", file_name);
-    printf("File Size: %s bytes\n", file_size);
+    printf("\n========== EVENT DETAILS ==========\n");
+    printf("Event ID:         %s\n", eid);
+    printf("Event Name:       %s\n", event_name);
+    printf("Date & Time:      %s\n", event_date);
+    printf("Created by:       %s\n", uid);
+    printf("-----------------------------------\n");
+    printf("Total Seats:      %s\n", total_seats);
+    printf("Reserved Seats:   %s\n", reserved_seats);
+    printf("-----------------------------------\n");
+    printf("File Name:        %s\n", file_name);
+    printf("File Size:        %s bytes\n", file_size);
+    printf("===================================\n\n");
 }

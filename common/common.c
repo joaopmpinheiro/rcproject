@@ -120,7 +120,8 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
                          (file_size - total_received) : TCP_BUFFER_SIZE;
         n = read(fd, buffer, to_read);
         // FIXME TODO: ver se é melhor separar n==0 e n<0 para disconnect e erro respetivamente
-        if (n <= 0) {
+        if (n == 0) break;
+        if (n < 0) {
             fclose(file);
             return ERROR;
         }

@@ -83,6 +83,15 @@ int verify_event_date_format(char* date_str);
 int verify_seat_count(char* count_str);
 
 /**
+ * @brief Verifies if the reserved seats count is valid (a number and less than or equal to total seats).
+ * 
+ * @param reserved_str 
+ * @param total_str 
+ * @return int 
+ */
+int verify_reserved_seats(char* reserved_str, char* total_str);
+
+/**
  * @brief Verifies if the file name format is correct (1 to FILE_NAME_LENGTH alphanumeric, dots, underscores, hyphens).
  * 
  * @param file_name 

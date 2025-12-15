@@ -199,6 +199,16 @@ int verify_seat_count(char* count_str) {
     return VALID;
 }
 
+int verify_reserved_seats(char* reserved_str, char* total_str) {
+    if (!is_number(reserved_str) || !is_number(total_str)) return INVALID;
+
+    int reserved = atoi(reserved_str);
+    int total = atoi(total_str);
+    if (reserved < 0 || reserved > total) return INVALID;
+
+    return VALID;
+}
+
 int verify_file_name_format(char* file_name) {
     if (file_name == NULL) return INVALID;
 
@@ -225,6 +235,7 @@ int verify_file_name_format(char* file_name) {
 
 int verify_file_size(char* file_size) {
     if (!is_number(file_size)) return INVALID;
-    if (file_size == 0 || file_size > MAX_FILE_SIZE) return INVALID;
+    long size = atol(file_size);
+    if (size == 0 || size > MAX_FILE_SIZE) return INVALID;
     return VALID;
 }

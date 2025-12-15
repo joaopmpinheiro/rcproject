@@ -45,6 +45,15 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 ReplyStatus create_event_handler(char** cursor, char** extra_info);
 ReplyStatus close_event_handler(char** cursor);
 ReplyStatus list_handler(char** cursor);
+
+/**
+ * @brief Shows event details by sending TCP request to server and handling the response.
+ * PROTOCOL: SED <eid>
+ * 
+ * RECEIVES: ERR server could not find event
+ *           RSE NOK no events or problems retrieving events from server
+ *           RSE OK [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]       
+ */
 ReplyStatus show_handler(char** cursor);
 
 // ---------- messages.c ----------
@@ -83,9 +92,10 @@ ReplyStatus read_uid(int tcp_fd, char* uid);
 ReplyStatus read_eid(int tcp_fd, char* eid);
 ReplyStatus read_event_name(int tcp_fd, char* event_name);
 ReplyStatus read_event_date(int tcp_fd, char* event_date);
-ReplyStatus read_show_response_header(int tcp_fd, char* resp_code, char* rep_status, 
-                                       char* uid, char* event_name, char* event_date,
-                                       char* total_seats, char* reserved_seats,
-                                       char* file_name, char* file_size);                                       
+ReplyStatus read_show_response_header(int tcp_fd, char* command, char* rep_status, 
+                                       char* uid, char* event_name,
+                                       char* event_date, char* attendance_size,
+                                       char* reserved_seats, char* file_name,
+                                       char* file_size);
 
 #endif
