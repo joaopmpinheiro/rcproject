@@ -180,6 +180,7 @@ ReplyStatus reserve_handler(char** cursor);
 // ---------- messages.c ----------
 void usage(const char *prog_name);
 void print_result(RequestType command, ReplyStatus status, char* extra_info);
+void event_message(char* eid);
 void show_event_details(char* eid, char* uid, char* event_name, char* event_date,
                         char* total_seats, char* reserved_seats,
                         char* file_name, char* file_size);

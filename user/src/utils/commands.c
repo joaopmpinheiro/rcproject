@@ -252,6 +252,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     
     ReplyStatus status = parse_create_event(cursor, event_name, file_name, date, num_seats);
     if (status != STATUS_UNASSIGNED) return status;
+    if(!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
     
     int tcp_fd = connect_tcp(IP, PORT);
     if (tcp_fd == -1) return STATUS_SEND_FAILED;
@@ -286,11 +287,12 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
 
     int parsed = sscanf(request_header, "%3s %3s %3s", response_code, reply_status, eid);
     status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
-
+    
     if (status == STATUS_OK){
-        *extra_info = malloc(4 * sizeof(char));
-        sscanf(request_header, "%*s %*s %3s", *extra_info);
-    }    
+        event_message(eid);
+        return STATUS_CUSTOM_OUTPUT;
+    }
+
     return status; // TODO: handle response
 }
 
