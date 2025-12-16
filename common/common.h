@@ -61,4 +61,86 @@ int tcp_write(int fd, const char* buffer, size_t length);
 int tcp_read_field(int fd, char* buffer, size_t max_len);
 int tcp_read_file(int fd, char *file_name, long file_size);
 
+/**
+ * @brief From command RequestType, get human-readable command name.
+ * 
+ * @param command RequestType
+ * @return const char* 
+ */
+const char* command_to_str(RequestType command);
+
+/**
+ * @brief Convert command RequestType to its 3-letter protocol code.
+ * 
+ * User -> Server
+ * 
+ * RequestType -> "XXX"
+ * 
+ * @param command RequestType
+ * @return const char* 
+ */
+const char* get_command_request(RequestType command);
+
+/**
+ * @brief Convert 3-letter command request code to RequestType.
+ * 
+ * User -> Server
+ * 
+ * "XXX" -> RequestType
+ * 
+ * @param command_buff 
+ * @return RequestType 
+ */
+RequestType identify_command_request(char* command_buff);
+
+/**
+ * @brief Convert 3-letter command response code to RequestType.
+ * 
+ * Server -> User
+ * 
+ * "XXX" -> RequestType
+ * 
+ * @param command 
+ * @return RequestType 
+ */
+RequestType identify_command_response(char* command);
+
+/**
+ * @brief Convert command RequestType to its 3-letter protocol response code.
+ * 
+ * Server -> User
+ * 
+ * RequestType -> "XXX"
+ * 
+ * @param command 
+ * @return const char* 
+ */
+const char* get_command_response_code(RequestType command);
+
+
+/**
+ * @brief Convert 3-letter status code to ReplyStatus enum.
+ * 
+ * Server -> User
+ * 
+ * "XXX" -> ReplyStatus
+ * 
+ * @param status 
+ * @return ReplyStatus 
+ */
+ReplyStatus identify_status_code(const char* status);
+
+/**
+ * @brief Convert ReplyStatus enum to its 3-letter status code.
+ * 
+ * Server -> User
+ * 
+ * ReplyStatus -> "XXX"
+ * 
+ * @param status 
+ * @return const char* 
+ */
+const char* get_status_code(ReplyStatus status);
+
+
 #endif

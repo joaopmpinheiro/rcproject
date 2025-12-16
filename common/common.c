@@ -132,3 +132,147 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
     fclose(file);
     return SUCCESS;
 }
+
+
+
+
+// ---------------- RequestType ----------------
+
+// RequestType -> Human-readable command name
+const char* command_to_str(RequestType command) {
+    switch (command) {
+        case LOGIN: return "Login";
+        case CHANGEPASS: return "Change password";
+        case UNREGISTER: return "Unregister";
+        case LOGOUT: return "Logout";
+        case EXIT: return "Exit";
+        case CREATE: return "Create";
+        case CLOSE: return "Close";
+        case MYEVENTS: return "My events";
+        case LIST: return "List";
+        case SHOW: return "Show";
+        case RESERVE: return "Reserve";
+        case MYRESERVATIONS: return "My reservations";
+        default: return "Unknown";
+    }
+}
+
+// USER -> SERVER
+const char* get_command_request(RequestType command) {
+    switch (command) {
+        case LOGIN: return "LIN";
+        case CHANGEPASS: return "CPS";
+        case UNREGISTER: return "UNR";
+        case LOGOUT: return "LOU";
+        case CREATE: return "CRE";
+        case CLOSE: return "CLS";
+        case MYEVENTS: return "LME";
+        case LIST: return "LST";
+        case SHOW: return "SED";
+        case RESERVE: return "RID";
+        case MYRESERVATIONS: return "LMR";
+        default: return "UNK";
+    }
+}
+
+RequestType identify_command_request(char* command_buff) {
+    if (strncmp(command_buff, "LIN", 3) == 0) return LOGIN;
+    if (strncmp(command_buff, "CPS", 3) == 0) return CHANGEPASS;
+    if (strncmp(command_buff, "UNR", 3) == 0) return UNREGISTER;
+    if (strncmp(command_buff, "LOU", 3) == 0) return LOGOUT;
+    if (strncmp(command_buff, "CRE", 3) == 0) return CREATE;
+    if (strncmp(command_buff, "CLS", 3) == 0) return CLOSE;
+    if (strncmp(command_buff, "LME", 3) == 0) return MYEVENTS;
+    if (strncmp(command_buff, "LST", 3) == 0) return LIST;
+    if (strncmp(command_buff, "SED", 3) == 0) return SHOW;
+    if (strncmp(command_buff, "RID", 3) == 0) return RESERVE;
+    if (strncmp(command_buff, "LMR", 3) == 0) return MYRESERVATIONS;
+    else return UNKNOWN;
+}
+
+// SERVER -> USER
+// "RXX" -> RequestType
+RequestType identify_command_response(char* command) {
+    if (strcmp(command, "RLI") == 0) return LOGIN;
+    if (strcmp(command, "RCP") == 0) return CHANGEPASS;
+    if (strcmp(command, "RUR") == 0) return UNREGISTER;
+    if (strcmp(command, "RLO") == 0) return LOGOUT;
+    if (strcmp(command, "REX") == 0) return EXIT;
+    if (strcmp(command, "RCE") == 0) return CREATE;
+    if (strcmp(command, "RCL") == 0) return CLOSE;
+    if (strcmp(command, "RME") == 0) return MYEVENTS;
+    if (strcmp(command, "RLS") == 0) return LIST;
+    if (strcmp(command, "RSE") == 0) return SHOW;
+    if (strcmp(command, "RRI") == 0) return RESERVE;
+    if (strcmp(command, "RMR") == 0) return MYRESERVATIONS;
+    if(strcmp(command, "ERR") == 0) return ERROR_REQUEST;
+    return UNKNOWN;
+}
+
+// SERVER -> USER
+// RequestType -> "RXX"
+const char* get_command_response_code(RequestType command) {
+    switch (command) {
+        case LOGIN: return "RLI";
+        case CHANGEPASS: return "RCP";
+        case UNREGISTER: return "RUR";
+        case LOGOUT: return "RLO";
+        case EXIT: return "REX";
+        case CREATE: return "RCE";
+        case CLOSE: return "RCL";
+        case MYEVENTS: return "RME";
+        case LIST: return "RLS";
+        case SHOW: return "RSE";
+        case RESERVE: return "RRI";
+        case MYRESERVATIONS: return "RMR";
+        case ERROR_REQUEST: return "ERR";
+        default: return "UNK";
+    }
+}
+
+
+// ---------------- ReplyStatus ----------------
+// SERVER -> USER
+// "XXX" -> ReplyStatus
+ReplyStatus identify_status_code(const char* status) {
+    if (strcmp(status, "ERR") == 0) return STATUS_ERROR;
+    if (strcmp(status, "OK") == 0) return STATUS_OK;
+    if (strcmp(status, "NOK") == 0) return STATUS_NOK;
+    if (strcmp(status, "REG") == 0) return STATUS_REGISTERED;
+    if (strcmp(status, "NLG") == 0) return STATUS_NOT_LOGGED_IN;
+    if (strcmp(status, "WRP") == 0) return STATUS_WRONG_PASSWORD;
+    if (strcmp(status, "UNR") == 0) return STATUS_USER_NOT_REGISTERED;
+    if (strcmp(status, "NID") == 0) return STATUS_USER_NOT_FOUND;
+    if (strcmp(status, "NOE") == 0) return STATUS_NO_EVENT_ID;
+    if (strcmp(status, "SLD") == 0) return STATUS_EVENT_SOLD_OUT;
+    if (strcmp(status, "PST") == 0) return STATUS_PAST_EVENT;
+    if (strcmp(status, "CLS") == 0) return STATUS_EVENT_CLOSED;
+    if (strcmp(status, "ACC") == 0) return STATUS_EVENT_RESERVED;
+    if (strcmp(status, "REJ") == 0) return STATUS_EVENT_RESERVATION_REJECTION;
+    if (strcmp(status, "CLO") == 0) return STATUS_EVENT_CLOSE_CLOSED;
+    return STATUS_UNEXPECTED_RESPONSE;
+}
+
+// SERVER -> USER
+// ReplyStatus -> "XXX"
+const char* get_status_code(ReplyStatus status) {
+    switch (status) {
+        case STATUS_ERROR: return "ERR";
+        case STATUS_OK: return "OK";
+        case STATUS_NOK: return "NOK";
+        case STATUS_REGISTERED: return "REG";
+        case STATUS_NOT_LOGGED_IN: return "NLG";
+        case STATUS_WRONG_PASSWORD: return "WRP";
+        case STATUS_USER_NOT_REGISTERED: return "UNR";
+        case STATUS_USER_NOT_FOUND: return "NID";
+        case STATUS_NO_EVENT_ID: return "NOE";
+        case STATUS_EVENT_SOLD_OUT: return "SLD";
+        case STATUS_PAST_EVENT: return "PST";
+        case STATUS_EVENT_CLOSED: return "CLS";
+        case STATUS_EVENT_RESERVED: return "ACC";
+        case STATUS_EVENT_RESERVATION_REJECTION: return "REJ";
+        case STATUS_EVENT_CLOSE_CLOSED: return "CLO";
+        default: return "UNK";
+    }
+}
+

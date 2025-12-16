@@ -154,7 +154,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
     
     if (strcmp(response_code, "RME") != 0) return STATUS_UNEXPECTED_RESPONSE;
-    ReplyStatus status = parse_status_code(reply_status);
+    ReplyStatus status = identify_status_code(reply_status);
 
     // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
     if (status != STATUS_OK) return status;
@@ -238,7 +238,7 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
     if(cmd == ERROR_REQUEST) return CMD_ERROR;
     if(cmd != MYRESERVATIONS) return STATUS_UNEXPECTED_RESPONSE;
     if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-    ReplyStatus status = parse_status_code(reply_status);
+    ReplyStatus status = identify_status_code(reply_status);
     if(status != STATUS_OK) return status;
     char *cursor_lst = event_list;
     return show_myreservations(cursor_lst);

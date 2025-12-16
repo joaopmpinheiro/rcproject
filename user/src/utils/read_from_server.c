@@ -38,7 +38,7 @@ ReplyStatus read_cmd_status(int tcp_fd, RequestType expected_command) {
 
     // Response status
     if(tcp_read_field(tcp_fd, rep_status, 3) == ERROR) return STATUS_RECV_FAILED;
-    return parse_status_code(rep_status);
+    return identify_status_code(rep_status);
 }
 
 ReplyStatus read_show_response_header(int tcp_fd,

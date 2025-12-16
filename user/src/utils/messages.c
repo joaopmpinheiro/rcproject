@@ -10,7 +10,7 @@ void usage(const char *prog_name) {
 }
 
 void print_result(RequestType command, ReplyStatus status, char* extra_info) {
-    const char* cmd_name = get_command_name(command);
+    const char* cmd_name = command_to_str(command);
     
     switch (status) {
         // Success cases
