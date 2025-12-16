@@ -76,7 +76,7 @@ ReplyStatus parse_reserve(char **cursor, char* eid, char* num_seats) {
 ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
                               char* seats_reserved) {
     char day_str[DAY_STR_SIZE + 1], time_str[TIME_STR_SIZE + 1 + 3];
-        
+    
     if(get_next_arg(cursor, eid) == ERROR ||
        get_next_arg(cursor, day_str) == ERROR ||
        get_next_arg(cursor, time_str) == ERROR ||
@@ -84,11 +84,10 @@ ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
         return STATUS_MALFORMED_RESPONSE;
 
     snprintf(event_date, EVENT_DATE_LENGTH + 1 + 3, "%s %s", day_str, time_str);
-    fprintf(stderr, "DEBUG: eid=%s, event_date=%s, seats_reserved=%s\n", eid, event_date, seats_reserved);
 
     if(!verify_eid_format(eid) ||
        !verify_reserved_seats(seats_reserved, "999"))
-          return STATUS_ALREADY_LOGGED_IN;
+          return STATUS_MALFORMED_RESPONSE;
 
     return STATUS_UNASSIGNED;    
 }

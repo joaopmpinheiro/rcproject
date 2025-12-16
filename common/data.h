@@ -37,7 +37,8 @@ typedef enum ReplyStatus {
     STATUS_EVENT_WRONG_USER,    // EOW - wrong user for this operation
     STATUS_EVENT_SOLD_OUT,    // SLD - event is sold out
     STATUS_PAST_EVENT,    // PST - event date has already passed
-    STATUS_EVENT_CLOSED, // CLO - event was already closed
+    STATUS_EVENT_CLOSED, // CLS - event was already closed
+    STATUS_EVENT_CLOSE_CLOSED, // CLO - event was already closed
     STATUS_EVENT_RESERVATION_REJECTION, // REJ - seats reservation rejected
 
     STATUS_MALFORMED_COMMAND, // Command not recognized

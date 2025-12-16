@@ -120,6 +120,7 @@ ReplyStatus parse_status_code(const char* status) {
     if (strcmp(status, "CLS") == 0) return STATUS_EVENT_CLOSED;
     if (strcmp(status, "ACC") == 0) return STATUS_EVENT_RESERVED;
     if (strcmp(status, "REJ") == 0) return STATUS_EVENT_RESERVATION_REJECTION;
+    if (strcmp(status, "CLO") == 0) return STATUS_EVENT_CLOSE_CLOSED;
     return STATUS_UNEXPECTED_RESPONSE;
 }
 

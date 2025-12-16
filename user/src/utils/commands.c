@@ -15,15 +15,14 @@
 // TODO: arranjar um sitio para esta funcao
 int verify_file(char* file_name) {
     struct stat st;
-    if (stat(file_name, &st) != 0) {
+    if (stat(file_name, &st) != 0)
         return STATUS_FILE_NOT_FOUND;
-    }
-    if (access(file_name, R_OK) != 0) {
+
+    if (access(file_name, R_OK) != 0) 
         return STATUS_FILE_READ_ERROR;
-    }
-    if (st.st_size > MAX_FILE_SIZE) {
+
+    if (st.st_size > MAX_FILE_SIZE)
         return STATUS_FILE_SIZE_EXCEEDED;
-    }
     return VALID;
 }
 
@@ -158,46 +157,46 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     ReplyStatus status = parse_status_code(reply_status);
 
     // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
-    if (status == STATUS_OK) {
-        char* event_list = response + 7;
+    if (status != STATUS_OK) return status;
 
-        printf("Your events:\n");
-        printf("%-5s %-10s\n", "EID", "State");
-        printf("-------------------\n");
+    // STATUS_OK
+    char* event_list = response + 7;
 
-        if (strlen(event_list) == 0) {
-            printf("(no events)\n");
-            return STATUS_CUSTOM_OUTPUT;
-        }
+    printf("Your events:\n");
+    printf("%-5s %-10s\n", "EID", "State");
+    printf("-------------------\n");
 
-        char eid[4];
-        int state;
-        int offset = 0;
-        int chars_read;
-
-        while (sscanf(event_list + offset, " %3s %d%n", eid, &state, &chars_read) == 2) {
-            // Validate EID format (3 digits)
-            if (strlen(eid) != 3) {
-                printf("Warning: Invalid EID format in response\n");
-                break;
-            }
-
-            const char* state_str;
-            switch (state) {
-                case 0: state_str = "Past"; break;
-                case 1: state_str = "Active"; break;
-                case 2: state_str = "Sold out"; break;
-                case 3: state_str = "Closed"; break;
-                default: state_str = "Unknown"; break;
-            }
-            printf("%-5s %-10s\n", eid, state_str);
-            offset += chars_read;
-        }
+    if (strlen(event_list) == 0) {
+        printf("(no events)\n");
         return STATUS_CUSTOM_OUTPUT;
     }
 
-    return status;
+    char eid[4];
+    int state;
+    int offset = 0;
+    int chars_read;
+
+    while (sscanf(event_list + offset, " %3s %d%n", eid, &state, &chars_read) == 2) {
+        // Validate EID format (3 digits)
+        if (strlen(eid) != 3) {
+            printf("Warning: Invalid EID format in response\n");
+            break;
+        }
+
+        const char* state_str;
+        switch (state) {
+            case 0: state_str = "Past"; break;
+            case 1: state_str = "Active"; break;
+            case 2: state_str = "Sold out"; break;
+            case 3: state_str = "Closed"; break;
+            default: state_str = "Unknown"; break;
+        }
+        printf("%-5s %-10s\n", eid, state_str);
+        offset += chars_read;
+    }
+    return STATUS_CUSTOM_OUTPUT;
 }
+
 
 /**
  * @brief Lists the events reserved by the logged-in user (by up to 50 events).
@@ -232,6 +231,8 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
 
     // PROTOCOL: RMR <status> [<event1ID name event_date seats_reserved> ...]
     int parsed = sscanf(response, "%3s %3s %[^\n]", response_code, reply_status, event_list);
+    fprintf(stderr, "DEBUG: response_code=%s, reply_status=%s, event_list=%s\n",
+            response_code, reply_status, event_list);
     if(parsed < 1) return STATUS_RECV_FAILED;
     RequestType cmd = identify_command_response(response_code);
     if(cmd == ERROR_REQUEST) return CMD_ERROR;
@@ -245,7 +246,6 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
 
 
 // ------------- TCP -------------
-
 ReplyStatus changepass_handler(char** cursor) {
     // Verify arguments
     char new_password[PASSWORD_LENGTH + 1], old_password[PASSWORD_LENGTH + 1];
@@ -395,7 +395,7 @@ ReplyStatus show_handler(char** cursor){
         return STATUS_SEND_FAILED;
     }
 
-     // PROTOCOl: RSE status [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
+    // PROTOCOl: RSE status [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
     char uid[UID_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
     char event_date[EVENT_DATE_LENGTH + 1];
