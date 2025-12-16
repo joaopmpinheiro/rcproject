@@ -1,3 +1,10 @@
 TODO:
 
 verificação de dois pontos de seguida no nome do ficheiro para prevenir "../../whatever.jpg" funcionar
+corrigir
+
+DUVIDA:
+
+no create, quando tenho erro a ler os fields dou RCE ERR? ou só return
+
+TODO, maybe printar logs nos verifies falhados??

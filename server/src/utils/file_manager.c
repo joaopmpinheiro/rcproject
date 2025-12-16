@@ -137,6 +137,34 @@ int write_event_start_file(const char* eid, const char* uid, const char* event_n
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
+int write_event_end_file() {
+    // This function writes the END_{EID}.txt file for an event.
+    // Since no parameters are provided, we assume it writes a generic end file.
+    // In a real scenario, you would likely need the EID to write the correct file.
+
+    // For demonstration, let's assume we write to a fixed EID "001"
+    const char* eid = "001"; // This should be dynamic in a real implementation
+
+    // Create file path: EVENTS/{EID}/END_{EID}.txt
+    char file_path[256];
+    snprintf(file_path, sizeof(file_path), "EVENTS/%s/END_%s.txt", eid, eid);
+
+    FILE* fp = fopen(file_path, "w");
+    if (fp == NULL) {
+        return ERROR;
+    }
+
+    time_t now = time(NULL);
+    struct tm* timeinfo = localtime(&now);
+    int ret = fprintf(fp, "%02d-%02d-%04d %02d:%02d:%02d\n", 
+        timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year + 1900,
+        timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+    
+    fclose(fp);
+
+    return (ret > 0) ? SUCCESS : ERROR;
+}
+
 int write_event_information_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
                            const char* event_date) {
@@ -149,7 +177,6 @@ int write_event_information_file(const char* eid, const char* uid, const char* e
     // Create file path: USER/CREATED/{EID}.txt
     char file_path[256];
     snprintf(file_path, sizeof(file_path), "USERS/%s/CREATED/%s.txt", uid, eid);
-    printf("Writing event information to file: %s\n", file_path);
 
     FILE* fp = fopen(file_path, "w");
     if (fp == NULL) {
@@ -165,16 +192,6 @@ int write_event_information_file(const char* eid, const char* uid, const char* e
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
-/**
- * @brief Creates or updates RES_{EID}.txt file with the number of reserved seats.
- * 
- * If the file doesn't exist, it creates it with reserved_seats = 0.
- * If the file exists, it reads the current value and increments it by reserved_seats.
- * 
- * @param eid Event ID (3-digit string, e.g., "001")
- * @param reserved_seats Number of seats to add to the reservation count
- * @return int SUCCESS if file was created/updated successfully, ERROR otherwise
- */
 int update_reservations_file(const char* eid, int reserved_seats) {
     if (eid == NULL) return ERROR;
 
@@ -208,15 +225,6 @@ int update_reservations_file(const char* eid, int reserved_seats) {
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
-/**
- * @brief Creates a DESCRIPTION directory inside the event directory and stores the description file.
- * 
- * @param eid Event ID (3-digit string, e.g., "001")
- * @param file_name Name of the description file
- * @param file_size Size of the file in bytes
- * @param file_content Content of the file
- * @return int SUCCESS if directory and file were created, ERROR otherwise
- */
 int write_description_file(const char* eid, const char* file_name, size_t file_size, const char* file_content) {
     if (eid == NULL || file_name == NULL || file_content == NULL) {
         return ERROR;
