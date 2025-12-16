@@ -18,6 +18,9 @@ const char* get_command_code(RequestType command);
 RequestType identify_command_response(char* command);
 
 
+
+
+
 // ---------------- commands.c -----------------
 int verify_file(char* file_name);
 
@@ -90,6 +93,20 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
 ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len);
 
+/**
+ * @brief Lists the events reserved by the logged-in user (by up to 50 events).
+ * USER INPUT: myreservations or myres
+ * USER PROTOCOL: LMR <uid> <password>
+ * SERVER PROTOCOL: RMR <status> [<event1ID name event_date seats
+ * reserved> <event2ID name event_date seats_reserved> ...]
+ * @param 
+ */
+ReplyStatus myreservations_handler(char** cursor, int udp_fd,
+                                struct sockaddr_in* server_udp_addr,
+                                socklen_t udp_addr_len);                      
+
+
+                             
 /**
  * @brief Changes the password of the logged-in user.
  * 
@@ -177,6 +194,10 @@ ReplyStatus show_handler(char** cursor);
  */
 ReplyStatus reserve_handler(char** cursor);
 
+
+
+
+
 // ---------- messages.c ----------
 void usage(const char *prog_name);
 void print_result(RequestType command, ReplyStatus status, char* extra_info);
@@ -188,6 +209,8 @@ void show_events_list(int tcp_fd);
 void show_event_reservations(char* seats_left, char* eid);                
 
 
+
+
 // ---------- socket_manager.c ----------
 int setup_udp(const char* ip, const char* port, struct sockaddr_in* server_addr);
 int connect_tcp(const char* ip, const char* port);
@@ -195,6 +218,8 @@ ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len, char* request, char* response, 
                             size_t response_size);
 ReplyStatus tcp_send_receive(char* request,  char* response, size_t response_size);
+
+
 
 
 // ---------- user_parser.c ---------- 
@@ -208,9 +233,9 @@ ReplyStatus parse_change_password(char** cursor, char* old_password,
                             
 
 
-                                       
-// ---------- read_from_server.c ----------
 
+                                 
+// ---------- read_from_server.c ----------
 ReplyStatus read_command(int tcp_fd, char* command, RequestType expected_command);
 
 /**

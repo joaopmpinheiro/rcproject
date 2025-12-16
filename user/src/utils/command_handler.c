@@ -171,7 +171,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = reserve_handler(cursor);
             break;
         case MYRESERVATIONS:
-            // Handle my reservations
+            status = myreservations_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break; 
         default:
             printf("Unknown command\n");

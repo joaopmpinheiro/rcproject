@@ -84,7 +84,7 @@ ReplyStatus read_events_list(int fd_tcp, char* eid, char* name, char* state,
         return STATUS_MALFORMED_RESPONSE;
     if(tcp_read_field(fd_tcp, event_day, DAY_STR_SIZE) != SUCCESS)
         return STATUS_MALFORMED_RESPONSE;   
-    if((fd_tcp, event_time, TIME_STR_SIZE) != SUCCESS)
+    if(tcp_read_field(fd_tcp, event_time, TIME_STR_SIZE) != SUCCESS)
         return STATUS_MALFORMED_RESPONSE;
     return STATUS_UNASSIGNED;
 }

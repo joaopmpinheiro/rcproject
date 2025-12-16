@@ -10,3 +10,10 @@ DUVIDA:
 no create, quando tenho erro a ler os fields dou RCE ERR? ou só return
 
 TODO, maybe printar logs nos verifies falhados??
+
+
+
+
+USER:
+confirmar que os read_tcp_field estao a fazer != SUCCESS ou == ERROR
+-> muita diferenca por causa do EOM

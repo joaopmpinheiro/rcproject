@@ -128,7 +128,6 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
     return status;
 }
 
-
 ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len) {
     ssize_t n;
@@ -154,6 +153,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
+    
     if (strcmp(response_code, "RME") != 0) return STATUS_UNEXPECTED_RESPONSE;
     ReplyStatus status = parse_status_code(reply_status);
 
@@ -199,7 +199,6 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     return status;
 }
 
-
 /**
  * @brief Lists the events reserved by the logged-in user (by up to 50 events).
  * USER INPUT: myreservations or myres
@@ -208,8 +207,57 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
  * reserved> <event2ID name event_date seats_reserved> ...]
  * @param 
  */
+ReplyStatus myreservations_handler(char** cursor, int udp_fd,
+                                struct sockaddr_in* server_udp_addr,
+                                socklen_t udp_addr_len) {
+    ssize_t n;
+    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
+    // PROTOCOL: LMR <uid> <password>
+    char request[256];
+    snprintf(request, sizeof(request), "LMR %s %s\n", current_uid, current_password);
 
+    if (sendto(udp_fd, request, strlen(request), 0, (struct sockaddr*)server_udp_addr,
+                udp_addr_len) == ERROR) return STATUS_SEND_FAILED;
+
+    char response[8192];
+    n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
+    if (n == ERROR) return STATUS_RECV_FAILED;
+
+    response[n] = '\0';
+    char response_code[4];
+    char reply_status[4];
+
+    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
+    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
+    if (strcmp(response_code, "RMR") != 0) return STATUS_UNEXPECTED_RESPONSE;
+    ReplyStatus status = parse_status_code(reply_status);
+    // PROTOCOL: RMR <status> [<event1ID name event_date seats_reserved> ...]
+    if (status == STATUS_OK) {
+        char* event_list = response + 7;
+        printf("Your reservations:\n");
+        printf("%-5s %-20s %-20s %-10s\n", "EID", "Name", "Date & Time", "Seats Reserved");
+        printf("---------------------------------------------------------------\n");
+        if (strlen(event_list) == 0) {
+            printf("(no reservations)\n");
+            return STATUS_CUSTOM_OUTPUT;
+        }
+        char eid[4], name[MAX_EVENT_NAME + 1], event_date[EVENT_DATE_LENGTH + 1], seats_reserved[4];
+        int offset = 0;
+        int chars_read;
+        while (sscanf(event_list + offset, " %3s %20s %20[0-9-: ] %3s%n", eid, name, event_date, seats_reserved, &chars_read) == 4) {
+            // Validate EID format (3 digits)
+            if (strlen(eid) != 3) {
+                printf("Warning: Invalid EID format in response\n");
+                break;
+            }
+            printf("%-5s %-20s %-20s %-10s\n", eid, name, event_date, seats_reserved);
+            offset += chars_read;
+        }
+    }  
+    return STATUS_CUSTOM_OUTPUT;
+}   
 
 
 // ------------- TCP -------------
