@@ -27,6 +27,7 @@ int verify_file(char* file_name) {
     return VALID;
 }
 
+// --------------- UDP ----------------
 
 ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
             socklen_t udp_addr_len) {
@@ -35,15 +36,9 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     // Verify arguments
     ReplyStatus status;
     char uid[32], password[32];
-
     status = parse_uid(cursor, uid);
     if (status != STATUS_UNASSIGNED) return status;
 
-    status = parse_password(cursor, password);
-    if (status != STATUS_UNASSIGNED) return status;
-    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
-
-    
     // PROTOCOL: LIN <uid> <password>
     char request[256], response[256];
     ssize_t response_size = 256;
@@ -66,37 +61,6 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
         strcpy(current_uid, uid);
     }
     else if (status == STATUS_OK)  is_logged_in = 1;
-
-    return status;
-}
-
-ReplyStatus changepass_handler(char** cursor) {
-    // Verify arguments
-    char new_password[PASSWORD_LENGTH + 1], old_password[PASSWORD_LENGTH + 1];
-    ReplyStatus status = parse_change_password(cursor, old_password, new_password,
-                                               current_password);
-    if (status != STATUS_UNASSIGNED) return status;
-    if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
-
-    char request[256], response[256];
-    // PROTOCOL: CHP <uid> <old_password> <new_password>
-    snprintf(request, sizeof(request), "CPS %s %s %s\n", current_uid, current_password, new_password);
-
-    // Parse response
-    char response_code[4], reply_status[4];
-    
-    // Send request to server and receive response
-    status = tcp_send_receive(request, response, 256);
-    if (status != STATUS_UNASSIGNED) return status;
-    
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, CHANGEPASS, parsed, 2, reply_status);
-
-    // Update global state on successful password change
-    if (status == STATUS_OK) {
-        strcpy(current_password, new_password);
-    }
-
     return status;
 }
 
@@ -104,7 +68,6 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
                                 socklen_t udp_addr_len) {
     // Verify arguments
     if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
-
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: UNR <uid> <password>
@@ -131,7 +94,6 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
 
     return status;
 }
-
 
 ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len) {
@@ -174,9 +136,8 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
-    char request[256];
-
     // PROTOCOL: LME <uid> <password>
+    char request[256];
     snprintf(request, sizeof(request), "LME %s %s\n", current_uid, current_password);
 
     if (sendto(udp_fd, request, strlen(request), 0, (struct sockaddr*)server_udp_addr,
@@ -194,9 +155,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
 
     if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-
     if (strcmp(response_code, "RME") != 0) return STATUS_UNEXPECTED_RESPONSE;
-
     ReplyStatus status = parse_status_code(reply_status);
 
     // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
@@ -241,11 +200,55 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     return status;
 }
 
+
+/**
+ * @brief Lists the events reserved by the logged-in user (by up to 50 events).
+ * USER INPUT: myreservations or myres
+ * USER PROTOCOL: LMR <uid> <password>
+ * SERVER PROTOCOL: RMR <status> [<event1ID name event_date seats
+ * reserved> <event2ID name event_date seats_reserved> ...]
+ * @param 
+ */
+
+
+
+
+// ------------- TCP -------------
+
+
+ReplyStatus changepass_handler(char** cursor) {
+    // Verify arguments
+    char new_password[PASSWORD_LENGTH + 1], old_password[PASSWORD_LENGTH + 1];
+    ReplyStatus status = parse_change_password(cursor, old_password, new_password,
+                                               current_password);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
+
+    // PROTOCOL: CHP <uid> <old_password> <new_password>
+    char request[256], response[256];
+    snprintf(request, sizeof(request), "CPS %s %s %s\n", current_uid, current_password, new_password);
+
+    // Parse response
+    char response_code[4], reply_status[4];
+    
+    // Send request to server and receive response
+    status = tcp_send_receive(request, response, 256);
+    if (status != STATUS_UNASSIGNED) return status;
+    
+    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
+    status = handle_response_code(response_code, CHANGEPASS, parsed, 2, reply_status);
+
+    // Update global state on successful password change
+    if (status == STATUS_OK) {
+        strcpy(current_password, new_password);
+    }
+
+    return status;
+}
+
 ReplyStatus create_event_handler(char** cursor, char** extra_info) {
-    char event_name[MAX_EVENT_NAME + 1];
-    char file_name[FILE_NAME_LENGTH + 1]; // TODO: maximum file name length?
-    char date[EVENT_DATE_LENGTH + 1]; //TODO: change this 
-    char num_seats[4];
+    char event_name[MAX_EVENT_NAME + 1], file_name[FILE_NAME_LENGTH + 1]; // TODO: maximum file name length?
+    char date[EVENT_DATE_LENGTH + 1], num_seats[4];
     *extra_info = NULL;
     
     ReplyStatus status = parse_create_event(cursor, event_name, file_name, date, num_seats);
@@ -281,8 +284,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     tcp_read(tcp_fd, request_header, sizeof(request_header));
     close(tcp_fd);
     char response_code[4], reply_status[4], eid[4];
-    fprintf(stderr, "Create event response: %s\n", request_header);
-    
+
     int parsed = sscanf(request_header, "%3s %3s %3s", response_code, reply_status, eid);
     status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
 
@@ -295,7 +297,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
 
 ReplyStatus close_event_handler(char** cursor) {
     char eid[4];
-    ReplyStatus status = parse_close(cursor, eid);
+    ReplyStatus status = parse_eid(cursor, eid);
     if (status != STATUS_UNASSIGNED) return status;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
@@ -361,10 +363,9 @@ ReplyStatus list_handler(char** cursor) {
     return STATUS_CUSTOM_OUTPUT;
 }
 
-
 ReplyStatus show_handler(char** cursor){
     char eid[4];
-    ReplyStatus status = parse_show(cursor, eid);
+    ReplyStatus status = parse_eid(cursor, eid);
     if (status != STATUS_UNASSIGNED) return status;
 
     // PROTOCOL: SED <eid>
@@ -411,3 +412,24 @@ ReplyStatus show_handler(char** cursor){
                       file_name, file_size);
     return STATUS_CUSTOM_OUTPUT;
 } 
+
+ReplyStatus reserve_handler(char** cursor) {
+    char eid[4], num_seats[4];
+    ReplyStatus status = parse_reserve(cursor, eid, num_seats);
+    if (status != STATUS_UNASSIGNED) return status;
+    if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
+
+    // PROTOCOL: RID <uid> <password> <EID> <people>.
+    char request[256], response[256];
+    snprintf(request, sizeof(request), "RID %s %s %s %s\n",
+             current_uid, current_password, eid, num_seats);
+
+    status = tcp_send_receive(request, response, 256);
+    if(status != STATUS_UNASSIGNED) return status;
+
+    char response_code[4], reply_status[4];
+    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
+    status = handle_response_code(response_code, RESERVE, parsed, 2, reply_status);
+
+    return status;
+}

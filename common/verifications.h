@@ -105,4 +105,12 @@ int verify_file_name_format(char* file_name);
  * @return int VALID if the file size is valid, INVALID otherwise.
  */
 int verify_file_size(char* file_size);
+
+/**
+ * @brief Converts a number string to a 3-digit zero-padded string (e.g., "1" -> "001").
+ * @param str Input number string
+ * @param output Output buffer (must be at least 4 bytes for 3 digits + null terminator)
+ * @return int SUCCESS if conversion succeeded, ERROR otherwise.
+ */
+int convert_to_3_digit(char* str, char* output);
 #endif

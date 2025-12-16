@@ -239,3 +239,4 @@ int verify_file_size(char* file_size) {
     if (size == 0 || size > MAX_FILE_SIZE) return INVALID;
     return VALID;
 }
+

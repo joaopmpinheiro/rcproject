@@ -1,3 +1,5 @@
 TODO:
 
 verificação de dois pontos de seguida no nome do ficheiro para prevenir "../../whatever.jpg" funcionar
+
+ir buscar ao git o corrections.txt antigo

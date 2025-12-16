@@ -20,41 +20,162 @@ RequestType identify_command_response(char* command);
 
 // ------------ commands.c -------------
 int verify_file(char* file_name);
+
+/**
+ * @brief Does the login of a user or creates a new user if not registered.
+ * 
+ * USER INPUT: login UID password 
+ * 
+ * USER PROTOCOL: UID password 
+ * 
+ * SERVER PROTOCOL: RLI status
+ *  
+ * @param cursor 
+ * @param udp_fd 
+ * @param server_udp_addr 
+ * @param udp_addr_len 
+ * @return ReplyStatus
+ */
 ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
             socklen_t udp_addr_len);
 
-ReplyStatus changepass_handler(char** cursor);
-
+/**
+ * @brief Unregisters the logged-in user.
+ * 
+ * USER INPUT: unregister
+ * 
+ * USER PROTOCOL: UNR <uid> <password>
+ * 
+ * SERVER PROTOCOL: RUR <status>
+ * 
+ * @param cursor 
+ * @param udp_fd 
+ * @param server_udp_addr 
+ * @param udp_addr_len 
+ * @return ReplyStatus 
+ */
 ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len);
+
+/**
+ * @brief Logs out the logged-in user.
+ * 
+ * USER INPUT: logout
+ * 
+ * USER PROTOCOL: LOU <uid> <password>
+ * 
+ * SERVER PROTOCOL: RLO <status>
+ * 
+ * @param cursor 
+ * @param udp_fd 
+ * @param server_udp_addr 
+ * @param udp_addr_len 
+ * @return ReplyStatus 
+ */
 ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
      socklen_t udp_addr_len);
+
+/**
+ * @brief Asks the server for the events created by the logged-in user.
+ * USER INPUT: myevents or mye
+ * USER PROTOCOL: LME <uid> <password>
+ * SERVER PROTOCOL: RME <status> [<event1ID state>...]*
+ * 
+ * @param cursor 
+ * @param udp_fd 
+ * @param server_udp_addr 
+ * @param udp_addr_len 
+ * @return ReplyStatus 
+ */
 ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len);
+
 /**
- * @brief Sends TCP request to create a new event and handles the response.
- * Receives:
- * NOK - event could not be created
- * NGL - user not logged in
- * OK EID- event created successfully 
- * PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size> <Fname> <Fsize> <Fdata>
+ * @brief Changes the password of the logged-in user.
  * 
- * @param args [event_name event_file_name event_date num_seats]
+ * USER INPUT: changepass old_password new_password
+ * 
+ * USER PROTOCOL: CPS UID oldPassword newPassword
+ * 
+ * SERVER PROTOCOL: RCP <status>
+ * 
+ * @param cursor 
+ * @return ReplyStatus 
+ */
+ReplyStatus changepass_handler(char** cursor);
+
+/**
+ * @brief Create a new event by the logged in user.
+ * 
+ * USER INPUT: create <event_name> <file_name> <event_date> <num_seats> 
+ * 
+ * USER PROTOCOL: CRE <uid> <password> <name> <event_date> <attendance_size>
+ * <Fname> <Fsize> <Fdata>
+ * 
+ * SERVER PROTOCOL: RCE <status> [<eid>]
+ * 
+ * @param cursor 
+ * @param extra_info 
  * @return ReplyStatus 
  */
 ReplyStatus create_event_handler(char** cursor, char** extra_info);
+
+/**
+ * @brief Closes an event created by the logged-in user.
+ * 
+ * USER INPUT: close <eid>
+ * 
+ * USER PROTOCOL: CLS <uid> <password> <eid>
+ * 
+ * SERVER PROTOCOL: RCL <status>
+ * 
+ * @param cursor 
+ * @return ReplyStatus 
+ */
 ReplyStatus close_event_handler(char** cursor);
+
+/**
+ * @brief Lists all events in the server.
+ * 
+ * USER INPUT: list
+ * 
+ * USER PROTOCOL: LST
+ * 
+ * SERVER PROTOCOL: RST <status> [<event1ID> <name> <state> <date>] * 
+ * 
+ * @param cursor 
+ * @return ReplyStatus 
+ */
 ReplyStatus list_handler(char** cursor);
 
 /**
- * @brief Shows event details by sending TCP request to server and handling the response.
- * PROTOCOL: SED <eid>
+ * @brief Shows the details of a specific event.
  * 
- * RECEIVES: ERR server could not find event
- *           RSE NOK no events or problems retrieving events from server
- *           RSE OK [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]       
+ * USER INPUT: show <eid>
+ * 
+ * USER PROTOCOL: SED <eid>
+ * 
+ * SERVER PROTOCOL: RSE status [UID name event_date attendance_size Seats_reserved Fname
+ * Fsize Fdata]
+ * 
+ * @param cursor 
+ * @return ReplyStatus 
  */
 ReplyStatus show_handler(char** cursor);
+
+/**
+ * @brief Reserve seats for an event.
+ * 
+ * USER INPUT: reserve <eid> <num_seats>
+ * 
+ * USER PROTOCOL: RID UID password EID people.
+ * 
+ * SEVER PROTOCOL: RRI status [ n_seats ]*.
+ * 
+ * @param cursor 
+ * @return ReplyStatus 
+ */
+ReplyStatus reserve_handler(char** cursor);
 
 // ---------- messages.c ----------
 void usage(const char *prog_name);
@@ -74,14 +195,15 @@ ReplyStatus tcp_send_receive(char* request,  char* response, size_t response_siz
 
 
 // ---------- user_parser.c ---------- 
+ReplyStatus parse_eid(char **cursor, char* eid);
+ReplyStatus parse_login(char **cursor, char* uid, char* password);
+ReplyStatus parse_reserve(char **cursor, char* eid, char* num_seats);
 ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
-                            char* date, char* num_seats);   
-ReplyStatus parse_close(char** cursor,  char* eid);
+                             char* date, char* num_seats);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
                                  char* new_password, char* current_password);                         
 ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
                               char* event_day, char* event_time);                              
-ReplyStatus parse_show(char** cursor, char* eid);
 
 
                                        

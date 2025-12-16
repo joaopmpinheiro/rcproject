@@ -31,7 +31,7 @@ int parse_cmd(char **cursor, char* cmd) {
 	return SUCCESS;
 }
 
-ReplyStatus parse_uid(char **cursor, char* uid) {
+/*ReplyStatus parse_uid(char **cursor, char* uid) {
 	if (get_next_arg(cursor, uid) == ERROR) return STATUS_INVALID_ARGS;
 	if (verify_uid_format(uid) == INVALID) return STATUS_INVALID_UID;
 	return STATUS_UNASSIGNED;
@@ -78,6 +78,16 @@ ReplyStatus parse_file_name(char **cursor, char* filename) {
 	if (err == ERROR) return STATUS_INVALID_ARGS;
 	if (!verify_file_name_format(filename)) return STATUS_INVALID_FILE;
 	return STATUS_UNASSIGNED;
+}
+
+int convert_to_3_digit(char* str, char* output) {
+    if (!is_number(str)) return ERROR;
+    
+    int number = atoi(str);
+    if (number < 0 || number > 999) return ERROR;
+    
+    snprintf(output, 4, "%03d", number);
+    return SUCCESS;
 }
 
 /* ReplyStatus parse_file_size(char **cursor, size_t *file_size) {

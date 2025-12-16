@@ -36,7 +36,6 @@ RequestType identify_command(char* command) {
     return UNKNOWN;
 }
 
-
 const char* get_command_name(RequestType command) {
     switch (command) {
         case LOGIN: return "Login";
@@ -139,7 +138,6 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
         case UNREGISTER:
             status = unregister_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
-        
         case LOGOUT:
             status = logout_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
             break;
@@ -153,7 +151,6 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             exit(0);
             break;
         case CREATE:
-            // Handle create event
             status = create_event_handler(cursor, &extra_info);
             break;
         case CLOSE:
@@ -169,7 +166,7 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             status = show_handler(cursor);
             break;
         case RESERVE:
-            // Handle reserve event
+            status = reserve_handler(cursor);
             break;
         case MYRESERVATIONS:
             // Handle my reservations
