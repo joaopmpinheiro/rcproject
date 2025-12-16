@@ -118,6 +118,8 @@ ReplyStatus parse_status_code(const char* status) {
     if (strcmp(status, "SLD") == 0) return STATUS_EVENT_SOLD_OUT;
     if (strcmp(status, "PST") == 0) return STATUS_PAST_EVENT;
     if (strcmp(status, "CLO") == 0) return STATUS_EVENT_CLOSED;
+    if (strcmp(status, "ACC") == 0) return STATUS_EVENT_RESERVED;
+    if (strcmp(status, "REJ") == 0) return STATUS_MALFORMED_COMMAND;
     return STATUS_UNEXPECTED_RESPONSE;
 }
 

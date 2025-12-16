@@ -214,7 +214,6 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 
 // ------------- TCP -------------
 
-
 ReplyStatus changepass_handler(char** cursor) {
     // Verify arguments
     char new_password[PASSWORD_LENGTH + 1], old_password[PASSWORD_LENGTH + 1];
@@ -401,17 +400,32 @@ ReplyStatus reserve_handler(char** cursor) {
     if (status != STATUS_UNASSIGNED) return status;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
+    char padded_eid[4];
+    if (convert_to_3_digit(eid, padded_eid) == ERROR)
+        return STATUS_INVALID_EID;
+
+    fprintf(stderr, "Reserving %s seats for event %s\n", num_seats, eid);
+
     // PROTOCOL: RID <uid> <password> <EID> <people>.
     char request[256], response[256];
     snprintf(request, sizeof(request), "RID %s %s %s %s\n",
-             current_uid, current_password, eid, num_seats);
+             current_uid, current_password, padded_eid, num_seats);
 
-    status = tcp_send_receive(request, response, 256);
-    if(status != STATUS_UNASSIGNED) return status;
+    int tcp_fd = connect_tcp(IP, PORT);
+    if (tcp_fd == -1) return STATUS_SEND_FAILED;
+    
+    // Send request header to server
+    if (tcp_send_message(tcp_fd, request) == ERROR) {
+        close(tcp_fd);
+        return STATUS_SEND_FAILED;
+    }
+    status = read_cmd_status(tcp_fd, RESERVE);
+    if(status != STATUS_OK){
+        close(tcp_fd);
+        return status;  
+    }
 
-    char response_code[4], reply_status[4];
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, RESERVE, parsed, 2, reply_status);
-
-    return status;
+    show_event_reservations(tcp_fd);
+    close(tcp_fd);
+    return STATUS_CUSTOM_OUTPUT;
 }

@@ -105,4 +105,13 @@ int verify_file_name_format(char* file_name);
  * @return int VALID if the file size is valid, INVALID otherwise.
  */
 int verify_file_size(char* file_size);
+
+/**
+ * @brief Converts a numeric string to a 3-digit zero-padded string.
+ * 
+ * @param str 
+ * @param out 
+ * @return int 
+ */
+int convert_to_3_digit(const char* str, char* out);
 #endif

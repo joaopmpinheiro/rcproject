@@ -66,10 +66,19 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
                     printf("%s failed: Event could not be created\n", cmd_name);
                     break;
                 case CLOSE:
-                    printf("%s failed: Event does not exist or wrong password\n", cmd_name);
+                    printf("%s failed: User does not exist or wrong password\n", cmd_name);
                     break;
                 case LIST:
                     printf("%s: No event was created\n", cmd_name);
+                    break;
+                case SHOW:
+                    printf("%s failed: No file or event does not exist\n", cmd_name);
+                    break;
+                case MYRESERVATIONS:
+                    printf("%s: User has no reservations\n", cmd_name);
+                    break;
+                case RESERVE:
+                    printf("%s failed: Event  not active\n", cmd_name);
                     break;
                 default:
                     printf("%s failed\n", cmd_name);
@@ -103,8 +112,12 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
         case STATUS_EVENT_CLOSED:
             printf("%s failed: Event was already closed\n", cmd_name);
             break;      
+        case STATUS_EVENT_RESERVED:
+            printf("%s successful: Seats successfully reserved\n", cmd_name);
+            break;      
         case STATUS_MALFORMED_COMMAND:
-
+            printf("%s failed: Malformed command\n", cmd_name);
+            break;
         case STATUS_ERROR:
             printf("%s failed: Server was unable to process the request\n", cmd_name);
             break;
@@ -162,6 +175,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
         case STATUS_ALREADY_LOGGED_IN:
             printf("%s failed: User already logged in\n", cmd_name);
             break;
+        case 
             
         // Special cases - no printing needed
         case STATUS_CUSTOM_OUTPUT:
@@ -201,7 +215,7 @@ void show_events_list(int tcp_fd) {
     printf("\n%-5s %-20s %-12s %-20s\n", "EID", "Name", "State", "Date & Time");
     printf("------------------------------------------------------------\n");
     
-    status = parse_events_list(tcp_fd, eid, name, state, event_day, event_time);
+    status = read_events_list(tcp_fd, eid, name, state, event_day, event_time);
     while (status == STATUS_UNASSIGNED) {
         const char* state_str;
         switch (state[0]) {
@@ -212,7 +226,12 @@ void show_events_list(int tcp_fd) {
             default: state_str = "Unknown"; break;
         }
         printf("%-5s %-20s %-12s %s %s\n", eid, name, state_str, event_day, event_time);
-        status = parse_events_list(tcp_fd, eid, name, state, event_day, event_time);
+        status = read_events_list(tcp_fd, eid, name, state, event_day, event_time);
     }
+}
+
+void show_event_reservations(int tcp_fd){
+    
+
 }
 

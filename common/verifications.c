@@ -240,3 +240,10 @@ int verify_file_size(char* file_size) {
     return VALID;
 }
 
+int convert_to_3_digit(const char* str, char* out) {
+    if (!is_number(str)) return ERROR;
+    int n = atoi(str);
+    if (n < 0 || n > 999) return ERROR;
+    snprintf(out, 4, "%03d", n);
+    return SUCCESS;
+}

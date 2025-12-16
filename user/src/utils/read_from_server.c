@@ -24,59 +24,6 @@ ReplyStatus read_command(int tcp_fd, char* command, RequestType expected_command
     return STATUS_OK;
 }
 
-ReplyStatus read_status(int tcp_fd, char* status) {
-    if(tcp_read_field(tcp_fd, status, 3) != SUCCESS) return STATUS_RECV_FAILED;
-    return parse_status_code(status);
-}
-
-ReplyStatus read_uid(int tcp_fd, char* uid) {
-    if(tcp_read_field(tcp_fd, uid, UID_LENGTH) != SUCCESS) return STATUS_RECV_FAILED;
-    if (verify_uid_format(uid) == INVALID) return STATUS_INVALID_UID;
-    return STATUS_OK;
-}
-
-ReplyStatus read_eid(int tcp_fd, char* eid) {
-    if(tcp_read_field(tcp_fd, eid, EID_LENGTH) != SUCCESS) return STATUS_RECV_FAILED;
-    if (verify_eid_format(eid) == INVALID) return STATUS_INVALID_EID;
-    return STATUS_OK;
-}
-
-ReplyStatus read_event_name(int tcp_fd, char* event_name) {
-    if(tcp_read_field(tcp_fd, event_name, MAX_EVENT_NAME) != SUCCESS) return STATUS_RECV_FAILED;
-    if (!verify_event_name_format(event_name)) return STATUS_INVALID_EVENT_NAME;
-    return STATUS_OK;
-}
-
-ReplyStatus read_event_date(int tcp_fd, char* event_date) {
-    char day_str[DAY_STR_SIZE + 1];
-    char time_str[TIME_STR_SIZE + 1];
-
-    if(tcp_read_field(tcp_fd, day_str, DAY_STR_SIZE) != SUCCESS) return STATUS_RECV_FAILED;
-    if(tcp_read_field(tcp_fd, time_str, TIME_STR_SIZE) != SUCCESS) return STATUS_RECV_FAILED;
-
-    snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", day_str, time_str);
-    if (!verify_event_date_format(event_date)) return STATUS_INVALID_EVENT_DATE;
-    return STATUS_OK;
-}
-
-ReplyStatus read_seat_count(int tcp_fd, char* seat_count) {
-    if(tcp_read_field(tcp_fd, seat_count, SEAT_COUNT_LENGTH) != SUCCESS) return STATUS_RECV_FAILED;
-    if (!verify_seat_count(seat_count)) return STATUS_INVALID_SEAT_COUNT;
-    return STATUS_OK;
-}
-
-ReplyStatus read_file_name(int tcp_fd, char* file_name) {
-    if(tcp_read_field(tcp_fd, file_name, FILE_NAME_LENGTH) != SUCCESS) return STATUS_RECV_FAILED;
-    if (!verify_file_name_format(file_name)) return STATUS_INVALID_FILE;
-    return STATUS_OK;
-}
-
-ReplyStatus read_file_size(int tcp_fd, char* file_size) {
-    if(tcp_read_field(tcp_fd, file_size, FILE_SIZE_LENGTH) != SUCCESS) return STATUS_RECV_FAILED;
-    if (!verify_file_size(file_size)) return STATUS_INVALID_FILE;
-    return STATUS_OK;
-}
-
 ReplyStatus read_cmd_status(int tcp_fd, RequestType expected_command) {
     char command[COMMAND_LENGTH + 1];
     char rep_status[4];
@@ -91,6 +38,7 @@ ReplyStatus read_cmd_status(int tcp_fd, RequestType expected_command) {
 
     // Response status
     if(tcp_read_field(tcp_fd, rep_status, 3) != SUCCESS) return STATUS_RECV_FAILED;
+    fprintf(stderr, "Received status code: %s for command %s\n", rep_status, command);
     return parse_status_code(rep_status);
 }
 
@@ -112,21 +60,21 @@ ReplyStatus read_show_response_header(int tcp_fd,
        tcp_read_field(tcp_fd, reserved_seats, SEAT_COUNT_LENGTH) != SUCCESS ||
        tcp_read_field(tcp_fd, file_name, FILE_NAME_LENGTH) != SUCCESS ||
        tcp_read_field(tcp_fd, file_size, FILE_SIZE_LENGTH) != SUCCESS){
-        return STATUS_RECV_FAILED;
+        return STATUS_MALFORMED_RESPONSE;
     }
     snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", str_day, str_time);
-    if (!verify_uid_format(uid)) return STATUS_INVALID_UID;
-    if (!verify_event_name_format(event_name)) return STATUS_INVALID_EVENT_NAME;
-    if (!verify_event_date_format(event_date)) return STATUS_INVALID_EVENT_DATE;
-    if (!verify_seat_count(attendance_size)) return STATUS_INVALID_SEAT_COUNT;
-    if (!verify_reserved_seats(reserved_seats, attendance_size)) return STATUS_INVALID_SEAT_COUNT;
-    if (!verify_file_name_format(file_name)) return STATUS_INVALID_FILE;
-    if (!verify_file_size(file_size)) return STATUS_INVALID_FILE;
+    if(!verify_uid_format(uid) ||
+       !verify_event_name_format(event_name) ||
+       !verify_event_date_format(event_date) ||
+       !verify_seat_count(attendance_size) ||
+       !verify_reserved_seats(reserved_seats, attendance_size) ||
+       !verify_file_name_format(file_name) ||
+       !verify_file_size(file_size)) return STATUS_MALFORMED_RESPONSE;
     return STATUS_OK;
 }    
 
 //TODO: reconhecer diferencas entre EOM e ERROR
-ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
+ReplyStatus read_events_list(int fd_tcp, char* eid, char* name, char* state,
                               char* event_day, char* event_time) {
                                 
     if(tcp_read_field(fd_tcp, eid, EID_LENGTH) != SUCCESS)
@@ -138,6 +86,14 @@ ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
     if(tcp_read_field(fd_tcp, event_day, DAY_STR_SIZE) != SUCCESS)
         return STATUS_MALFORMED_RESPONSE;   
     if(tcp_read_field(fd_tcp, event_time, TIME_STR_SIZE) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;
+    return STATUS_UNASSIGNED;
+}
+
+ReplyStatus read_reserve_seats(int tcp_fd, char* seats) {
+    if (tcp_read_field(tcp_fd, NULL, 0) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;
+    if(!verify_seat_count(seats))
         return STATUS_MALFORMED_RESPONSE;
     return STATUS_UNASSIGNED;
 }

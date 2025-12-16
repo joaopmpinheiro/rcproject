@@ -25,6 +25,7 @@ typedef enum ReplyStatus {
     // Success statuses
     STATUS_OK,              // Operation successful
     STATUS_REGISTERED,      // REG - new user registered (login)
+    STATUS_EVENT_RESERVED, // ACC - seats successfully reserved
     
     // Server error statuses (from protocol)
     STATUS_NOK,             // NOK - Generic failure
@@ -37,6 +38,7 @@ typedef enum ReplyStatus {
     STATUS_EVENT_SOLD_OUT,    // SLD - event is sold out
     STATUS_PAST_EVENT,    // PST - event date has already passed
     STATUS_EVENT_CLOSED, // CLO - event was already closed
+    STATUS_EVENT_RESERVATION_REJECTION, // REJ - seats reservation rejected
 
     STATUS_MALFORMED_COMMAND, // Command not recognized
     

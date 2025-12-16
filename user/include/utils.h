@@ -204,19 +204,13 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
                              char* date, char* num_seats);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
                                  char* new_password, char* current_password);                         
-ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
-                              char* event_day, char* event_time);                              
+                            
 
 
                                        
 // ---------- read_from_server.c ----------
 
 ReplyStatus read_command(int tcp_fd, char* command, RequestType expected_command);
-ReplyStatus read_status(int tcp_fd, char* status);
-ReplyStatus read_uid(int tcp_fd, char* uid);
-ReplyStatus read_eid(int tcp_fd, char* eid);
-ReplyStatus read_event_name(int tcp_fd, char* event_name);
-ReplyStatus read_event_date(int tcp_fd, char* event_date);
 
 /**
  * @brief Reads the command and status from the server. Verifies they match the~
@@ -232,5 +226,6 @@ ReplyStatus read_show_response_header(int tcp_fd,
                                        char* event_date, char* attendance_size,
                                        char* reserved_seats, char* file_name,
                                        char* file_size);
-
+ReplyStatus read_events_list(int fd_tcp, char* eid, char* name, char* state,
+                              char* event_day, char* event_time);  
 #endif
