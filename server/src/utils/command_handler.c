@@ -173,9 +173,11 @@ void change_password_handler(){
 }
 
 // Helper function to read a field or send a error and close connection in create_event_handler
-static int read_field_or_error(int fd, char* dst, size_t len) {
+static int read_field_or_error(int fd, char* dst, size_t len, char* code) {
+    char response[16] = {0};
     if (tcp_read_field(fd, dst, len) == ERROR) {
-        tcp_write(fd, "RCE ERR\n", 8);
+        snprintf(response, sizeof(response), "%s ERR\n", code);
+        tcp_write(fd, response, strlen(response));
         close(fd);
         return ERROR;
     }
@@ -203,50 +205,63 @@ void create_event_handler(Request* req){
     size_t file_size;
     char* file_content = NULL;
 
+    char protocol[4] = "RCE";
+
     int fd = req->client_socket;
 
     // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <seat_count> 
     // <file_name> <file_size> <file_content>
-    // Note: req->buffer only contains "CRE", rest must be read from socket
-
     // TODO VER CASO DO EOM AQUI
-    if (read_field_or_error(fd, UID, UID_LENGTH) == ERROR) return;
-    if (read_field_or_error(fd, password, PASSWORD_LENGTH) == ERROR) return;
-    if (read_field_or_error(fd, event_name, MAX_EVENT_NAME) == ERROR) return;
+    int field_status;
+    field_status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
+
+    field_status = read_field_or_error(fd, password, PASSWORD_LENGTH, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
+
+    field_status = read_field_or_error(fd, event_name, MAX_EVENT_NAME, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
 
     // Read event_date (16 chars: DD-MM-YYYY HH:MM)
     // Date has a space in it, so we need to read date and time separately
     char date_part[11]; // DD-MM-YYYY
     char time_part[6];  // HH:MM
-    if (read_field_or_error(fd, date_part, 10) == ERROR) return;
-    if (read_field_or_error(fd, time_part, 5) == ERROR) return;
+    field_status = read_field_or_error(fd, date_part, 10, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
+
+    field_status = read_field_or_error(fd, time_part, 5, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
+
     snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_part, time_part);
 
     // Read seat_count (max 3 digits)
-    if (read_field_or_error(fd, seat_count, 3) == ERROR) return;
-    if (read_field_or_error(fd, file_name, FILE_NAME_LENGTH) == ERROR) return;
-    if (read_field_or_error(fd, file_size_str, FILE_SIZE_LENGTH) == ERROR) return;
-    file_size = (size_t)atol(file_size_str);
+    field_status = read_field_or_error(fd, seat_count, 3, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
 
-    // Validate file_size
-    if (file_size == 0 || file_size > MAX_FILE_SIZE) {
+    field_status = read_field_or_error(fd, file_name, FILE_NAME_LENGTH, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
+
+    field_status = read_field_or_error(fd, file_size_str, FILE_SIZE_LENGTH, protocol);
+    if (field_status == ERROR || field_status == EOM) return;
+
+    if (!verify_file_size(file_size_str)) {
         tcp_write(fd, "RCE ERR\n", 8);
         close(fd);
         return;
     }
 
-    if(set.verbose) {
-        // FIXME TODO: criar log_server e mudar TODAS as mensagens de debug para UID e IP não port (dito pelo branquinho)
-        printf("Handling create event (CRE), from user with UID %s, using port %s\n", UID, set.port);
-    }
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling create event (CRE), from user with UID %s, using port %s\n", UID, set.port);
+    server_log(log);
     
     // Validate all fields
     if (!verify_uid_format(UID) ||
-    !verify_password_format(password) ||
-    !verify_event_name_format(event_name) ||
-    !verify_event_date_format(event_date) ||
-    !verify_seat_count(seat_count) ||
-    !verify_file_name_format(file_name)) {
+        !verify_password_format(password) ||
+        !verify_event_name_format(event_name) ||
+        !verify_event_date_format(event_date) ||
+        !verify_seat_count(seat_count) ||
+        !verify_file_name_format(file_name)) {
         tcp_write(fd, "RCE ERR\n", 8);
         close(fd);
         return;
@@ -265,6 +280,7 @@ void create_event_handler(Request* req){
     }
 
     // Allocate buffer for file content
+    file_size = (size_t)atol(file_size_str);
     file_content = (char*)malloc(file_size + 1);
     if (file_content == NULL) {
         tcp_write(fd, "RCE NOK\n", 8);
@@ -287,42 +303,46 @@ void create_event_handler(Request* req){
     }
     file_content[file_size] = '\0';
 
-    // TODO CLEAN UP ESTE DEBUGGING
-    int which_error = 0;
-    if (find_available_eid(EID) == ERROR) printf("Error finding available EID\n"), which_error = 1;
-    printf("EID found: %s\n", EID);
 
-    if (create_eid_dir(atoi(EID)) == ERROR) printf("Error creating EID directory: %s\n", EID), which_error = 5;
-    printf("EID directory created: %s\n", EID);
-
-    if (write_event_start_file(EID, UID, event_name, file_name, seat_count,
-                               event_date) == ERROR) printf("Error writing event start file for EID %s\n", EID), which_error = 2;
-
-    // TODO pode ser preciso por o eid no ficheiro q isto faz tbm
-    if (write_event_information_file(EID, UID, event_name, file_name, seat_count,
-                               event_date) == ERROR) printf("Error writing event information file for EID %s\n", EID), which_error = 6;
-    printf("Event start file written for EID %s\n", EID);
-    if (update_reservations_file(EID, 0) == ERROR) printf("Error updating reservations file for EID %s\n", EID), which_error = 3;
-    printf("Reservations file updated for EID %s\n", EID);
-    if (write_description_file(EID, file_name, file_size, file_content) == ERROR) printf("Error writing description file for EID %s\n", EID), which_error = 4;
-
-    if (which_error != 0) {
-        printf("Error %d occurred while creating event for UID %s\n", which_error, UID);
-        free(file_content);
+    // TODO: funçao de rollback, pensar nisso
+    if (find_available_eid(EID) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
         close(fd);
         return;
     }
 
-//    if (find_available_eid(EID) == ERROR ||
-//        write_event_start_file(EID, UID, event_name, file_name, seat_count,
-//                               event_date) == ERROR ||
-//        update_reservations_file(EID, 0) == ERROR ||
-//        write_description_file(EID, file_name, file_size, file_content) == ERROR) {
-//        tcp_write(fd, "RCE NOK\n", 8);
-//        close(fd);
-//        return;
-//    }
+    if (create_eid_dir(atoi(EID)) == ERROR) {
+        tcp_write(fd, "RCE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (write_event_start_file(EID, UID, event_name, file_name, seat_count,
+                               event_date) == ERROR) {
+        tcp_write(fd, "RCE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    // TODO pode ser preciso por o eid no ficheiro q isto faz tbm
+    if (write_event_information_file(EID, UID, event_name, file_name, seat_count,
+                               event_date) == ERROR) {
+        tcp_write(fd, "RCE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (update_reservations_file(EID, 0) == ERROR) {
+        tcp_write(fd, "RCE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (write_description_file(EID, file_name, file_size, file_content) == ERROR) {
+        tcp_write(fd, "RCE NOK\n", 8);
+        close(fd);
+        return;
+    }
     
     free(file_content);
 
@@ -344,7 +364,91 @@ USER:
 - event is sold out: if the event is fully reserved
 - sucessful event closure
 */
-void close_event_handler(){
+void close_event_handler(Request* req){
+    char UID[UID_LENGTH + 1];
+    char password[PASSWORD_LENGTH + 1];
+    char EID[EID_LENGTH + 1];
+
+    int fd = req->client_socket;
+
+    char protocol[4] = "RCL";
+
+    // PROTOCOL: CLS <uid> <password> <eid>
+    // TODO VER CASO DO EOM AQUI
+    int status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
+    if (status == ERROR || status == EOM) return;
+
+    status = read_field_or_error(fd, password, PASSWORD_LENGTH, protocol);
+    if (status == ERROR || status == EOM) return;
+
+    status = read_field_or_error(fd, EID, MAX_EVENT_NAME, protocol);
+    if (status == ERROR) return;
+
+    // FIXME TODO MUDAR PORT PARA IP
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling close event (CLS), from user with UID %s, using port %s\n", UID, set.port);
+    server_log(log);
+
+    // Validate all fields
+    if (!verify_uid_format(UID) ||
+        !verify_password_format(password) ||
+        !verify_eid_format(EID)) {
+        // TODO, maybe printar logs nestes casos (?)
+        tcp_write(fd, "RCE ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!is_logged_in(UID)) {
+        tcp_write(fd, "RCL NLG\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!verify_correct_password(UID, password) || !user_exists(UID)) {
+        tcp_write(fd, "RCL NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!event_exists(EID)) {
+        tcp_write(fd, "RCL NOE\n", 8);
+        close(fd);
+        return;
+    }
+
+    //    if (!is_event_creator(UID, EID)) {
+    //        tcp_write(fd, "RCL EOW\n", 8);
+    //        close(fd);
+    //        return;
+    //    }
+
+
+//    if (is_event_sold_out(EID)) {
+//        tcp_write(fd, "RCL SLD\n", 8);
+//        close(fd);
+//        return;
+//    }
+
+//    if (is_event_past(EID)) {
+//        tcp_write(fd, "RCL PST\n", 8);
+//        close(fd);
+//        return;
+//    }
+
+//    if (is_event_closed(EID)) {
+//        tcp_write(fd, "RCL CLO\n", 8);
+//        close(fd);
+//        return;
+//    }
+
+    if (write_event_end_file() == ERROR) {
+        tcp_write(fd, "RCL NOK\n", 8);
+        close(fd);
+        return;
+    }
+
 
 }
 

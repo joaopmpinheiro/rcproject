@@ -97,8 +97,8 @@ void change_password_handler();
  * @param req 
  */
 void create_event_handler(Request* req);
-void close_event_handler();
-void show_event_handler();
+void close_event_handler(Request* req);
+void show_event_handler(Request* req);
 void reserve_seats_handler();
 
 
@@ -130,6 +130,13 @@ int find_available_eid(char* eid_str);
 int write_event_start_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
                            const char* event_date);
+
+/**
+ * @brief Writes event end data to EVENTS/{EID}/END_{EID}.txt
+ * 
+ * @return int SUCCESS if file was written successfully, ERROR otherwise
+ */
+int write_event_end_file();
 
 /**
  * @brief Writes event metadata to USERS/CREATED/{EID}.txt file
