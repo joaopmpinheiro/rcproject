@@ -184,7 +184,8 @@ void event_message(char* eid);
 void show_event_details(char* eid, char* uid, char* event_name, char* event_date,
                         char* total_seats, char* reserved_seats,
                         char* file_name, char* file_size);
-void show_events_list(int tcp_fd);                       
+void show_events_list(int tcp_fd);       
+void show_event_reservations(char* seats_left, char* eid);                
 
 
 // ---------- socket_manager.c ----------

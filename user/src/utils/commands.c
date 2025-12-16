@@ -404,10 +404,8 @@ ReplyStatus reserve_handler(char** cursor) {
     if (convert_to_3_digit(eid, padded_eid) == ERROR)
         return STATUS_INVALID_EID;
 
-    fprintf(stderr, "Reserving %s seats for event %s\n", num_seats, eid);
-
     // PROTOCOL: RID <uid> <password> <EID> <people>.
-    char request[256], response[256];
+    char request[256];
     snprintf(request, sizeof(request), "RID %s %s %s %s\n",
              current_uid, current_password, padded_eid, num_seats);
 
@@ -420,12 +418,18 @@ ReplyStatus reserve_handler(char** cursor) {
         return STATUS_SEND_FAILED;
     }
     status = read_cmd_status(tcp_fd, RESERVE);
-    if(status != STATUS_OK){
+    if(status != STATUS_EVENT_RESERVATION_REJECTION){
         close(tcp_fd);
         return status;  
     }
 
-    show_event_reservations(tcp_fd);
+    char seats_left[4];
+    if(tcp_read_field(tcp_fd, seats_left, sizeof(seats_left)) == ERROR ||
+       !verify_reserved_seats(seats_left, "999")) {
+        close(tcp_fd);
+        return STATUS_RECV_FAILED;
+    }
+    show_event_reservations(seats_left, eid);
     close(tcp_fd);
     return STATUS_CUSTOM_OUTPUT;
 }

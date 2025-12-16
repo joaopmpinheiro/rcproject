@@ -174,9 +174,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
             break;
         case STATUS_ALREADY_LOGGED_IN:
             printf("%s failed: User already logged in\n", cmd_name);
-            break;
-        case 
-            
+            break;           
         // Special cases - no printing needed
         case STATUS_CUSTOM_OUTPUT:
             break;
@@ -230,8 +228,7 @@ void show_events_list(int tcp_fd) {
     }
 }
 
-void show_event_reservations(int tcp_fd){
-    
-
+void show_event_reservations(char* seats_left, char* eid){
+    printf("Reserve failed: There is only %s seats available at event with EID: %s \n", seats_left, eid);
 }
 

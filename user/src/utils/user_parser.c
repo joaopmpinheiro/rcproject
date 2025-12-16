@@ -69,6 +69,6 @@ ReplyStatus parse_reserve(char **cursor, char* eid, char* num_seats) {
        is_end_of_message(cursor) == ERROR)
         return STATUS_INVALID_ARGS;
     if(!verify_eid_format(eid)) return STATUS_INVALID_EID;
-    if(!verify_seat_count(num_seats)) return STATUS_INVALID_SEAT_COUNT;
+    if(!verify_reserved_seats(num_seats, "999")) return STATUS_INVALID_SEAT_COUNT;
     return STATUS_UNASSIGNED;    
 }
