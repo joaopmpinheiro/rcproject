@@ -232,3 +232,21 @@ void show_event_reservations(char* seats_left, char* eid){
     printf("Reserve failed: There is only %s seats available at event with EID: %s \n", seats_left, eid);
 }
 
+ReplyStatus show_myreservations(char* cursor_lst){
+    char eid[4], event_date[EVENT_DATE_LENGTH + 1], seats_reserved[4];
+    printf("Your reservations:\n");
+    printf("%-5s %-20s %-10s\n", "EID", "Date & Time", "Seats Reserved");
+    printf("---------------------------------------------------------------\n");
+
+    ReplyStatus status = STATUS_UNASSIGNED;
+    status = parse_reservations(&cursor_lst, eid, event_date, seats_reserved);
+    while (status == STATUS_UNASSIGNED) {
+        printf("%-5s %-20s %-10s\n", eid, event_date, seats_reserved);
+        status = parse_reservations(&cursor_lst, eid, event_date, seats_reserved);
+    }
+    // TODO corrigir pq isto tem 
+    if(status == STATUS_MALFORMED_RESPONSE){
+        return STATUS_MALFORMED_RESPONSE;
+    }
+    return STATUS_CUSTOM_OUTPUT;
+}

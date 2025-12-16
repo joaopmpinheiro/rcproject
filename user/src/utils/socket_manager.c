@@ -87,7 +87,6 @@ ReplyStatus udp_send_receive(int udp_fd, struct sockaddr_in* server_udp_addr,
     return STATUS_UNASSIGNED;
 }
 
-
 ReplyStatus tcp_send_receive(char* message, char* response, 
                             size_t response_size) {
     int tcp_fd = connect_tcp(IP, PORT);

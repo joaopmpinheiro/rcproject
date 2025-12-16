@@ -228,36 +228,20 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
     response[n] = '\0';
     char response_code[4];
     char reply_status[4];
+    char event_list[8192];
 
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-    if (strcmp(response_code, "RMR") != 0) return STATUS_UNEXPECTED_RESPONSE;
-    ReplyStatus status = parse_status_code(reply_status);
     // PROTOCOL: RMR <status> [<event1ID name event_date seats_reserved> ...]
-    if (status == STATUS_OK) {
-        char* event_list = response + 7;
-        printf("Your reservations:\n");
-        printf("%-5s %-20s %-20s %-10s\n", "EID", "Name", "Date & Time", "Seats Reserved");
-        printf("---------------------------------------------------------------\n");
-        if (strlen(event_list) == 0) {
-            printf("(no reservations)\n");
-            return STATUS_CUSTOM_OUTPUT;
-        }
-        char eid[4], name[MAX_EVENT_NAME + 1], event_date[EVENT_DATE_LENGTH + 1], seats_reserved[4];
-        int offset = 0;
-        int chars_read;
-        while (sscanf(event_list + offset, " %3s %20s %20[0-9-: ] %3s%n", eid, name, event_date, seats_reserved, &chars_read) == 4) {
-            // Validate EID format (3 digits)
-            if (strlen(eid) != 3) {
-                printf("Warning: Invalid EID format in response\n");
-                break;
-            }
-            printf("%-5s %-20s %-20s %-10s\n", eid, name, event_date, seats_reserved);
-            offset += chars_read;
-        }
-    }  
-    return STATUS_CUSTOM_OUTPUT;
-}   
+    int parsed = sscanf(response, "%3s %3s %[^\n]", response_code, reply_status, event_list);
+    if(parsed < 1) return STATUS_RECV_FAILED;
+    RequestType cmd = identify_command_response(response_code);
+    if(cmd == ERROR_REQUEST) return CMD_ERROR;
+    if(cmd != MYRESERVATIONS) return STATUS_UNEXPECTED_RESPONSE;
+    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
+    ReplyStatus status = parse_status_code(reply_status);
+    if(status != STATUS_OK) return status;
+    char *cursor_lst = event_list;
+    return show_myreservations(cursor_lst);
+}  
 
 
 // ------------- TCP -------------

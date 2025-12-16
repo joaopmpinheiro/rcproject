@@ -206,7 +206,8 @@ void show_event_details(char* eid, char* uid, char* event_name, char* event_date
                         char* total_seats, char* reserved_seats,
                         char* file_name, char* file_size);
 void show_events_list(int tcp_fd);       
-void show_event_reservations(char* seats_left, char* eid);                
+void show_event_reservations(char* seats_left, char* eid); 
+ReplyStatus show_myreservations(char* cursor_lst);            
 
 
 
@@ -229,7 +230,9 @@ ReplyStatus parse_reserve(char **cursor, char* eid, char* num_seats);
 ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
                              char* date, char* num_seats);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
-                                 char* new_password, char* current_password);                         
+                                 char* new_password, char* current_password); 
+ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
+                              char* seats_reserved);                     
                             
 
 
