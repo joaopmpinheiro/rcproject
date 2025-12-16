@@ -27,24 +27,24 @@ void parse_arguments(int argc, char *argv[]) {
         switch (opt) {
             case 'p':
                 if (optarg[0] == '-') {
-                    fprintf(stderr, "Error: -p requires a port number\n");
+                    fprintf(stdout, "Error: -p requires a port number\n");
                     usage(argv[0]);
                     exit(EXIT_FAILURE);
                 }
                 if(!is_valid_port(optarg)) {
-                    fprintf(stderr, "Error: Invalid port number\n");
+                    fprintf(stdout, "Error: Invalid port number\n");
                     exit(EXIT_FAILURE);
                 }
                 strcpy(PORT, optarg);
                 break;
             case 'n':
                 if (optarg[0] == '-') {
-                    fprintf(stderr, "Error: -n requires a hostname or IP\n");
+                    fprintf(stdout, "Error: -n requires a hostname or IP\n");
                     usage(argv[0]);
                     exit(EXIT_FAILURE);
                 }
                 if (strlen(optarg) >= sizeof(IP)) {
-                    fprintf(stderr, "Error: Hostname too long\n");
+                    fprintf(stdout, "Error: Hostname too long\n");
                     exit(EXIT_FAILURE);
                 }
                 strcpy(IP, optarg);

@@ -36,7 +36,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     // Verify arguments
     ReplyStatus status;
     char uid[32], password[32];
-    status = parse_uid(cursor, uid);
+    status = parse_login(cursor, uid, password);
     if (status != STATUS_UNASSIGNED) return status;
 
     // PROTOCOL: LIN <uid> <password>
@@ -107,8 +107,7 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
 
     // PROTOCOL: LOU <uid> <password>
     snprintf(request, sizeof(request), "LOU %s %s\n", current_uid, current_password);
-    fprintf(stderr, "Logout request: %s", request);
-
+    
     // Send request to server and receive response
     ReplyStatus status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
                                 request, response, response_size);

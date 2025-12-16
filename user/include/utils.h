@@ -18,7 +18,7 @@ const char* get_command_code(RequestType command);
 RequestType identify_command_response(char* command);
 
 
-// ------------ commands.c -------------
+// ---------------- commands.c -----------------
 int verify_file(char* file_name);
 
 /**
@@ -93,7 +93,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 /**
  * @brief Changes the password of the logged-in user.
  * 
- * USER INPUT: changepass old_password new_password
+ * USER INPUT: changePass old_password new_password
  * 
  * USER PROTOCOL: CPS UID oldPassword newPassword
  * 

@@ -4,9 +4,9 @@
 #include <stdio.h>
 
 void usage(const char *prog_name) {
-    fprintf(stderr, "Usage: %s [-n server_ip] [-p server_port]\n", prog_name);
-    fprintf(stderr, "  -n server_ip    Specify the server IP address\n");
-    fprintf(stderr, "  -p server_port  Specify the server port number\n");
+    fprintf(stdout, "Usage: %s [-n server_ip] [-p server_port]\n", prog_name);
+    fprintf(stdout, "  -n server_ip    Specify the server IP address\n");
+    fprintf(stdout, "  -p server_port  Specify the server port number\n");
 }
 
 void print_result(RequestType command, ReplyStatus status, char* extra_info) {
