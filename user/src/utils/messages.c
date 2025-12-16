@@ -187,3 +187,27 @@ void show_event_details(char* eid, char* uid, char* event_name, char* event_date
     printf("File Size:        %s bytes\n", file_size);
     printf("===================================\n\n");
 }
+
+void show_events_list(int tcp_fd) {
+    ReplyStatus status;
+    char eid[4], name[MAX_EVENT_NAME + 1];
+    char state[2];
+    char event_day[EVENT_DATE_LENGTH + 1], event_time[EVENT_DATE_LENGTH + 1];
+    
+    printf("\n%-5s %-20s %-12s %-20s\n", "EID", "Name", "State", "Date & Time");
+    printf("------------------------------------------------------------\n");
+    
+    status = parse_events_list(tcp_fd, eid, name, state, event_day, event_time);
+    while (status == STATUS_UNASSIGNED) {
+        const char* state_str;
+        switch (state[0]) {
+            case '0': state_str = "Past"; break;
+            case '1': state_str = "Active"; break;
+            case '2': state_str = "Sold out"; break;
+            case '3': state_str = "Closed"; break;
+            default: state_str = "Unknown"; break;
+        }
+        printf("%-5s %-20s %-12s %s %s\n", eid, name, state_str, event_day, event_time);
+        status = parse_events_list(tcp_fd, eid, name, state, event_day, event_time);
+    }
+}

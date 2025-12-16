@@ -107,7 +107,7 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
 
     // PROTOCOL: LOU <uid> <password>
     snprintf(request, sizeof(request), "LOU %s %s\n", current_uid, current_password);
-    
+
     // Send request to server and receive response
     ReplyStatus status = udp_send_receive(udp_fd, server_udp_addr, udp_addr_len,
                                 request, response, response_size);
@@ -337,27 +337,8 @@ ReplyStatus list_handler(char** cursor) {
         close(tcp_fd);
         return status;  
     }
-    
-    // Print list 
-    char eid[4], name[MAX_EVENT_NAME + 1];
-    char state = 0;
-    char event_day[EVENT_DATE_LENGTH + 1], event_time[EVENT_DATE_LENGTH + 1];
-    
-    printf("%s %s %s %s\n", "EID", "Name", "State", "Day");
-    printf("-------------------------------------------------------------\n");
-    status = parse_events_list(tcp_fd, eid, name, &state, event_day, event_time);
-    while (status == STATUS_UNASSIGNED) {
-        const char* state_str;
-        switch (state) {
-            case '0': state_str = "Past"; break;
-            case '1': state_str = "Active"; break;
-            case '2': state_str = "Sold out"; break;
-            case '3': state_str = "Closed"; break;
-            default: state_str = "Unknown"; break;
-        }
-        printf("%s %s %s %s %s\n", eid, name, state_str, event_day, event_time);
-        status = parse_events_list(tcp_fd, eid, name, &state, event_day, event_time);
-    }
+
+    show_events_list(tcp_fd);
     close(tcp_fd);
     return STATUS_CUSTOM_OUTPUT;
 }

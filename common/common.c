@@ -99,7 +99,7 @@ int tcp_read_field(int fd, char* buffer, size_t max_len) {
         }
         buffer[i++] = c;
     }
-    buffer[max_len] = '\0';
+    buffer[i] = '\0';
     return SUCCESS;
 }
 

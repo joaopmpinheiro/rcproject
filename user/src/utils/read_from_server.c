@@ -125,16 +125,19 @@ ReplyStatus read_show_response_header(int tcp_fd,
     return STATUS_OK;
 }    
 
+//TODO: reconhecer diferencas entre EOM e ERROR
 ReplyStatus parse_events_list(int fd_tcp, char* eid, char* name, char* state,
                               char* event_day, char* event_time) {
-    int is_end = tcp_read_field(fd_tcp, eid, EID_LENGTH + 1);
-    if(is_end == ERROR) return STATUS_MALFORMED_RESPONSE;
-    if(is_end == EOM) return STATUS_EOM;
-    if(tcp_read_field(fd_tcp, name, MAX_EVENT_NAME + 1) != SUCCESS) return STATUS_MALFORMED_RESPONSE;
-    if(tcp_read_field(fd_tcp, state, 2) != SUCCESS) return STATUS_MALFORMED_RESPONSE;
-    if(tcp_read_field(fd_tcp, event_day, DAY_STR_SIZE + 1) != SUCCESS) return STATUS_MALFORMED_RESPONSE;   
-    is_end = tcp_read_field(fd_tcp, event_time, TIME_STR_SIZE + 1);
-    if(is_end == ERROR) return STATUS_MALFORMED_RESPONSE;
-    if(is_end == EOM) return STATUS_EOM;
+                                
+    if(tcp_read_field(fd_tcp, eid, EID_LENGTH) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;
+    if(tcp_read_field(fd_tcp, name, MAX_EVENT_NAME) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;
+    if(tcp_read_field(fd_tcp, state, 2) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;
+    if(tcp_read_field(fd_tcp, event_day, DAY_STR_SIZE) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;   
+    if(tcp_read_field(fd_tcp, event_time, TIME_STR_SIZE) != SUCCESS)
+        return STATUS_MALFORMED_RESPONSE;
     return STATUS_UNASSIGNED;
 }

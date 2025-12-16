@@ -183,6 +183,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info);
 void show_event_details(char* eid, char* uid, char* event_name, char* event_date,
                         char* total_seats, char* reserved_seats,
                         char* file_name, char* file_size);
+void show_events_list(int tcp_fd);                       
 
 
 // ---------- socket_manager.c ----------
