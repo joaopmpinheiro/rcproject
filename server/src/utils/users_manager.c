@@ -1,13 +1,21 @@
 #include "../../include/globals.h"
 #include "../../include/utils.h"
 
+/**
+ * @brief 
+ * 
+ * @param UID 
+ * @param password 
+ * @return VALID if password matches,
+ * INVALID otherwise,
+ * ERROR if there was a problem getting the password
+ */
 int verify_correct_password(char* UID, char* password){
     char stored_password[PASSWORD_LENGTH + 1];
 
     if (get_password(UID, stored_password) == ERROR) return ERROR;
 
     if (strcmp(stored_password, password) == 0) return VALID;
-
     return INVALID;
 }
 

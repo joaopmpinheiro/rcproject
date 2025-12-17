@@ -2,6 +2,7 @@
 #include "../../include/globals.h"
 #include "../../common/verifications.h"
 #include "../../common/common.h"
+#include "../../common/parser.h"
 
 
 int verify_uid_password(Request* req) {
@@ -20,12 +21,11 @@ int verify_uid_password(Request* req) {
 }
 
 void handle_udp_request(Request* req) {
-    char command_buff[3] = {0};
-    char command_arg_buffer[BUFFER_SIZE] = {0};
-
+    char *cursor = req->buffer;
+    
     // Get 3-letter command
-    int parsed = sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
-    if (parsed < 1) {
+    char command_buff[COMMAND_LENGTH + 1];
+    if(get_next_arg(&cursor, command_buff) == ERROR){
         send_udp_response("ERR\n", req);
         return;
     }
@@ -38,43 +38,35 @@ void handle_udp_request(Request* req) {
         return;
     }
 
-    // Command known but wrong number of arguments, send CMD ERR
-    if(!verify_argument_count(req->buffer, 3)){
-        // Build error response "CMD ERR\n"
-        char response[16]; 
-        snprintf(response, sizeof(response), "%s ERR\n", command_buff);
-        send_udp_response(response, req);
-        return;
-    }
-
-    char UID[UID_LENGTH + 1];
+    // Get next arguments: UID and password
+    char uid[UID_LENGTH + 1];
     char password[PASSWORD_LENGTH + 1];
-    sscanf(req->buffer, "%3s %6s %8s", command_buff, UID, password);
-
-    // Command known but invalid UID or password format, send CMD ERR
-    if(!verify_uid_format(UID) || !verify_password_format(password)){
+    if(get_next_arg(&cursor, uid) == ERROR ||
+       get_next_arg(&cursor, password) == ERROR ||
+       is_end_of_message(&cursor) == ERROR ||
+       !verify_uid_format(uid) ||
+       !verify_password_format(password)) {
         char response[16]; 
         snprintf(response, sizeof(response), "%s ERR\n", command_buff);
         send_udp_response(response, req);
         return;
     }
 
-
-    if(set.verbose) printf("Handling %s command, from UID: %s, using port %s\n",
-                            command_to_str(command), UID, set.port);
+    if(set.verbose) printf("Handling %s (%s) command, from UID: %s, using port %s\n",
+                            command_to_str(command), command_buff, uid, set.port);
 
     switch (command) {
         case LOGIN:
-            login_handler(req, UID, password);
+            login_handler(req, uid, password);
             break;
         case LOGOUT:
-            logout_handler(req, UID, password);
+            logout_handler(req, uid, password);
             break;
         case UNREGISTER:
-            /* unregister_handler(req, UID, password); */
+            /* unregister_handler(req, uid, password); */
             break;
         case MYEVENTS:
-           /*  myevents_handler(UID, password); */
+           /*  myevents_handler(uid, password); */
             break;
         case MYRESERVATIONS:
 /*             myreservations_handler();
@@ -133,9 +125,16 @@ void login_handler(Request* req, char* UID, char* password) {
         send_udp_response("RLI REG\n", req);
         return;
     }
-
-    get_password(UID, user_password);
-    if (strcmp(password, user_password) != 0) {
+    
+    int status = verify_correct_password(UID, password);
+    // Error verifying password
+    if (status == ERROR) {
+        send_udp_response("RLI ERR\n", req);
+        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
+        return;
+    }
+    // Incorrect password
+    if (status == INVALID) {
         send_udp_response("RLI NOK\n", req);
         return;
     }
@@ -144,30 +143,50 @@ void login_handler(Request* req, char* UID, char* password) {
     send_udp_response("RLI OK\n", req);
 }
 
-/** LOU UID password
- * RLO OK - successful logout
+/**
+ * @brief Handles logout request: LOU UID password
+ * 
+ * Sends to user:
+ * RLO OK - successful logout,
+ * RLO UNR - user was not registered
  * RLO NOK - user not logged in
- * RLO UNK - user was not registered
-**/
+ * RLO WRP - wrong password
+ * 
+ * @param req The UDP request to handle.
+ * @param UID User ID
+ * @param password User password
+ */
 void logout_handler(Request* req, char* UID, char* password) {
-    sscanf(req->buffer, "LOU %s %s", UID, password);
 
-    if(set.verbose){
-        printf("Handling logout (LOU), from user with UID %s, using port %s\n",UID, set.port);
-    }
-
+    // User not registered
     if (!user_exists(UID)) {
-        send_udp_response("RLO UNK\n", req);
+        send_udp_response("RLO UNR\n", req);
         return;
     }
 
+    // User not logged in
     if (!is_logged_in(UID)) {
         send_udp_response("RLO NOK\n", req);
         return;
     }
 
-/*     remove_login(UID);
- */    send_udp_response("RLO OK\n", req);
+    int status = verify_correct_password(UID, password);
+
+    // Error verifying password
+    if (status == ERROR) {
+        send_udp_response("RLO ERR\n", req);
+        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
+        return;
+    }
+
+    // Incorrect password
+    if (status == INVALID) {
+        send_udp_response("RLO WRP\n", req);
+        return;
+    }
+
+    erase_login(UID);
+    send_udp_response("RLO OK\n", req);
 
 }
 
