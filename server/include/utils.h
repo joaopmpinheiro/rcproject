@@ -112,7 +112,6 @@ int is_dir_empty(const char* path);
 char* read_file(const char* filename);
 int file_exists(const char* filename);
 char* read_file(const char* filename);
-int dir_exists(const char* path);
 int remove_directory(const char *path);
 
 /**
@@ -201,7 +200,6 @@ int event_exists(char* EID);
 int is_event_creator(char* UID, char* EID);
 int is_event_sold_out(char* EID);
 int is_event_past(char* EID);
-int is_event_closed(char* EID);
 int create_eid_dir (int EID);
 int is_event_closed(char* EID);
 

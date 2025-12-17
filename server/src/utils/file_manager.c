@@ -96,13 +96,6 @@ char* read_file(const char* filename) {
     return buffer;
 }
 
-int dir_exists(const char* path) {
-    struct stat info;
-
-    if (stat(path, &info) != 0) return INVALID;
-    else if (S_ISDIR(info.st_mode)) return VALID;
-    return INVALID;
-}
 
 int remove_directory(const char *path) {
     return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS) ? ERROR : SUCCESS;

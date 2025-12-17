@@ -285,7 +285,7 @@ int send_list_of_user_events(char* UID, Request* req){
                  "%s/%s", path, entry->d_name);
         
         // 🔥 EVENT FOUND → send it
-        send_udp(entry->d_name);
+        /* send_udp(entry->d_name); */
     }
 
     closedir(dir);

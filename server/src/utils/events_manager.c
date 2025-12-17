@@ -120,12 +120,6 @@ int is_event_past(char* EID){
     return INVALID;    // Event is in the future
 }
 
-int is_event_closed(char* EID){
-    char event_end_fname[30];
-    sprintf(event_end_fname, "EVENTS/%s/END_%s.txt", EID, EID);
-    return file_exists(event_end_fname);
-}
-
 
 int create_eid_dir (int EID){
     char EID_dirname[15];
