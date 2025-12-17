@@ -99,6 +99,7 @@ void myreservations_handler(Request* req, char* UID, char* password);
  */
 void create_event_handler(Request* req);
 void close_event_handler(Request* req);
+void list_events_handler(Request* req);
 void show_event_handler(Request* req);
 void change_password_handler();
 void reserve_seats_handler();
@@ -106,6 +107,9 @@ void reserve_seats_handler();
 
 // ------------- file_manager.c ---------------
 int check_file(char *fname);
+int dir_exists(const char* path);
+int is_dir_empty(const char* path);
+char* read_file(const char* filename);
 int file_exists(const char* filename);
 char* read_file(const char* filename);
 int dir_exists(const char* path);
@@ -194,6 +198,10 @@ int verify_correct_password(char* UID, char* password);
 
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);
+int is_event_creator(char* UID, char* EID);
+int is_event_sold_out(char* EID);
+int is_event_past(char* EID);
+int is_event_closed(char* EID);
 int create_eid_dir (int EID);
 int is_event_closed(char* EID);
 

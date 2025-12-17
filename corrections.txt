@@ -7,6 +7,9 @@ corrigir
 
 DUVIDA:
 
+no list vai ser testado ter um folder de events corrompido? isto é só ter um folder
+ ou todos os folder estão mal formatados, por exemplo o folder 001 não tem nada mas existe
+
 no create, quando tenho erro a ler os fields dou RCE ERR? ou só return
 
 TODO, maybe printar logs nos verifies falhados??
