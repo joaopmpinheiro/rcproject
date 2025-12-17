@@ -1,6 +1,18 @@
+#define _XOPEN_SOURCE 500
 #include "../../include/globals.h"
 #include "../../common/verifications.h"
+#include <ftw.h>
+#include <sys/stat.h>
 
+static int unlink_cb(const char *fpath,
+                     const struct stat *sb,
+                     int typeflag,
+                     struct FTW *ftwbuf) {
+    (void)sb;
+    (void)typeflag;
+    (void)ftwbuf;
+    return remove(fpath);
+}
 
 /**
  * @brief Checks if the description file exists and returns its size.
@@ -20,14 +32,6 @@ int check_file(char *fname){
 int file_exists(const char* filename) {
     struct stat buffer;
     return (stat(filename, &buffer) == 0) ? VALID : INVALID;
-}
-
-int dir_exists(const char* path) {
-    struct stat info;
-
-    if (stat(path, &info) != 0) return INVALID;
-    else if (S_ISDIR(info.st_mode)) return VALID;
-    return INVALID;
 }
 
 char* read_file(const char* filename) {
@@ -64,6 +68,18 @@ char* read_file(const char* filename) {
 
     buffer[filesize] = '\0'; // Null-terminate the string
     return buffer;
+}
+
+int dir_exists(const char* path) {
+    struct stat info;
+
+    if (stat(path, &info) != 0) return INVALID;
+    else if (S_ISDIR(info.st_mode)) return VALID;
+    return INVALID;
+}
+
+int remove_directory(const char *path) {
+    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS) ? ERROR : SUCCESS;
 }
 
 int find_available_eid(char* eid_str) {

@@ -63,7 +63,7 @@ void handle_udp_request(Request* req) {
             logout_handler(req, uid, password);
             break;
         case UNREGISTER:
-            /* unregister_handler(req, uid, password); */
+            unregister_handler(req, uid, password);
             break;
         case MYEVENTS:
            /*  myevents_handler(uid, password); */
@@ -112,8 +112,6 @@ void handle_tcp_request(Request* req) {
 
 // ------------ UDP Requests ---------------
 void login_handler(Request* req, char* UID, char* password) {
-    char user_password[PASSWORD_LENGTH + 1];
-
     sscanf(req->buffer, "LIN %s %s", UID, password);
 
     if (!user_exists(UID)) {
@@ -143,19 +141,7 @@ void login_handler(Request* req, char* UID, char* password) {
     send_udp_response("RLI OK\n", req);
 }
 
-/**
- * @brief Handles logout request: LOU UID password
- * 
- * Sends to user:
- * RLO OK - successful logout,
- * RLO UNR - user was not registered
- * RLO NOK - user not logged in
- * RLO WRP - wrong password
- * 
- * @param req The UDP request to handle.
- * @param UID User ID
- * @param password User password
- */
+
 void logout_handler(Request* req, char* UID, char* password) {
 
     // User not registered
@@ -190,14 +176,46 @@ void logout_handler(Request* req, char* UID, char* password) {
 
 }
 
-/* UNR UID password
-RUR OK - successful unregister
-RUR NOK - not logged
-RUR UNK - not reggistered
-USER: successful unregister, unknown user, or incorrect unregister attempt
-*/
+/**
+ * @brief Handles unregister request: UNR UID password
+ * 
+ * Sends to user:
+ * RUR OK - successful unregistration,
+ * RUR UNR - user was not registered
+ * RUR NOK - user not logged in
+ * RUR WRP - wrong password
+ * 
+ * @param req 
+ * @param UID 
+ * @param password 
+ */
 void unregister_handler(Request* req, char* UID, char* password) {
-   
+    if(!user_exists(UID)) {
+        send_udp_response("RUR UNR\n", req);
+        return;
+    }
+    if(!is_logged_in(UID)) {
+        send_udp_response("RUR NOK\n", req);
+        return;
+    }
+    int status = verify_correct_password(UID, password);
+    if(status == ERROR) {
+        send_udp_response("RUR ERR\n", req);
+        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
+        return;
+    }
+    if(status == INVALID) {
+        send_udp_response("RUR WRP\n", req);
+        return;
+    }
+
+    // Proceed to unregister user
+    if(remove_user(UID) == ERROR) {
+        send_udp_response("RUR ERR\n", req);
+        fprintf(stderr, "Error deleting user with UID %s\n", UID);
+        return;
+    }
+    send_udp_response("RUR OK\n", req);
 }
 
 
@@ -205,17 +223,17 @@ void unregister_handler(Request* req, char* UID, char* password) {
 
  * USER: list of events created by the user or no events created yet.
 **/
-void myevents_handler(Request* req, char* UID, char* password){
+/* void myevents_handler(Request* req, char* UID, char* password){
 
 }
-
+ */
 /*
 - list
 - user does not have reservations [sends a maximum of 50 reservations - the most recent]
 */
-void myreservations_handler(Request* req, char* UID, char* password){
+/* void myreservations_handler(Request* req, char* UID, char* password){
 
-}
+} */
 
 
 
@@ -225,9 +243,9 @@ void myreservations_handler(Request* req, char* UID, char* password){
 // ------------- TCP -------------
 /* USER: uccessful password change, unknown user, user not logged In or incorrect password. 
 */    
-void change_password_handler(){
+/* void change_password_handler(){
 
-}
+} */
 
 // Helper function to read a field or send a error and close connection in create_event_handler
 static int read_field_or_error(int fd, char* dst, size_t len, char* code) {

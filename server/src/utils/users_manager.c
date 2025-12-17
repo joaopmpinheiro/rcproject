@@ -25,7 +25,7 @@ int user_exists(char* UID){
     return dir_exists(UID_dirname);
 }
 
-int create_USER_dir (char* UID){
+int create_user (char* UID){
     char UID_dirname[32];
     char created_dirname[32];
     int ret;
@@ -51,10 +51,16 @@ int create_USER_dir (char* UID){
     return SUCCESS;
 }
 
+int remove_user(char* UID){
+    char UID_dirname[32];
+    sprintf(UID_dirname, "USERS/%s", UID);
+    return remove_directory(UID_dirname);
+}
+
 int create_new_user(char* UID, char* password){
     int ret;
 
-    ret = create_USER_dir(UID);
+    ret = create_user(UID);
     if (ret == ERROR) return ERROR;
 
     ret = write_password(UID, password);

@@ -60,14 +60,6 @@ void handle_tcp_request(Request* req);
 
 
 /**
- * @brief Creates a new user with the given UID and password.
- * 
- * @param UID int
- * @param password char*
- */
-void create_user(int UID, char* password);
-
-/**
  * @brief Handles log in request: LIN UID password.
  * 
  * Sends to user:
@@ -77,7 +69,22 @@ void create_user(int UID, char* password);
  * @param req 
  */
 void login_handler(Request* req, char* UID, char* password);
+
+/**
+ * @brief Handles logout request: LOU UID password
+ * 
+ * Sends to user:
+ * RLO OK - successful logout,
+ * RLO UNR - user was not registered
+ * RLO NOK - user not logged in
+ * RLO WRP - wrong password
+ * 
+ * @param req The UDP request to handle.
+ * @param UID User ID
+ * @param password User password
+ */
 void logout_handler(Request* req, char* UID, char* password);
+
 void unregister_handler(Request* req, char* UID, char* password);
 void myevents_handler(Request* req, char* UID, char* password);
 void myreservations_handler(Request* req, char* UID, char* password);
@@ -99,9 +106,10 @@ void reserve_seats_handler();
 
 // ------------- file_manager.c ---------------
 int check_file(char *fname);
-int dir_exists(const char* path);
-char* read_file(const char* filename);
 int file_exists(const char* filename);
+char* read_file(const char* filename);
+int dir_exists(const char* path);
+int remove_directory(const char *path);
 
 /**
  * @brief Finds the first available EID (001-999) by scanning the EVENTS directory.
@@ -174,7 +182,9 @@ int write_description_file(const char* eid, const char* file_name, size_t file_s
 // ------------ users_manager.c ---------------
 int user_exists(char* UID);
 int create_new_user(char* UID, char* password);
-int create_USER_dir(char* UID);
+int create_user(char* UID);
+int remove_user(char* UID);
+int erase_login(char* UID);
 int write_password(char* UID, char* password);
 int write_login(char* UID);
 int get_password(char* UID, char* password);
