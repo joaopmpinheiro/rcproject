@@ -8,10 +8,11 @@ int event_exists(char* EID){
     return dir_exists(EID_dirname);
 }
 
+// VALID if event is closed INVALID otherwise
 int is_event_closed(char* EID){
     char state_path[30];
     sprintf(state_path, "EVENTS/%s/END_%s.txt", EID, EID);
-    return file_exists(state_path) ? SUCCESS : ERROR;
+    return file_exists(state_path);
 }
 
 int is_event_creator(char* UID, char* EID){

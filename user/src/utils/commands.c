@@ -146,7 +146,6 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 
     response[n] = '\0';
 
-    fprintf(stderr, "DEBUG: Full response: %s\n", response);
     char response_code[4];
     char reply_status[4];
 
@@ -231,8 +230,6 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
 
     // PROTOCOL: RMR <status> [<event1ID name event_date seats_reserved> ...]
     int parsed = sscanf(response, "%3s %3s %[^\n]", response_code, reply_status, event_list);
-    fprintf(stderr, "DEBUG: response_code=%s, reply_status=%s, event_list=%s\n",
-            response_code, reply_status, event_list);
     if(parsed < 1) return STATUS_RECV_FAILED;
     RequestType cmd = identify_command_response(response_code);
     if(cmd == ERROR_REQUEST) return CMD_ERROR;

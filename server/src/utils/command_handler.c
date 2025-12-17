@@ -304,7 +304,7 @@ int format_list_of_user_events(char* UID, char* message, size_t message_size) {
         event_EID[3] = '\0';
 
         int state;
-        if (is_event_closed(event_EID) == SUCCESS) state = CLOSED;
+        if (is_event_closed(event_EID) == VALID) state = CLOSED;
         else if (is_event_past(event_EID) == SUCCESS) state = PAST;
         else if (is_event_sold_out(event_EID) == VALID) state = SOLD_OUT;
         else state = ACCEPTING;
@@ -316,7 +316,6 @@ int format_list_of_user_events(char* UID, char* message, size_t message_size) {
         free(entry); // free each dirent allocated by scandir
     }
     free(namelist); // free the array itself
-
     strncat(message, "\n", message_size - strlen(message) - 1);
     return SUCCESS;
 }
@@ -607,7 +606,8 @@ void close_event_handler(Request* req){
         return;
     }
 
-    if (is_event_closed(EID)) {
+    if (is_event_closed(EID) == VALID) {
+        fprintf(stderr, "Event %s is already closed.\n", EID);
         tcp_write(fd, "RCL CLO\n", 8);
         close(fd);
         return;
