@@ -132,6 +132,17 @@ int write_password(char* UID, char* password){
     return SUCCESS;
 }
 
+int verify_event_file(char* event_file_name){
+    if (strlen(event_file_name) != 7) return INVALID;
+
+    // Check first 3 characters are digits
+    for (int i = 0; i < 3; i++) {
+        if (!isdigit((unsigned char)event_file_name[i]))
+            return INVALID;
+    }
+    return strcmp(event_file_name + 3, ".txt") == 0 ? VALID : INVALID;
+}
+
 /* int get_event_list(char *EID, EVENTLIST *list){
     char* UID
     struct dirent **filelist;

@@ -66,7 +66,7 @@ void handle_udp_request(Request* req) {
             unregister_handler(req, uid, password);
             break;
         case MYEVENTS:
-           /*  myevents_handler(uid, password); */
+           myevents_handler(req, uid, password);
             break;
         case MYRESERVATIONS:
 /*             myreservations_handler();
@@ -219,14 +219,78 @@ void unregister_handler(Request* req, char* UID, char* password) {
 }
 
 
-/** UNR UID password
-
- * USER: list of events created by the user or no events created yet.
-**/
-/* void myevents_handler(Request* req, char* UID, char* password){
-
-}
+/**
+ * @brief Handles myevents request: MYE UID password
+ * 
+ * * Sends to user:
+ * RME OK [EID1 state>]*
+ * RME NOK - user has no events
+ * RME NLG - user not logged in
+ * RME WRP - wrong password
+ * 
+ * @param req 
+ * @param UID 
+ * @param password 
  */
+void myevents_handler(Request* req, char* UID, char* password){
+    if(!user_exists(UID)) {
+        send_udp_response("RME ERR\n", req);
+        return;
+    }
+    if(!is_logged_in(UID)) {
+        send_udp_response("RME NLG\n", req);
+        return;
+    }
+    int status = verify_correct_password(UID, password);
+    if(status == ERROR) {
+        send_udp_response("RME ERR\n", req);
+        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
+        return;
+    }
+    if(status == INVALID) {
+        send_udp_response("RME WRP\n", req);
+        return;
+    }
+    // check if the user has events
+    //
+    //
+
+    // Proceed to list user's events
+    send_udp_response("RME WRP ", req);
+    send_list_of_user_events(UID, req);
+}
+
+
+
+int send_list_of_user_events(char* UID, Request* req){  
+    DIR *dir;
+    struct dirent *entry;
+    struct stat st;
+    char path[32];
+    char event_path[64];
+
+    sscanf(path, "USERS/%s/CREATED", UID);
+    dir = opendir(path);
+    if (!dir) return ERROR;
+
+    while ((entry = readdir(dir)) != NULL) {
+
+        // Skip "." and ".."
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        // Build full path: MYEVENTS/<event_id>
+        snprintf(event_path, sizeof(event_path),
+                 "%s/%s", path, entry->d_name);
+        
+        // 🔥 EVENT FOUND → send it
+        send_udp(entry->d_name);
+    }
+
+    closedir(dir);
+}
+
 /*
 - list
 - user does not have reservations [sends a maximum of 50 reservations - the most recent]

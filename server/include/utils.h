@@ -195,5 +195,6 @@ int verify_correct_password(char* UID, char* password);
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);
 int create_eid_dir (int EID);
+int is_event_closed(char* EID);
 
 #endif

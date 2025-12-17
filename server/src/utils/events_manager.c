@@ -7,6 +7,12 @@ int event_exists(char* EID){
     return dir_exists(EID_dirname);
 }
 
+int is_event_closed(char* EID){
+    char state_path[30];
+    sprintf(state_path, "EVENTS/%s/END_%s.txt", EID, EID);
+    return file_exists(state_path) ? SUCCESS : ERROR;
+}
+
 int create_eid_dir (int EID){
     char EID_dirname[15];
     char RES_dirname[25];
