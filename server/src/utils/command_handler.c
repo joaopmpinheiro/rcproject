@@ -88,7 +88,7 @@ void handle_tcp_request(Request* req) {
             create_event_handler(req);
             break;
         case CLOSE:
-            // close_event_handler();
+            close_event_handler(req);
             break;
         case LIST:
             // list_events_handler();
@@ -287,6 +287,7 @@ void create_event_handler(Request* req){
     // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <seat_count> 
     // <file_name> <file_size> <file_content>
     // TODO VER CASO DO EOM AQUI
+    // TODO write RCE ERR and close fd in case of error
     int field_status;
     field_status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
     if (field_status == ERROR || field_status == EOM) return;
@@ -327,7 +328,7 @@ void create_event_handler(Request* req){
 
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling create event (CRE), from user with UID %s, using port %s\n", UID, set.port);
+     "Handling create event (CRE), from user with UID %s, using port %s", UID, set.port);
     server_log(log);
     
     // Validate all fields
@@ -449,7 +450,7 @@ void close_event_handler(Request* req){
     char protocol[4] = "RCL";
 
     // PROTOCOL: CLS <uid> <password> <eid>
-    // TODO VER CASO DO EOM AQUI
+    // TODO write feedback
     int status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
     if (status == ERROR || status == EOM) return;
 
@@ -462,7 +463,7 @@ void close_event_handler(Request* req){
     // FIXME TODO MUDAR PORT PARA IP
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling close event (CLS), from user with UID %s, using port %s\n", UID, set.port);
+     "Handling close event (CLS), from user with UID %s, using port %s", UID, set.port);
     server_log(log);
 
     // Validate all fields
@@ -493,39 +494,51 @@ void close_event_handler(Request* req){
         return;
     }
 
-    //    if (!is_event_creator(UID, EID)) {
-    //        tcp_write(fd, "RCL EOW\n", 8);
-    //        close(fd);
-    //        return;
-    //    }
-
-
-//    if (is_event_sold_out(EID)) {
-//        tcp_write(fd, "RCL SLD\n", 8);
-//        close(fd);
-//        return;
-//    }
-
-//    if (is_event_past(EID)) {
-//        tcp_write(fd, "RCL PST\n", 8);
-//        close(fd);
-//        return;
-//    }
-
-//    if (is_event_closed(EID)) {
-//        tcp_write(fd, "RCL CLO\n", 8);
-//        close(fd);
-//        return;
-//    }
-
-    if (write_event_end_file() == ERROR) {
-        tcp_write(fd, "RCL NOK\n", 8);
+    if (!is_event_creator(UID, EID)) {
+        tcp_write(fd, "RCL EOW\n", 8);
         close(fd);
         return;
     }
 
 
+    if (is_event_sold_out(EID)) {
+        tcp_write(fd, "RCL SLD\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (is_event_past(EID)) {
+        tcp_write(fd, "RCL PST\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (is_event_closed(EID)) {
+        tcp_write(fd, "RCL CLO\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (write_event_end_file() == ERROR) {
+        tcp_write(fd, "RCL ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    tcp_write(fd, "RCL OK\n", 7);
+    close(fd);
 }
+
+// void list_events_handler(Request* req){
+//     if (is_dir_empty("EVENTS")) {
+//         tcp_write(req->client_socket, "RLS NOK\n", 8);
+//         close(req->client_socket);
+//         return;
+//     }
+// 
+//     char response
+// }
+
 
 /*
 input: EID

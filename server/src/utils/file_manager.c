@@ -34,6 +34,32 @@ int file_exists(const char* filename) {
     return (stat(filename, &buffer) == 0) ? VALID : INVALID;
 }
 
+int dir_exists(const char* path) {
+    struct stat info;
+
+    if (stat(path, &info) != 0) return INVALID;
+    else if (S_ISDIR(info.st_mode)) return VALID;
+    return INVALID;
+}
+
+int is_dir_empty(const char* path) {
+    if (dir_exists(path) == INVALID) return INVALID;
+
+    DIR* dir = opendir(path);
+    if (dir == NULL) return INVALID;
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Skip . and ..
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            closedir(dir);
+            return INVALID;
+        }
+    }
+    closedir(dir);
+    return VALID;
+}
+
 char* read_file(const char* filename) {
     FILE* fp = fopen(filename, "r");
     if (fp == NULL) {
