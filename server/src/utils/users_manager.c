@@ -143,6 +143,11 @@ int verify_event_file(char* event_file_name){
     return strcmp(event_file_name + 3, ".txt") == 0 ? VALID : INVALID;
 }
 
+int has_events(char* UID){
+    sscanf(UID, "USERS/%s/CREATED", UID);
+    return is_dir_empty(UID) == VALID ? INVALID : VALID;
+}
+
 /* int get_event_list(char *EID, EVENTLIST *list){
     char* UID
     struct dirent **filelist;

@@ -28,6 +28,10 @@
 #define DIR_ALREADY_EXISTS -3
 #define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena? TODO: tirar esta cena (lmao)
 
+#define PAST '0'
+#define ACCEPTING '1'
+#define SOLD_OUT '2'
+#define CLOSED '3'
 
 typedef struct {
     int verbose;

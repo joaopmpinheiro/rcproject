@@ -251,16 +251,22 @@ void myevents_handler(Request* req, char* UID, char* password){
         send_udp_response("RME WRP\n", req);
         return;
     }
-    // check if the user has events
-    //
-    //
-
+    if(has_events(UID) == INVALID) {
+        send_udp_response("RME NOK\n", req);
+        return;
+    }
     // Proceed to list user's events
-    send_udp_response("RME WRP ", req);
+    send_udp_response("RME OK", req);
     send_list_of_user_events(UID, req);
-}
+}   
 
-
+/* 
+states:
+1 - accepting reservations
+0 - in the past
+2 - in the future but sold out
+3 - closed
+*/
 
 int send_list_of_user_events(char* UID, Request* req){  
     DIR *dir;
@@ -268,6 +274,9 @@ int send_list_of_user_events(char* UID, Request* req){
     struct stat st;
     char path[32];
     char event_path[64];
+    char event_EID[4];
+    int state = -1;
+    char response[16];
 
     sscanf(path, "USERS/%s/CREATED", UID);
     dir = opendir(path);
@@ -275,19 +284,28 @@ int send_list_of_user_events(char* UID, Request* req){
 
     while ((entry = readdir(dir)) != NULL) {
 
-        // Skip "." and ".."
+        // Skip other files
         if (strcmp(entry->d_name, ".") == 0 ||
-            strcmp(entry->d_name, "..") == 0)
+            strcmp(entry->d_name, "..") == 0 ||
+            verify_event_file(entry->d_name) == INVALID)
             continue;
 
-        // Build full path: MYEVENTS/<event_id>
-        snprintf(event_path, sizeof(event_path),
-                 "%s/%s", path, entry->d_name);
-        
-        // 🔥 EVENT FOUND → send it
-        /* send_udp(entry->d_name); */
+        strncpy(event_EID, entry->d_name, 3);
+        event_EID[3] = '\0';
+        // Check event state
+        if (is_event_closed(event_EID) == SUCCESS) {
+            state = CLOSED;
+        } else if (is_event_past(event_EID) == SUCCESS) {
+            state = PAST;
+        } else if (is_event_sold_out(event_EID) == VALID) {
+            state = SOLD_OUT;
+        } else {
+            state = ACCEPTING;
+        }
+        snprintf(response, sizeof(response), "%s %c\n", event_EID, state);
+        send_udp_response(response, req);
     }
-
+    send_udp_response("\n", req);
     closedir(dir);
 }
 

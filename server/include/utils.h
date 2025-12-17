@@ -192,6 +192,8 @@ int write_password(char* UID, char* password);
 int write_login(char* UID);
 int get_password(char* UID, char* password);
 int is_logged_in(char* UID);
+int verify_event_file(char* event_file_name);
+int has_events(char* UID);
 
 int verify_correct_password(char* UID, char* password);
 
