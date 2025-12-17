@@ -146,6 +146,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 
     response[n] = '\0';
 
+    fprintf(stderr, "DEBUG: Full response: %s\n", response);
     char response_code[4];
     char reply_status[4];
 
@@ -175,7 +176,6 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     int state;
     int offset = 0;
     int chars_read;
-
     while (sscanf(event_list + offset, " %3s %d%n", eid, &state, &chars_read) == 2) {
         // Validate EID format (3 digits)
         if (strlen(eid) != 3) {

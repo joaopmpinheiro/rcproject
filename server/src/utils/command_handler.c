@@ -3,6 +3,10 @@
 #include "../../common/verifications.h"
 #include "../../common/common.h"
 #include "../../common/parser.h"
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 int verify_uid_password(Request* req) {
@@ -255,9 +259,15 @@ void myevents_handler(Request* req, char* UID, char* password){
         send_udp_response("RME NOK\n", req);
         return;
     }
-    // Proceed to list user's events
-    send_udp_response("RME OK", req);
-    send_list_of_user_events(UID, req);
+
+
+    char response[999 * 6 + 10]; // Max 999 events, each with "EID state " (6 chars) + null terminator
+    if(format_list_of_user_events(UID, response, sizeof(response)) == ERROR) {
+        send_udp_response("RME ERR\n", req);
+        fprintf(stderr, "Error formatting list of events for user with UID %s\n", UID);
+        return;
+    }
+    send_udp_response(response, req);
 }   
 
 /* 
@@ -268,45 +278,47 @@ states:
 3 - closed
 */
 
-int send_list_of_user_events(char* UID, Request* req){  
-    DIR *dir;
-    struct dirent *entry;
-    struct stat st;
+int format_list_of_user_events(char* UID, char* message, size_t message_size) {
     char path[32];
-    char event_path[64];
-    char event_EID[4];
-    int state = -1;
-    char response[16];
+    snprintf(path, sizeof(path), "USERS/%s/CREATED", UID);
 
-    sscanf(path, "USERS/%s/CREATED", UID);
-    dir = opendir(path);
-    if (!dir) return ERROR;
+    struct dirent **namelist;
+    int n = scandir(path, &namelist, NULL, alphasort);
+    if (n < 0) {
+        perror("scandir");
+        return ERROR;
+    }
 
-    while ((entry = readdir(dir)) != NULL) {
+    snprintf(message, message_size, "RME OK");
 
-        // Skip other files
-        if (strcmp(entry->d_name, ".") == 0 ||
-            strcmp(entry->d_name, "..") == 0 ||
-            verify_event_file(entry->d_name) == INVALID)
+    for (int i = 0; i < n; i++) {
+        struct dirent *entry = namelist[i];
+        // Skip non-event files
+        if (verify_event_file(entry->d_name) == INVALID) {
+            free(entry);
             continue;
+        }
 
+        char event_EID[4];
         strncpy(event_EID, entry->d_name, 3);
         event_EID[3] = '\0';
-        // Check event state
-        if (is_event_closed(event_EID) == SUCCESS) {
-            state = CLOSED;
-        } else if (is_event_past(event_EID) == SUCCESS) {
-            state = PAST;
-        } else if (is_event_sold_out(event_EID) == VALID) {
-            state = SOLD_OUT;
-        } else {
-            state = ACCEPTING;
-        }
-        snprintf(response, sizeof(response), "%s %c\n", event_EID, state);
-        send_udp_response(response, req);
+
+        int state;
+        if (is_event_closed(event_EID) == SUCCESS) state = CLOSED;
+        else if (is_event_past(event_EID) == SUCCESS) state = PAST;
+        else if (is_event_sold_out(event_EID) == VALID) state = SOLD_OUT;
+        else state = ACCEPTING;
+
+        char temp[16];
+        snprintf(temp, sizeof(temp), " %s %c", event_EID, state);
+        strncat(message, temp, message_size - strlen(message) - 1);
+
+        free(entry); // free each dirent allocated by scandir
     }
-    send_udp_response("\n", req);
-    closedir(dir);
+    free(namelist); // free the array itself
+
+    strncat(message, "\n", message_size - strlen(message) - 1);
+    return SUCCESS;
 }
 
 /*
