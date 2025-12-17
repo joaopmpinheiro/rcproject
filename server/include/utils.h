@@ -87,6 +87,7 @@ void logout_handler(Request* req, char* UID, char* password);
 
 void unregister_handler(Request* req, char* UID, char* password);
 void myevents_handler(Request* req, char* UID, char* password);
+int send_list_of_user_events(char* UID, Request* req);
 void myreservations_handler(Request* req, char* UID, char* password);
 
 /**
