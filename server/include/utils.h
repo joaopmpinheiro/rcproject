@@ -43,13 +43,6 @@ void usage(const char *prog_name);
  */
 int verify_uid_password(Request* req);
 
-/**
- * @brief Identifies the request based on the command string.
- * 
- * @param command The string of the command to identify.
- * @return RequestType
- */
-RequestType identify_request_type(char* command);
 
 /**
  * @brief Handles the given request.
@@ -83,10 +76,11 @@ void create_user(int UID, char* password);
  * RLI REG - new user registered
  * @param req 
  */
-void login_handler(Request* req);
-void logout_handler();
-void unregister_handler();
-void change_password_handler();
+void login_handler(Request* req, char* UID, char* password);
+void logout_handler(Request* req, char* UID, char* password);
+void unregister_handler(Request* req, char* UID, char* password);
+void myevents_handler(Request* req, char* UID, char* password);
+void myreservations_handler(Request* req, char* UID, char* password);
 
 /**
  * @brief Handles create event request: CRE UID password event_name event_fname event_date num_attendees
@@ -99,6 +93,7 @@ void change_password_handler();
 void create_event_handler(Request* req);
 void close_event_handler(Request* req);
 void show_event_handler(Request* req);
+void change_password_handler();
 void reserve_seats_handler();
 
 

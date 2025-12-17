@@ -3,20 +3,6 @@
 #include "../../common/verifications.h"
 #include "../../common/common.h"
 
-RequestType identify_request_type(char* command_buff){
-    if (strncmp(command_buff, "LIN", 3) == 0) return LOGIN;
-    if (strncmp(command_buff, "LOU", 3) == 0) return LOGOUT;
-    if (strncmp(command_buff, "UNR", 3) == 0) return UNREGISTER;
-    if (strncmp(command_buff, "CPS", 3) == 0) return CHANGEPASS;
-    if (strncmp(command_buff, "CRE", 3) == 0) return CREATE;
-    if (strncmp(command_buff, "CLS", 3) == 0) return CLOSE;
-    if (strncmp(command_buff, "LME", 3) == 0) return MYEVENTS;
-    if (strncmp(command_buff, "LST", 3) == 0) return LIST;
-    if (strncmp(command_buff, "SED", 3) == 0) return SHOW;
-    if (strncmp(command_buff, "RID", 3) == 0) return RESERVE;
-    if (strncmp(command_buff, "LMR", 3) == 0) return MYRESERVATIONS;
-    else return UNKNOWN;
-}
 
 int verify_uid_password(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) return INVALID;
@@ -38,24 +24,63 @@ void handle_udp_request(Request* req) {
     char command_arg_buffer[BUFFER_SIZE] = {0};
 
     // Get 3-letter command
-    sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
-    RequestType command = identify_request_type(command_buff);
+    int parsed = sscanf(req->buffer, "%s %[^\n]", command_buff, command_arg_buffer);
+    if (parsed < 1) {
+        send_udp_response("ERR\n", req);
+        return;
+    }
 
-    // known command but wrong arguments
-    if (command != UNKNOWN && verify_uid_password(req) == INVALID) {
-        // build error response
+    RequestType command = identify_command_request(command_buff);
+
+    // If command is UNKNOWN, send ERR response
+    if(command == UNKNOWN){
+        send_udp_response("ERR\n", req);
+        return;
+    }
+
+    // Command known but wrong number of arguments, send CMD ERR
+    if(!verify_argument_count(req->buffer, 3)){
+        // Build error response "CMD ERR\n"
         char response[16]; 
         snprintf(response, sizeof(response), "%s ERR\n", command_buff);
         send_udp_response(response, req);
         return;
     }
 
+    char UID[UID_LENGTH + 1];
+    char password[PASSWORD_LENGTH + 1];
+    sscanf(req->buffer, "%3s %6s %8s", command_buff, UID, password);
+
+    // Command known but invalid UID or password format, send CMD ERR
+    if(!verify_uid_format(UID) || !verify_password_format(password)){
+        char response[16]; 
+        snprintf(response, sizeof(response), "%s ERR\n", command_buff);
+        send_udp_response(response, req);
+        return;
+    }
+
+
+    if(set.verbose) printf("Handling %s command, from UID: %s, using port %s\n",
+                            command_to_str(command), UID, set.port);
+
     switch (command) {
         case LOGIN:
-            login_handler(req);
+            login_handler(req, UID, password);
             break;
+        case LOGOUT:
+            logout_handler(req, UID, password);
+            break;
+        case UNREGISTER:
+            /* unregister_handler(req, UID, password); */
+            break;
+        case MYEVENTS:
+           /*  myevents_handler(UID, password); */
+            break;
+        case MYRESERVATIONS:
+/*             myreservations_handler();
+ */            break;
         default:
-            send_udp_response("ERR\n", req);
+            /* send_udp_response("ERR\n", req); */
             break;
     }
 }
@@ -64,7 +89,7 @@ void handle_tcp_request(Request* req) {
     char command_buff[COMMAND_LENGTH + 1] = {0};
 
     strncpy(command_buff, req->buffer, COMMAND_LENGTH);
-    RequestType command = identify_request_type(command_buff);
+    RequestType command = identify_command_request(command_buff);
 
     switch (command) {
         case CREATE:
@@ -94,16 +119,10 @@ void handle_tcp_request(Request* req) {
 
 
 // ------------ UDP Requests ---------------
-void login_handler(Request* req) {
-    char UID[UID_LENGTH + 1];
-    char password[PASSWORD_LENGTH + 1];
+void login_handler(Request* req, char* UID, char* password) {
     char user_password[PASSWORD_LENGTH + 1];
 
     sscanf(req->buffer, "LIN %s %s", UID, password);
-
-    if(set.verbose){
-        printf("Handling login (LIN), from user with UID %s, using port %s\n",UID, set.port);
-    }
 
     if (!user_exists(UID)) {
         if (create_new_user(UID, password) == ERROR) {
@@ -116,12 +135,13 @@ void login_handler(Request* req) {
     }
 
     get_password(UID, user_password);
-    if (strcmp(password, user_password) == 0) {
-        write_login(UID);
-        send_udp_response("RLI OK\n", req);
+    if (strcmp(password, user_password) != 0) {
+        send_udp_response("RLI NOK\n", req);
+        return;
     }
 
-    else send_udp_response("RLI NOK\n", req);
+    write_login(UID);
+    send_udp_response("RLI OK\n", req);
 }
 
 /** LOU UID password
@@ -129,7 +149,25 @@ void login_handler(Request* req) {
  * RLO NOK - user not logged in
  * RLO UNK - user was not registered
 **/
-void logout_handler(){
+void logout_handler(Request* req, char* UID, char* password) {
+    sscanf(req->buffer, "LOU %s %s", UID, password);
+
+    if(set.verbose){
+        printf("Handling logout (LOU), from user with UID %s, using port %s\n",UID, set.port);
+    }
+
+    if (!user_exists(UID)) {
+        send_udp_response("RLO UNK\n", req);
+        return;
+    }
+
+    if (!is_logged_in(UID)) {
+        send_udp_response("RLO NOK\n", req);
+        return;
+    }
+
+/*     remove_login(UID);
+ */    send_udp_response("RLO OK\n", req);
 
 }
 
@@ -139,8 +177,8 @@ RUR NOK - not logged
 RUR UNK - not reggistered
 USER: successful unregister, unknown user, or incorrect unregister attempt
 */
-void unregister_handler(){
-
+void unregister_handler(Request* req, char* UID, char* password) {
+   
 }
 
 
@@ -148,7 +186,7 @@ void unregister_handler(){
 
  * USER: list of events created by the user or no events created yet.
 **/
-void check_user_events_handler(){
+void myevents_handler(Request* req, char* UID, char* password){
 
 }
 
@@ -156,7 +194,7 @@ void check_user_events_handler(){
 - list
 - user does not have reservations [sends a maximum of 50 reservations - the most recent]
 */
-void check_user_reservations_handler(){
+void myreservations_handler(Request* req, char* UID, char* password){
 
 }
 

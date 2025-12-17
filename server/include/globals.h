@@ -45,6 +45,7 @@ typedef struct {
     socklen_t addr_len;
     int is_tcp;
     char buffer[BUFFER_SIZE];
+    char** cursor;
 } Request;
 
 extern Settings set;

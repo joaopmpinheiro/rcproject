@@ -190,6 +190,7 @@ RequestType identify_command_request(char* command_buff) {
     else return UNKNOWN;
 }
 
+
 // SERVER -> USER
 // "RXX" -> RequestType
 RequestType identify_command_response(char* command) {
@@ -275,4 +276,3 @@ const char* get_status_code(ReplyStatus status) {
         default: return "UNK";
     }
 }
-
