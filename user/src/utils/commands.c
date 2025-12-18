@@ -49,14 +49,15 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
    
     if (status != STATUS_UNASSIGNED) return status;
     
-    // Parse response
+    // Protocol: RLI <status>
     char *resp_cursor = response;
     status =  parse_udp_response_header(&resp_cursor, LOGIN);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
-    
-    if (status != STATUS_OK &&
+    // Expected responses: OK / NOK / REG
+    if(status != STATUS_OK &&
        status != STATUS_NOK &&
        status != STATUS_ERROR &&
+       status != STATUS_REGISTERED &&
        status != STATUS_SEND_FAILED &&
        status != STATUS_RECV_FAILED &&
        status != STATUS_MALFORMED_RESPONSE) {
@@ -97,6 +98,13 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     status = parse_udp_response_header(&resp_cursor, UNREGISTER);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
 
+    // Expected responses: OK / NOK / UNR / WRP
+    if (status != STATUS_OK && 
+        status != STATUS_NOK && 
+        status != STATUS_USER_NOT_REGISTERED && 
+        status != STATUS_WRONG_PASSWORD)
+        return STATUS_UNEXPECTED_RESPONSE;
+
     // Clear global state on successful unregister
     if (status == STATUS_OK) {
         is_logged_in = 0;
@@ -130,8 +138,15 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
     status = handle_response_code(response_code, LOGOUT, parsed, 2, reply_status);
 
-    // Clear global state on successful logout
-    if (status == STATUS_OK) {
+    // Expected responses: OK / NOK / UNR / WRP
+    if (status != STATUS_OK && 
+        status != STATUS_NOK && 
+        status != STATUS_USER_NOT_REGISTERED && 
+        status != STATUS_WRONG_PASSWORD)
+        return STATUS_UNEXPECTED_RESPONSE;
+
+    // Clear global state if we know we are logged out
+    if (status == STATUS_OK || status == STATUS_NOK || status == STATUS_USER_NOT_REGISTERED) {
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
@@ -146,6 +161,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
+    // TODO @marta
     // PROTOCOL: LME <uid> <password>
     char request[256];
     snprintf(request, sizeof(request), "LME %s %s\n", current_uid, current_password);
@@ -166,11 +182,16 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 
     if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
     
+    // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
     if (strcmp(response_code, "RME") != 0) return STATUS_UNEXPECTED_RESPONSE;
     ReplyStatus status = identify_status_code(reply_status);
 
-    // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
-    if (status != STATUS_OK) return status;
+    // Expected responses: OK / NOK / NLG / WRP
+    if (status != STATUS_OK && 
+        status != STATUS_NOK && 
+        status != STATUS_NOT_LOGGED_IN && 
+        status != STATUS_WRONG_PASSWORD)
+        return STATUS_UNEXPECTED_RESPONSE;
 
     // STATUS_OK
     char* event_list = response + 7;
@@ -242,12 +263,11 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
     char *resp_cursor = response;
     ReplyStatus status = parse_udp_response_header(&resp_cursor, MYRESERVATIONS);
     
-    // Expected responses: OK / NOK / NLG / WRP / ERR
+    // Expected responses: OK / NOK / NLG / WRP
     if (status != STATUS_OK && 
         status != STATUS_NOK && 
         status != STATUS_NOT_LOGGED_IN && 
-        status != STATUS_WRONG_PASSWORD && 
-        status != STATUS_ERROR) 
+        status != STATUS_WRONG_PASSWORD) 
         return STATUS_UNEXPECTED_RESPONSE;
 
     // Only if status == OK, parse the reservation list
@@ -280,6 +300,7 @@ ReplyStatus changepass_handler(char** cursor) {
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
     status = handle_response_code(response_code, CHANGEPASS, parsed, 2, reply_status);
 
+    // Expected responses: OK / NOK / NLG / NID
     // Update global state on successful password change
     if (status == STATUS_OK) {
         strcpy(current_password, new_password);
@@ -332,6 +353,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     int parsed = sscanf(request_header, "%3s %3s %3s", response_code, reply_status, eid);
     status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
     
+    // Expected responses: OK / NOK / NLG / WRP
     if (status == STATUS_OK){
         event_message(eid);
         return STATUS_CUSTOM_OUTPUT;
@@ -360,7 +382,7 @@ ReplyStatus close_event_handler(char** cursor) {
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
     status = handle_response_code(response_code, CLOSE, parsed, 2, reply_status);
 
-    // Expected responses: OK/NOK/NLG/NOE/EOW/SLD/PST/CLO
+    // Expected responses: OK / NOK / NLG / NOE / EOW / SLD / PST / CLO / WRP
     if (status != STATUS_OK && 
         status != STATUS_NOK && 
         status != STATUS_NOT_LOGGED_IN && 
@@ -393,6 +415,8 @@ ReplyStatus list_handler(char** cursor) {
 
     // Read server response command and status
     ReplyStatus status = read_cmd_status(tcp_fd, LIST);
+    
+    // Expected responses: OK / NOK
     if (status != STATUS_OK){
         close(tcp_fd);
         return status;  
@@ -444,6 +468,7 @@ ReplyStatus show_handler(char** cursor){
         return status;
     }
 
+    // Expected responses: OK / NOK
     long file_size_long = atol(file_size);
     if(tcp_read_file(tcp_fd, file_name, file_size_long) == ERROR) {
         close(tcp_fd);
@@ -481,6 +506,8 @@ ReplyStatus reserve_handler(char** cursor) {
         return STATUS_SEND_FAILED;
     }
     status = read_cmd_status(tcp_fd, RESERVE);
+    
+    // Expected responses: ACC / REJ / CLS / SLD / PST / NOK / NLG / WRP
     if(status != STATUS_EVENT_RESERVATION_REJECTION){
         close(tcp_fd);
         return status;  

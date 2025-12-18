@@ -241,7 +241,7 @@ void show_event_reservations(char* seats_left, char* eid){
 }
 
 ReplyStatus show_myreservations(char* cursor_lst){
-    char eid[4], event_date[EVENT_DATE_LENGTH + 1], seats_reserved[4];
+    char eid[4], event_date[EVENT_DATE_LENGHT_W_SECONDS + 1], seats_reserved[4];
     printf("Your reservations:\n");
     printf("%-5s %-20s %-10s\n", "EID", "    Date & Time     ", "Seats Reserved");
     printf("----- -------------------- --------------\n");
