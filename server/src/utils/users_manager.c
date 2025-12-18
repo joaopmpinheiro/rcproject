@@ -29,7 +29,8 @@ int user_exists(char* UID){
 
 int create_user (char* UID){
     char UID_dirname[32];
-    char created_dirname[32];
+    char created_dirname[64];
+    char reserved_dirname[64];
     int ret;
 
     sprintf(UID_dirname, "USERS/%s", UID);
@@ -43,11 +44,11 @@ int create_user (char* UID){
         return ERROR;
     }
 
-    snprintf(created_dirname, sizeof(created_dirname), "USERS/%s/RESERVED", UID);
-    ret = mkdir(created_dirname, 0700);
+    snprintf(reserved_dirname, sizeof(reserved_dirname), "USERS/%s/RESERVED", UID);
+    ret = mkdir(reserved_dirname, 0700);
     if (ret == -1){
-        rmdir(UID_dirname);
         rmdir(created_dirname);
+        rmdir(UID_dirname);
         return ERROR;
     }
     return SUCCESS;
