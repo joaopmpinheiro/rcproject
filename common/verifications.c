@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-
-
 int is_number(const char *str) {
     for (int i = 0; str[i] != '\0'; i++) {
         if (!isdigit(str[i])) return INVALID;
@@ -220,6 +218,11 @@ int verify_file_name_format(char* file_name) {
 
     if (len == 0 || len > FILE_NAME_LENGTH) return INVALID;
 
+    // Reject path traversal attempts (.., /)
+    if (strstr(file_name, "..") != NULL || strstr(file_name, "/") != NULL) {
+        return INVALID;
+    }
+
     // Verify alphanumeric, dots, underscores, and hyphens
     for (size_t i = 0; i < len; i++) {
         if (!isalnum((unsigned char)file_name[i]) && 
@@ -247,7 +250,3 @@ int convert_to_3_digit(const char* str, char* out) {
     snprintf(out, 4, "%03d", n);
     return SUCCESS;
 }
-
-
-
-

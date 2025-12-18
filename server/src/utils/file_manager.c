@@ -49,8 +49,8 @@ int is_dir_empty(const char* path) {
 
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
-        // Skip . and ..
-        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+        // Skip . and .. and hidden files
+        if (entry->d_name[0] != '.') {
             closedir(dir);
             return FALSE;
         }
@@ -170,13 +170,8 @@ int write_event_start_file(const char* eid, const char* uid, const char* event_n
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
-int write_event_end_file() {
-    // This function writes the END_{EID}.txt file for an event.
-    // Since no parameters are provided, we assume it writes a generic end file.
-    // In a real scenario, you would likely need the EID to write the correct file.
-
-    // For demonstration, let's assume we write to a fixed EID "001"
-    const char* eid = "001"; // This should be dynamic in a real implementation
+int write_event_end_file(const char* eid) {
+    if (eid == NULL) return ERROR;
 
     // Create file path: EVENTS/{EID}/END_{EID}.txt
     char file_path[256];

@@ -714,7 +714,7 @@ void close_event_handler(Request* req){
         return;
     }
 
-    if (write_event_end_file() == ERROR) {
+    if (write_event_end_file(EID) == ERROR) {
         tcp_write(fd, "RCL ERR\n", 8);
         close(fd);
         return;
@@ -724,6 +724,15 @@ void close_event_handler(Request* req){
     close(fd);
 }
 
+/**
+ * @brief Handles list events request: LST
+ * 
+ * Sends to user:
+ * RLS OK [EID name state event_date]*
+ * RLS NOK - no events available
+ * 
+ * @param req 
+ */
 void list_events_handler(Request* req){
     int fd = req->client_socket;
     
@@ -732,6 +741,12 @@ void list_events_handler(Request* req){
     snprintf(log, sizeof(log),
      "Handling list event (LST), using port %s", set.port);
     server_log(log);
+
+    if (is_dir_empty("EVENTS")) {
+        tcp_write(fd, "RLS NOK\n", 7);
+        close(fd);
+        return;
+    }
     
     // Send initial OK response
     tcp_write(fd, "RLS OK ", 7);
@@ -769,8 +784,6 @@ void list_events_handler(Request* req){
     tcp_write(fd, "\n", 1);
     close(fd);
 }
-
-
 
 /**
  * @brief Handles show event request: SHO EID

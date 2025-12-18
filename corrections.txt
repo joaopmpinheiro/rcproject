@@ -28,7 +28,8 @@ TODO, maybe printar logs nos verifies falhados??
 
 TODO, pensar se vale a pena ler a data de forma diferente
 
-
+    int status = read_field_or_error(fd, EID, EID_LENGTH, protocol);
+estas merdas têm que dar write a <protocol> ERR, acho
 
 
 USER:

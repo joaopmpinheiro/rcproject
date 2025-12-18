@@ -142,9 +142,11 @@ int write_event_start_file(const char* eid, const char* uid, const char* event_n
 /**
  * @brief Writes event end data to EVENTS/{EID}/END_{EID}.txt
  * 
+ * @param eid Event ID (3-digit string, e.g., "001")
+ * 
  * @return int SUCCESS if file was written successfully, ERROR otherwise
  */
-int write_event_end_file();
+int write_event_end_file(const char* eid);
 
 /**
  * @brief Writes event metadata to USERS/CREATED/{EID}.txt file
