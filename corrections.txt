@@ -19,18 +19,9 @@ corrigir
 
 DUVIDA:
 
-no list vai ser testado ter um folder de events corrompido? isto é só ter um folder
- ou todos os folder estão mal formatados, por exemplo o folder 001 não tem nada mas existe
-
-no create, quando tenho erro a ler os fields dou RCE ERR? ou só return
-
 TODO, maybe printar logs nos verifies falhados??
 
 TODO, pensar se vale a pena ler a data de forma diferente
-
-    int status = read_field_or_error(fd, EID, EID_LENGTH, protocol);
-estas merdas têm que dar write a <protocol> ERR, acho
-
 
 USER:
 confirmar que os read_tcp_field estao a fazer != SUCCESS ou == ERROR

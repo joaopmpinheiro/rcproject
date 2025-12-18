@@ -701,15 +701,15 @@ void close_event_handler(Request* req){
         return;
     }
 
-    if (is_event_past(EID)) {
-        tcp_write(fd, "RCL PST\n", 8);
+    if (is_event_closed(EID)) {
+        fprintf(stderr, "Event %s is already closed.\n", EID);
+        tcp_write(fd, "RCL CLO\n", 8);
         close(fd);
         return;
     }
 
-    if (is_event_closed(EID)) {
-        fprintf(stderr, "Event %s is already closed.\n", EID);
-        tcp_write(fd, "RCL CLO\n", 8);
+    if (is_event_past(EID)) {
+        tcp_write(fd, "RCL PST\n", 8);
         close(fd);
         return;
     }
@@ -837,10 +837,10 @@ void show_event_handler(Request* req){
     fprintf(stderr, "description path %s\n", description_path);
     tcp_write(fd, response, strlen(response));
     tcp_send_file(fd, description_path);
+    
+    shutdown(fd, SHUT_WR);
     close(fd);
 }
-
-
 
 int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size) {
     char UID[UID_LENGTH + 1];
