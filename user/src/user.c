@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
 
     while (1) {
         printf("> ");
+        fflush(stdout);
         // Read user input
         if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) break;
 
