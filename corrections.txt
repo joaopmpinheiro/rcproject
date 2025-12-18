@@ -14,17 +14,19 @@ VER SE A ORDEM DE VERIFICAÇÃO ESTÁ CERTA
         state = ACCEPTING;
     }
 
-verificação de dois pontos de seguida no nome do ficheiro para prevenir "../../whatever.jpg" funcionar
-
-ir buscar ao git o corrections.txt antigo
-corrigir
-
-DUVIDA:
-
-TODO, maybe printar logs nos verifies falhados??
-
-TODO, pensar se vale a pena ler a data de forma diferente
-
 USER:
 confirmar que os read_tcp_field estao a fazer != SUCCESS ou == ERROR
 -> muita diferenca por causa do EOM
+
+
+TODO:
+
+    - RESERVE RESERVATIONS POR EOM checking
+    - CTRL C SERVER-SIDE
+    - REVER STATUS TODOS DO SERVER
+    - UNREGISTER E LOGOUT
+    - SERVER CHAMAR-SE ES (compilado)
+    - PASS SER 8 DIGITOS EXATAMENTE (read field or error nao vê (ver reserve seats))
+    - DOUBLE CHECK SE EID É SEMPRE PADDED (1 -> 001) TEM QUE SER USER SIDE SE NAO TÁ MAL ODEIO A MINHA VIDA AHFABDIWJESGAJKWSSBEFHADNWKIPOEFGBUYHEFJKADLMFENGBSIHFJK
+
+DOUBT:
