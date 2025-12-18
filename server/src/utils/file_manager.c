@@ -289,3 +289,58 @@ int write_description_file(const char* eid, const char* file_name, size_t file_s
 }
 
 
+int write_reservation(char* UID, char* EID, int num_seats) {
+    if (!UID || !EID || num_seats <= 0) return ERROR;
+
+    // Get current time for timestamp
+    time_t now = time(NULL);
+    struct tm* tm_info = localtime(&now);
+
+    // Format datetime: DD-MM-YYYY HH:MM:SS
+    char datetime[20];
+    strftime(datetime, sizeof(datetime), "%d-%m-%Y %H:%M:%S", tm_info);
+
+    // Build filename: {EID}-{DD-MM-YYYY HH:MM:SS}.txt
+    char filename[64];
+    snprintf(filename, sizeof(filename), "%s-%s.txt", EID, datetime);
+
+    // Build file content: UID res_num res_datetime
+    char content[128];
+    snprintf(content, sizeof(content), "%s %d %s\n", UID, num_seats, datetime);
+
+    // Write to EVENTS/{EID}/RESERVATIONS/
+    char event_res_path[128];
+    snprintf(event_res_path, sizeof(event_res_path), 
+             "EVENTS/%s/RESERVATIONS/%s", EID, filename);
+    
+    FILE* fp = fopen(event_res_path, "w");
+    if (!fp) return ERROR;
+    
+    if (fprintf(fp, "%s", content) < 0) {
+        fclose(fp);
+        return ERROR;
+    }
+    fclose(fp);
+
+    // Write to USERS/{UID}/RESERVED/
+    char user_res_path[128];
+    snprintf(user_res_path, sizeof(user_res_path), 
+             "USERS/%s/RESERVED/%s", UID, filename);
+    
+    fp = fopen(user_res_path, "w");
+    if (!fp) {
+        // Rollback: remove the event reservation file
+        unlink(event_res_path);
+        return ERROR;
+    }
+    
+    if (fprintf(fp, "%s", content) < 0) {
+        fclose(fp);
+        unlink(event_res_path);
+        unlink(user_res_path);
+        return ERROR;
+    }
+    fclose(fp);
+
+    return SUCCESS;
+}

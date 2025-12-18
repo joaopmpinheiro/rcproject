@@ -940,6 +940,14 @@ void reserve_seats_handler(Request* req){
         close(fd);
         return;
     }
+
+    // Create reservation record files
+    if (make_reservation(UID, EID, requested_seats) == ERROR) {
+        tcp_write(fd, "RRI ERR\n", 8);
+        close(fd);
+        return;
+    }
+
     tcp_write(fd, "RRI ACC\n", 8);
     close(fd);
 }

@@ -148,6 +148,10 @@ int has_events(char* UID){
     return is_dir_empty(UID) ? FALSE : TRUE;
 }
 
+
+
+
+
 /* int get_event_list(char *EID, EVENTLIST *list){
     char* UID
     struct dirent **filelist;

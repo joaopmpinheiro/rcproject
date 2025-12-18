@@ -184,6 +184,8 @@ int update_reservations_file(const char* eid, int reserved_seats);
  */
 int write_description_file(const char* eid, const char* file_name, size_t file_size, const char* file_content);
 
+
+int write_reservation(char* UID, char* EID, int num_seats);
 // ------------ users_manager.c ---------------
 int user_exists(char* UID);
 int create_new_user(char* UID, char* password);
@@ -199,6 +201,7 @@ int has_events(char* UID);
 
 int verify_correct_password(char* UID, char* password);
 
+
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);
 int verify_event_dir(char* event_dir_name);
@@ -212,7 +215,7 @@ int read_event_full_details(char* EID, char* UID, char* event_name,
                             char* event_date, char* total_seats,
                             char* reserved_seats, char* file_name);
 int get_available_seats(char* EID);
-int make_reservation(char* EID, int num_seats);
+int make_reservation(char* UID, char* EID, int num_seats);
 
 
 #endif
