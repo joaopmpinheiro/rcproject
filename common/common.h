@@ -16,6 +16,9 @@
 #define PORTMAX 65535
 #define PORTMIN 0
 
+#define TRUE 1
+#define FALSE 0
+
 // TODO por todos os defines no mesmo sitio
 #define TIMEOUT_SECONDS 5
 #define PASSWORD_LENGTH 8

@@ -145,7 +145,7 @@ int verify_event_file(char* event_file_name){
 
 int has_events(char* UID){
     sscanf(UID, "USERS/%s/CREATED", UID);
-    return is_dir_empty(UID) == VALID ? INVALID : VALID;
+    return is_dir_empty(UID) ? FALSE : TRUE;
 }
 
 /* int get_event_list(char *EID, EVENTLIST *list){

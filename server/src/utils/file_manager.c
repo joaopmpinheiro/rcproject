@@ -31,33 +31,32 @@ int check_file(char *fname){
 
 int file_exists(const char* filename) {
     struct stat buffer;
-    return (stat(filename, &buffer) == 0) ? VALID : INVALID;
+    return (stat(filename, &buffer) == 0) ? TRUE : FALSE;
 }
 
 int dir_exists(const char* path) {
     struct stat info;
 
-    if (stat(path, &info) != 0) return INVALID;
-    else if (S_ISDIR(info.st_mode)) return VALID;
-    return INVALID;
+    if (stat(path, &info) != 0) return FALSE;
+    else if (S_ISDIR(info.st_mode)) return TRUE;
+    return FALSE;
 }
 
 int is_dir_empty(const char* path) {
-    if (dir_exists(path) == INVALID) return INVALID;
-
+    if (!dir_exists(path)) return FALSE;
     DIR* dir = opendir(path);
-    if (dir == NULL) return INVALID;
+    if (dir == NULL) return FALSE;
 
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
         // Skip . and ..
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             closedir(dir);
-            return INVALID;
+            return FALSE;
         }
     }
     closedir(dir);
-    return VALID;
+    return TRUE;
 }
 
 char* read_file(const char* filename) {
@@ -95,7 +94,6 @@ char* read_file(const char* filename) {
     buffer[filesize] = '\0'; // Null-terminate the string
     return buffer;
 }
-
 
 int remove_directory(const char *path) {
     return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS) ? ERROR : SUCCESS;

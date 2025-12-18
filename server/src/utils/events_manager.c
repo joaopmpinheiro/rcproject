@@ -12,7 +12,24 @@ int event_exists(char* EID){
 int is_event_closed(char* EID){
     char state_path[30];
     sprintf(state_path, "EVENTS/%s/END_%s.txt", EID, EID);
-    return file_exists(state_path);
+    return file_exists(state_path) ? TRUE : FALSE;
+}
+
+int verify_event_dir(char* event_dir_name){
+    // Check length is exactly 3
+    if (strlen(event_dir_name) != 3) return INVALID;
+
+    // Check all 3 characters are digits
+    for (int i = 0; i < 3; i++) {
+        if (!isdigit((unsigned char)event_dir_name[i]))
+            return INVALID;
+    }
+    
+    // Check range 001-999
+    int eid = atoi(event_dir_name);
+    if (eid < 1 || eid > 999) return INVALID;
+    
+    return VALID;
 }
 
 int is_event_creator(char* UID, char* EID){
@@ -21,20 +38,20 @@ int is_event_creator(char* UID, char* EID){
 
     FILE* fp = fopen(event_info_fname, "r");
     if (fp == NULL) {
-        return INVALID;
+        return FALSE;
     }
 
     char file_UID[UID_LENGTH + 1];
     if (fscanf(fp, "%6s", file_UID) != 1) {
         fclose(fp);
-        return INVALID;
+        return FALSE;
     }
     fclose(fp);
 
     if (strcmp(UID, file_UID) == 0) {
-        return VALID;
+        return TRUE;
     }
-    return INVALID;
+    return FALSE;
 }
 
 int is_event_sold_out(char* EID){
@@ -45,13 +62,13 @@ int is_event_sold_out(char* EID){
 
     FILE* fp = fopen(event_info_fname, "r");
     if (fp == NULL) {
-        return INVALID;
+        return FALSE;
     }
 
     char seat_count_str[SEAT_COUNT_LENGTH + 1];
     if (fscanf(fp, "%*s %*s %*s %3s", seat_count_str) != 1) {
         fclose(fp);
-        return INVALID;
+        return FALSE;
     }
     fclose(fp);
 
@@ -65,9 +82,9 @@ int is_event_sold_out(char* EID){
     }
 
     if (reserved_seats >= seat_count) {
-        return VALID;
+        return TRUE;
     }
-    return INVALID;
+    return FALSE;
 }
 
 int is_event_past(char* EID){
@@ -76,7 +93,7 @@ int is_event_past(char* EID){
 
     FILE* fp = fopen(event_info_fname, "r");
     if (fp == NULL) {
-        return INVALID;
+        return FALSE;
     }
 
     char date_str[11];  // DD-MM-YYYY
@@ -84,7 +101,7 @@ int is_event_past(char* EID){
     // Format: UID event_name filename seat_count date time
     if (fscanf(fp, "%*s %*s %*s %*s %10s %5s", date_str, time_str) != 2) {
         fclose(fp);
-        return INVALID;
+        return FALSE;
     }
     fclose(fp);
 
@@ -92,7 +109,7 @@ int is_event_past(char* EID){
     int day, month, year, hour, minute;
     if (sscanf(date_str, "%d-%d-%d", &day, &month, &year) != 3 ||
         sscanf(time_str, "%d:%d", &hour, &minute) != 2) {
-        return INVALID;
+        return FALSE;
     }
 
     // Get current time
@@ -111,16 +128,37 @@ int is_event_past(char* EID){
 
     time_t event_time = mktime(&event_tm);
     if (event_time == -1) {
-        return INVALID;
+        return FALSE;
     }
 
     // Compare times
     if (event_time < now) {
-        return VALID;  // Event is in the past
+        return TRUE;  // Event is in the past
     }
-    return INVALID;    // Event is in the future
+    return FALSE;    // Event is in the future
 }
 
+int read_event_start_file(char* EID, char* event_name, char* event_date) {
+    
+    char start_file_path[30];
+    sprintf(start_file_path, "EVENTS/%s/START_%s.txt", EID, EID);
+
+    FILE* fp = fopen(start_file_path, "r");
+    if (fp == NULL) return ERROR;
+
+    char date_str[11];  // DD-MM-YYYY
+    char time_str[6];   // HH:MM
+    // Format: UID event_name filename seat_count date time
+    if (fscanf(fp, "%*s %10s %*s %*s %10s %5s", event_name, date_str, time_str) != 3) {
+        fclose(fp);
+        return ERROR;
+    }
+
+    fclose(fp);
+    // Combine date and time into event_date
+    snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_str, time_str);
+    return SUCCESS;
+}
 
 int create_eid_dir (int EID){
     char EID_dirname[15];
