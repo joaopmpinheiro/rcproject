@@ -73,8 +73,8 @@ void handle_udp_request(Request* req) {
            myevents_handler(req, uid, password);
             break;
         case MYRESERVATIONS:
-/*             myreservations_handler();
- */            break;
+            myreservations_handler(req, uid, password);
+            break;
         default:
             send_udp_response("ERR\n", req);
             break;
@@ -324,9 +324,52 @@ int format_list_of_user_events(char* UID, char* message, size_t message_size) {
 - list
 - user does not have reservations [sends a maximum of 50 reservations - the most recent]
 */
-/* void myreservations_handler(Request* req, char* UID, char* password){
 
-} */
+/**
+ * @brief Handles myreservations request: LMR UID password
+ * 
+ * Sends to user:
+ * RMR status - [EID date value]*
+ * RMR NOK - user has no reservations
+ * RMR NLG - user not logged in
+ * RMR WRP - wrong password
+ * 
+ * @param req 
+ * @param UID 
+ * @param password 
+ */
+void myreservations_handler(Request* req, char* UID, char* password){
+    if(!user_exists(UID)) {
+        send_udp_response("RMR ERR\n", req);
+        return;
+    }
+    if(!is_logged_in(UID)) {
+        send_udp_response("RMR NLG\n", req);
+        return;
+    }
+    int status = verify_correct_password(UID, password);
+    if(status == ERROR) {
+        send_udp_response("RMR ERR\n", req);
+        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
+        return;
+    }
+    if(status == INVALID) {
+        send_udp_response("RMR WRP\n", req);
+        return;
+    }
+    if(has_reservations(UID) == INVALID) {
+        send_udp_response("RMR NOK\n", req);
+        return;
+    }
+
+    char response[4096];
+    if(format_list_of_user_reservations(UID, response, sizeof(response)) == ERROR) {
+        send_udp_response("RMR ERR\n", req);
+        fprintf(stderr, "Error formatting list of reservations for user with UID %s\n", UID);
+        return;
+    }
+    send_udp_response(response, req);
+} 
 
 
 

@@ -198,6 +198,8 @@ int get_password(char* UID, char* password);
 int is_logged_in(char* UID);
 int verify_event_file(char* event_file_name);
 int has_events(char* UID);
+int has_reservations(char* UID);
+int format_list_of_user_reservations(char* UID, char* response, size_t response_size);
 
 int verify_correct_password(char* UID, char* password);
 

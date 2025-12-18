@@ -322,6 +322,8 @@ int write_reservation(char* UID, char* EID, int num_seats) {
     }
     fclose(fp);
 
+    snprintf(content, sizeof(content), "%s %d %s\n", EID, num_seats, datetime);
+
     // Write to USERS/{UID}/RESERVED/
     char user_res_path[128];
     snprintf(user_res_path, sizeof(user_res_path), 

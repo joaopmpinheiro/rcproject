@@ -1,5 +1,7 @@
 #include "../../include/globals.h"
 #include "../../include/utils.h"
+#include "../../common/parser.h"
+
 
 /**
  * @brief 
@@ -143,12 +145,95 @@ int verify_event_file(char* event_file_name){
     return strcmp(event_file_name + 3, ".txt") == 0 ? VALID : INVALID;
 }
 
+//TODO: melhorar esta funcao
+int verify_reservation_file(char* reservation_file_name){
+    if (strlen(reservation_file_name) != 27) return INVALID;
+
+    // Check first 3 characters are digits
+    for (int i = 0; i < 3; i++) {
+        if (!isdigit((unsigned char)reservation_file_name[i]))
+            return INVALID;
+    }
+    return VALID;
+}
+
 int has_events(char* UID){
     sscanf(UID, "USERS/%s/CREATED", UID);
     return is_dir_empty(UID) ? FALSE : TRUE;
 }
 
 
+int has_reservations(char* UID){
+    sscanf(UID, "USERS/%s/RESERVED", UID);
+    return is_dir_empty(UID) ? FALSE : TRUE;
+}
+
+int format_list_of_user_reservations(char* UID, char* response, size_t response_size) {
+    char path[128];
+    snprintf(path, sizeof(path), "USERS/%s/RESERVED", UID);
+
+    struct dirent **namelist;
+    int n = scandir(path, &namelist, NULL, alphasort);
+    if (n < 0) {
+        perror("scandir");
+        return ERROR;
+    }
+
+    snprintf(response, response_size, "RMR OK");
+
+    for (int i = 0; i < n; i++) {
+        struct dirent *entry = namelist[i];
+        char file_path[256];
+        snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
+        FILE *fp = fopen(file_path, "r");
+        if (!fp) {
+            free(entry);
+            continue;
+        }
+
+        char eid[EID_LENGTH + 1];
+        char reserved_seats[SEAT_COUNT_LENGTH + 1];
+        char date[15];
+        char time[TIME_LENGTH + 3];
+        char file_content[128];
+
+        if (fgets(file_content, sizeof(file_content), fp) == NULL) {
+            fclose(fp);
+            free(entry);
+            continue;
+        }
+        char *cursor = file_content;
+        if(get_next_arg(&cursor, eid) == ERROR ||
+           get_next_arg(&cursor, reserved_seats) == ERROR ||
+           get_next_arg(&cursor, date) == ERROR ||
+           get_next_arg(&cursor, time) == ERROR) {
+            fclose(fp);
+            free(entry);
+            continue;
+        }
+        if(!verify_eid_format(eid) ||
+           !verify_reserved_seats(reserved_seats, "999")) {
+            fclose(fp);
+            free(entry);
+            continue;
+        }
+        fprintf(stderr, "Read reservation: EID=%s, Seats=%s, Date=%s, Time=%s\n",
+                eid, reserved_seats, date, time);
+
+        // Append reservation info to response
+        char temp[64];
+        snprintf(temp, sizeof(temp), " %s %s %s %s", eid, reserved_seats, date, time);
+        strncat(response, temp, response_size - strlen(response) - 1);
+        fclose(fp);
+        free(entry);
+    }
+
+    free(namelist);
+    strncat(response, "\n", response_size - strlen(response) - 1);
+
+    fprintf(stderr, "response in format_list_of_user_reservations: %s\n", response);
+    return SUCCESS;
+}
 
 
 
