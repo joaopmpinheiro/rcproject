@@ -41,7 +41,14 @@ typedef enum ReplyStatus {
     STATUS_EVENT_CLOSE_CLOSED, // CLO - event was already closed
     STATUS_EVENT_RESERVATION_REJECTION, // REJ - seats reservation rejected
 
+    // Communication errors
+    STATUS_SEND_FAILED,     // Failed to send request
+    STATUS_RECV_FAILED,     // Failed to receive response
     STATUS_MALFORMED_COMMAND, // Command not recognized
+    STATUS_MALFORMED_RESPONSE, // Could not parse server response
+    STATUS_UNEXPECTED_RESPONSE, // Unexpected response code
+    STATUS_UNEXPECTED_STATUS,    // Unexpected status
+    
     
     // Client-side errors (before/during communication)
     STATUS_INVALID_ARGS,    // Invalid argument count or format
@@ -55,11 +62,6 @@ typedef enum ReplyStatus {
     STATUS_FILE_NOT_FOUND,  // File does not exist
     STATUS_FILE_READ_ERROR, // Error reading file
     STATUS_FILE_SIZE_EXCEEDED, // File size exceeds limit
-    STATUS_SEND_FAILED,     // Failed to send request
-    STATUS_RECV_FAILED,     // Failed to receive response
-    STATUS_MALFORMED_RESPONSE, // Could not parse server response
-    STATUS_UNEXPECTED_RESPONSE, // Unexpected response code
-    STATUS_UNEXPECTED_STATUS,    // Unexpected status
     
     // Special status
     STATUS_ALREADY_LOGGED_IN,   // User already logged in (for login)

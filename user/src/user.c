@@ -94,8 +94,12 @@ int main(int argc, char* argv[]) {
         status = command_handler(command, &cursor, udp_fd, &server_udp_addr);
         
         // TODO: mais algum devia dar paragem?
-        if(status == STATUS_MALFORMED_RESPONSE ||
-           status == STATUS_MALFORMED_COMMAND) {
+        if (status == STATUS_MALFORMED_RESPONSE ||
+            status == STATUS_MALFORMED_COMMAND ||
+            status == STATUS_SEND_FAILED ||
+            status == STATUS_RECV_FAILED ||
+            status == STATUS_UNEXPECTED_RESPONSE ||
+            status == STATUS_UNEXPECTED_STATUS) {
             close(udp_fd);
             exit(1);
         }
