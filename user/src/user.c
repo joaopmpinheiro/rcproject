@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <signal.h>
 
 #include "../include/utils.h"
 #include "../include/client_data.h"
@@ -19,7 +20,7 @@ int is_logged_in = LOGGED_OUT;
 
 char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
 char PORT[6] = DEFAULT_PORT;
-int stop = 0;
+volatile sig_atomic_t stop = 0;
 
 
 void sig_detected(int signum) {
@@ -63,7 +64,7 @@ void parse_arguments(int argc, char *argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-
+    signal(SIGINT, sig_detected);
     parse_arguments(argc, argv);
     
     struct sockaddr_in server_udp_addr;
@@ -103,6 +104,9 @@ int main(int argc, char* argv[]) {
             close(udp_fd);
             exit(1);
         }
+    }
+    if(stop == 1) {
+        printf("\nExiting...\n");
     }
     close(udp_fd);
     return 0;
