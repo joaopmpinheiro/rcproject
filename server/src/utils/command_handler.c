@@ -76,7 +76,7 @@ void handle_udp_request(Request* req) {
 /*             myreservations_handler();
  */            break;
         default:
-            /* send_udp_response("ERR\n", req); */
+            send_udp_response("ERR\n", req);
             break;
     }
 }
@@ -101,10 +101,10 @@ void handle_tcp_request(Request* req) {
             show_event_handler(req);
             break;
         case RESERVE:
-            // reserve_seats_handler();
+            /* reserve_seats_handler(req); */
             break;
         case CHANGEPASS:
-            // change_password_handler();
+            change_password_handler(req);
             break;
         default:
             tcp_write(req->client_socket, "ERR\n", strlen("ERR\n"));
@@ -336,10 +336,6 @@ int format_list_of_user_events(char* UID, char* message, size_t message_size) {
 // ------------- TCP -------------
 /* USER: uccessful password change, unknown user, user not logged In or incorrect password. 
 */    
-/* void change_password_handler(){
-
-} */
-
 // Helper function to read a field or send a error and close connection in create_event_handler
 static int read_field_or_error(int fd, char* dst, size_t len, char* code) {
     char response[16] = {0};
@@ -351,6 +347,61 @@ static int read_field_or_error(int fd, char* dst, size_t len, char* code) {
     }
     return SUCCESS;
 }
+
+
+
+/**
+ * @brief Handles change password request: CPS UID oldPassword newPassword 
+ * 
+ * Sends to user:
+ * RCP OK - successful password change,
+ * RCP NLG - user not logged in
+ * RCP NOK - wrong password
+ * RCP NID - unknown user
+ * 
+ * @param req 
+ */
+void change_password_handler(Request* req){
+    char UID[UID_LENGTH + 1];
+    char old_password[PASSWORD_LENGTH + 1];
+    char new_password[PASSWORD_LENGTH + 1];
+    int status;
+
+    status = read_field_or_error(req->client_socket, UID, UID_LENGTH, "RCP");
+    if (status != SUCCESS) return;
+    status = read_field_or_error(req->client_socket, old_password, PASSWORD_LENGTH, "RCP");
+    if (status != SUCCESS) return;
+    status = read_field_or_error(req->client_socket, new_password, PASSWORD_LENGTH, "RCP");
+    if (status != SUCCESS) return;
+    
+    if(!user_exists(UID)) {
+        tcp_write(req->client_socket, "RCP NID\n", strlen("RCP NID\n"));
+        return;
+    }
+    if(!is_logged_in(UID)) {
+        tcp_write(req->client_socket, "RCP NLG\n", strlen("RCP NLG\n"));
+        return;
+    }
+    status = verify_correct_password(UID, old_password);
+    if(status == ERROR) {
+        tcp_write(req->client_socket, "RCP ERR\n", strlen("RCP ERR\n"));
+        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
+        return;
+    }
+    if(status == INVALID) {
+        tcp_write(req->client_socket, "RCP NOK\n", strlen("RCP NOK\n"));
+        return;
+    }
+
+    // Proceed to change password
+    if(write_password(UID, new_password) == ERROR) {
+        tcp_write(req->client_socket, "RCP ERR\n", strlen("RCP ERR\n"));
+        fprintf(stderr, "Error changing password for user with UID %s\n", UID);
+        return;
+    }
+    tcp_write(req->client_socket, "RCP OK\n", strlen("RCP OK\n"));
+}
+
 
 /*
 input: 
@@ -776,7 +827,7 @@ USER: s
 - refused + num of available seats (if num_seats > available seats)
 - no longer active
 */
-void reserve_seats_handler(){
+void reserve_seats_handler(Request* req){
 
 }
 

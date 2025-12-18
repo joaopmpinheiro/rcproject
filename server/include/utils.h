@@ -102,8 +102,8 @@ void create_event_handler(Request* req);
 void close_event_handler(Request* req);
 void list_events_handler(Request* req);
 void show_event_handler(Request* req);
-void change_password_handler();
-void reserve_seats_handler();
+void change_password_handler(Request* req);
+void reserve_seats_handler(Request* req);
 int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size);    
 
 
