@@ -211,5 +211,8 @@ int get_list_event_info(char* EID, char* event_name, char* event_date);
 int read_event_full_details(char* EID, char* UID, char* event_name,
                             char* event_date, char* total_seats,
                             char* reserved_seats, char* file_name);
+int get_available_seats(char* EID);
+int make_reservation(char* EID, int num_seats);
+
 
 #endif

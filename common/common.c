@@ -128,7 +128,6 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
         }
         fwrite(buffer, 1, n, file);
         total_received += n;
-        fprintf(stderr, "Received %ld/%ld bytes\n", total_received, file_size);
     }
 
     fclose(file);   

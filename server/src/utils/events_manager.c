@@ -235,3 +235,35 @@ int read_event_full_details(char* EID, char* UID, char* event_name,
     return SUCCESS;
 }
 
+
+int get_available_seats(char* EID) {
+    char event_info_fname[30];
+    char reservations_fname[30];
+    sprintf(event_info_fname, "EVENTS/%s/START_%s.txt", EID, EID);
+    sprintf(reservations_fname, "EVENTS/%s/RES_%s.txt", EID, EID);
+
+    FILE* fp = fopen(event_info_fname, "r");
+    if (fp == NULL) {
+        return ERROR;
+    }
+
+    char seat_count_str[SEAT_COUNT_LENGTH + 1];
+    if (fscanf(fp, "%*s %*s %*s %3s", seat_count_str) != 1) {
+        fclose(fp);
+        return ERROR;
+    }
+    fclose(fp);
+
+    int seat_count = atoi(seat_count_str);
+    int reserved_seats = 0;
+
+    fp = fopen(reservations_fname, "r");
+    if (fp == NULL) return ERROR;
+    if(fscanf(fp, "%d", &reserved_seats) != 1) {
+        fclose(fp);
+        return -1;
+    }
+    fclose(fp);
+
+    return seat_count - reserved_seats;
+}

@@ -101,7 +101,7 @@ void handle_tcp_request(Request* req) {
             show_event_handler(req);
             break;
         case RESERVE:
-            /* reserve_seats_handler(req); */
+            reserve_seats_handler(req);
             break;
         case CHANGEPASS:
             change_password_handler(req);
@@ -373,6 +373,13 @@ void change_password_handler(Request* req){
     if (status != SUCCESS) return;
     status = read_field_or_error(req->client_socket, new_password, PASSWORD_LENGTH, "RCP");
     if (status != SUCCESS) return;
+
+    // FIXME isto é burro e podia ser chamado no command handler
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling change password (RCP), for user with UID %s, using port %s",
+     UID, set.port);
+    server_log(log);
     
     if(!user_exists(UID)) {
         tcp_write(req->client_socket, "RCP NID\n", strlen("RCP NID\n"));
@@ -827,7 +834,113 @@ USER: s
 - refused + num of available seats (if num_seats > available seats)
 - no longer active
 */
-void reserve_seats_handler(Request* req){
 
+/**
+ * @brief Handles reserve seats request: RES UID password EID num_seats
+ * 
+ * Sends to user:
+ * RRI ACC - reservation successful,
+ * RRI NOK - event not active
+ * RRI NLG - user not logged in
+ * RRI WRP - wrong password
+ * RRI CLS - event closed
+ * RRI SLD - event sold out
+ * RRI REJ n_seats- not enough available seats
+ * RRI PST - event date has passed
+ * 
+ * @param req 
+ */
+void reserve_seats_handler(Request* req){
+    char UID[UID_LENGTH + 1];
+    char password[PASSWORD_LENGTH + 1];
+    char EID[EID_LENGTH + 1];
+    char seat_count[SEAT_COUNT_LENGTH + 1]; // max 3 digits
+
+    int fd = req->client_socket;
+
+    char protocol[4] = "RRI";
+
+    // PROTOCOL: RES <uid> <password> <eid> <num_seats>
+    if(read_field_or_error(fd, UID, UID_LENGTH, protocol) != SUCCESS ||
+       read_field_or_error(fd, password, PASSWORD_LENGTH, protocol) != SUCCESS ||
+       read_field_or_error(fd, EID, EID_LENGTH, protocol) != SUCCESS ||
+       read_field_or_error(fd, seat_count, SEAT_COUNT_LENGTH, protocol) != SUCCESS) return;
+    
+
+    // FIXME isto é burro e podia ser chamado no command handler
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling reserve seats (RID), from user with UID %s, using port %s",
+     UID, set.port);
+    server_log(log);
+
+    // Validate all fields
+    if (!verify_uid_format(UID) ||
+        !verify_password_format(password) ||
+        !verify_eid_format(EID) ||
+        !verify_seat_count(seat_count)) {
+        tcp_write(fd, "RRI ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!is_logged_in(UID)) {
+        tcp_write(fd, "RRI NLG\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!verify_correct_password(UID, password) || !user_exists(UID)) {
+        tcp_write(fd, "RRI WRP\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!event_exists(EID)) {
+        tcp_write(fd, "RRI NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (is_event_closed(EID)) {
+        tcp_write(fd, "RRI CLS\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (is_event_sold_out(EID)) {
+        tcp_write(fd, "RRI SLD\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (is_event_past(EID)) {
+        tcp_write(fd, "RRI PST\n", 8);
+        close(fd);
+        return;
+    }
+    int available_seats = get_available_seats(EID);
+    if(available_seats == ERROR) {
+        tcp_write(fd, "RRI ERR\n", 8);
+        close(fd);
+        return;
+    }
+
+    int requested_seats = atoi(seat_count);
+    if (requested_seats > available_seats) {
+        char response[BUFFER_SIZE];
+        snprintf(response, sizeof(response), "RRI REJ %d\n", available_seats);
+        tcp_write(fd, response, strlen(response));
+        close(fd);
+        return;
+    }
+
+    if (update_reservations_file(EID, requested_seats) == ERROR) {
+        tcp_write(fd, "RRI ERR\n", 8);
+        close(fd);
+        return;
+    }
+    tcp_write(fd, "RRI ACC\n", 8);
+    close(fd);
 }
 
