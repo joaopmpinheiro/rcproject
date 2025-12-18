@@ -121,7 +121,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
             printf("%s successful: Seats successfully reserved\n", cmd_name);
             break;      
         case STATUS_MALFORMED_COMMAND:
-            printf("%s failed: Malformed command. Closing connection\n", cmd_name);
+            printf("%s failed: Malformed command.\n Closing connection\n", cmd_name);
             break;
         case STATUS_ERROR:
             printf("%s failed: Server was unable to process the request\n", cmd_name);
@@ -172,7 +172,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
             printf("%s failed: Failed to receive response\n", cmd_name);
             break;
         case STATUS_MALFORMED_RESPONSE:
-            printf("%s failed: Malformed server response\n", cmd_name);
+            printf("%s failed: Malformed server response.\n Closing connection\n", cmd_name);
             break;
         case STATUS_UNEXPECTED_RESPONSE:
             printf("%s failed: Unexpected response code\n", cmd_name);

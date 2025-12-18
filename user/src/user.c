@@ -69,6 +69,8 @@ int main(int argc, char* argv[]) {
 
     char input_buffer[1024] = {0}; //FIXME: tamanho do buffer
     char cmd[64] = {0};
+    RequestType command;
+    ReplyStatus status;
 
     while (1) {
         printf("> ");
@@ -78,12 +80,14 @@ int main(int argc, char* argv[]) {
         memset(cmd, 0, sizeof(cmd));
 
         // Parse command and arguments
-        //sscanf(input_buffer, "%s %[^\n]", command_buffer, command_arg_buffer);
-
         char* cursor = input_buffer;
         if (parse_cmd(&cursor, cmd) == ERROR) continue;
-        RequestType command = identify_command(cmd);
-        if(command_handler(command, &cursor, udp_fd, &server_udp_addr) == STATUS_MALFORMED_COMMAND) {
+        command = identify_command(cmd);
+        status = command_handler(command, &cursor, udp_fd, &server_udp_addr);
+        
+        // TODO: mais algum devia dar paragem?
+        if(status == STATUS_MALFORMED_RESPONSE ||
+           status == STATUS_MALFORMED_COMMAND) {
             close(udp_fd);
             exit(1);
         }
