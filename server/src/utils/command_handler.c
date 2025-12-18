@@ -98,7 +98,7 @@ void handle_tcp_request(Request* req) {
             list_events_handler(req);
             break;
         case SHOW:
-            // show_events_handler();
+            show_event_handler(req);
             break;
         case RESERVE:
             // reserve_seats_handler();
@@ -648,7 +648,7 @@ void list_events_handler(Request* req){
         if (!event_exists(event_EID)) continue;
 
         // Read event details
-        if (read_event_start_file(event_EID, event_name, event_date) == ERROR) continue;
+        if (get_list_event_info(event_EID, event_name, event_date) == ERROR) continue;
 
         // Determine event state
         if (is_event_past(event_EID)) state = PAST;
@@ -670,18 +670,101 @@ void list_events_handler(Request* req){
 }
 
 
-/*
-input: EID
-USER: [events details]
-- event_name
--total seats available, 
-- num of seates reserved
-- file
-OR error message*/
-void show_events_handler(){
 
+/**
+ * @brief Handles show event request: SHO EID
+ * 
+ * Sends to user:
+ * RSE OK [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
+ * RSE NOK - event does not exist or other problem
+ * 
+ * @param req 
+ */
+void show_event_handler(Request* req){
+    char EID[EID_LENGTH + 1];
+
+    int fd = req->client_socket;
+    char protocol[4] = "RSE";
+
+    int status = read_field_or_error(fd, EID, EID_LENGTH, protocol);
+    if (status == ERROR) return;
+
+    // FIXME isto é burro e podia ser chamaadoo no command handler
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling show event (SHO), for EID %s, using port %s", EID, set.port);
+    server_log(log);
+
+    // Validate EID
+    if (!verify_eid_format(EID)) {
+        tcp_write(fd, "RSE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    if (!event_exists(EID)) {
+        tcp_write(fd, "RSE NOK\n", 8);
+        close(fd);
+        return;
+    }
+
+    char response[BUFFER_SIZE];
+    char file_name[FILE_NAME_LENGTH + 1];
+    long file_size;
+    if (format_event_details(EID, response, sizeof(response), file_name, &file_size) == ERROR) {
+        tcp_write(fd, "RSE NOK\n", 8);
+        close(fd);
+        return;
+    }
+    fprintf(stderr, "response %s\n", response);
+
+    char description_path[128];
+    snprintf(description_path, sizeof(description_path), "EVENTS/%s/DESCRIPTION/%s", EID, file_name);
+    fprintf(stderr, "description path %s\n", description_path);
+    tcp_write(fd, response, strlen(response));
+    tcp_send_file(fd, description_path);
+    close(fd);
 }
 
+
+
+int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size) {
+    char UID[UID_LENGTH + 1];
+    char event_name[MAX_EVENT_NAME + 1];
+    char event_date[EVENT_DATE_LENGTH + 1];
+    char total_seats[SEAT_COUNT_LENGTH + 1];
+    char reserved_seats[SEAT_COUNT_LENGTH + 1];
+
+    if (read_event_full_details(EID, UID, event_name,
+                            event_date, total_seats,
+                            reserved_seats, file_name) == ERROR)
+        return ERROR;
+    
+    if (!verify_eid_format(EID) ||
+       !verify_uid_format(UID) ||
+       !verify_event_name_format(event_name) ||
+       !verify_event_date_format(event_date) ||
+       !verify_seat_count(total_seats) ||
+       !verify_reserved_seats(reserved_seats, total_seats) ||
+       !verify_file_name_format(file_name)) 
+        return ERROR;
+    
+    // Check if description file exists
+    char description_path[128];
+    snprintf(description_path, sizeof(description_path), "EVENTS/%s/DESCRIPTION/%s", EID, file_name);
+    if(!file_exists(description_path)) return ERROR;
+    
+    struct stat st;
+    if (stat(description_path, &st) != 0) return ERROR;
+    *file_size = st.st_size;
+    
+    snprintf(message, message_size,
+             "RSE OK %s %s %s %s %s %s %ld ",
+             UID, event_name, event_date,
+             total_seats, reserved_seats,
+             file_name, *file_size);
+    return SUCCESS;
+}
 
 
 /*

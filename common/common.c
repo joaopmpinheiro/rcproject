@@ -46,6 +46,7 @@ int tcp_send_file(int fd, char* file_name) {
     return SUCCESS;
 }
 
+
 // TODO FIXME: olhadela wtf void* buf typecast ?!?!?!
 int tcp_read(int fd, void* buf, size_t len) {
     ssize_t bytes_read = 0;
@@ -127,9 +128,10 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
         }
         fwrite(buffer, 1, n, file);
         total_received += n;
+        fprintf(stderr, "Received %ld/%ld bytes\n", total_received, file_size);
     }
 
-    fclose(file);
+    fclose(file);   
     return SUCCESS;
 }
 

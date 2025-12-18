@@ -76,10 +76,12 @@ int is_event_sold_out(char* EID){
     int reserved_seats = 0;
 
     fp = fopen(reservations_fname, "r");
-    if (fp != NULL) {
-        fscanf(fp, "%d", &reserved_seats);
+    if (fp == NULL) return FALSE;
+    if(fscanf(fp, "%d", &reserved_seats) != 1) {
         fclose(fp);
+        return FALSE;
     }
+    fclose(fp);
 
     if (reserved_seats >= seat_count) {
         return TRUE;
@@ -138,10 +140,12 @@ int is_event_past(char* EID){
     return FALSE;    // Event is in the future
 }
 
-int read_event_start_file(char* EID, char* event_name, char* event_date) {
+
+int get_list_event_info(char* EID, char* event_name, char* event_date) {
     
     char start_file_path[30];
     sprintf(start_file_path, "EVENTS/%s/START_%s.txt", EID, EID);
+    if(!file_exists(start_file_path)) return ERROR;
 
     FILE* fp = fopen(start_file_path, "r");
     if (fp == NULL) return ERROR;
@@ -193,4 +197,41 @@ int create_eid_dir (int EID){
     return SUCCESS;
 }
 
+
+int read_event_full_details(char* EID, char* UID, char* event_name,
+                            char* event_date, char* total_seats,
+                            char* reserved_seats, char* file_name){
+                                
+    char start_file_path[30];
+    char res_file_path[30];
+    sprintf(start_file_path, "EVENTS/%s/START_%s.txt", EID, EID);
+    sprintf(res_file_path, "EVENTS/%s/RES_%s.txt", EID, EID);
+    if(!file_exists(start_file_path)) return ERROR;
+    FILE* fp = fopen(start_file_path, "r");
+    if (fp == NULL) return ERROR;
+    char date_str[11];  // DD-MM-YYYY
+    char time_str[6];   // HH:MM
+    // Format: UID event_name filename seat_count date time
+    if (fscanf(fp, "%6s %10s %20s %3s %10s %5s", UID, event_name, file_name,
+               total_seats, date_str, time_str) != 6) {
+        fclose(fp);
+        return ERROR;
+    }
+    fclose(fp);
+    // Combine date and time into event_date
+    snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_str, time_str);
+
+    // Read reserved seats
+    *reserved_seats = 0;
+    fp = fopen(res_file_path, "r");
+    if (fp == NULL) return ERROR; 
+    
+    if(fscanf(fp, "%s", reserved_seats) != 1) {
+        fclose(fp);
+        return ERROR;
+    }
+    
+    fclose(fp);
+    return SUCCESS;
+}
 

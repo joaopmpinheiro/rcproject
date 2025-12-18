@@ -293,7 +293,8 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
 
     // Prepare request header
     char request_header[512];
-    snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld ",
+    // Do NOT append a trailing space after file_size; next bytes are raw file data
+    snprintf(request_header, sizeof(request_header), "CRE %s %s %s %s %s %s %ld",
              current_uid, current_password, event_name, date, num_seats, file_name, file_size);
     
     // Send request header to server

@@ -104,6 +104,7 @@ void list_events_handler(Request* req);
 void show_event_handler(Request* req);
 void change_password_handler();
 void reserve_seats_handler();
+int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size);    
 
 
 // ------------- file_manager.c ---------------
@@ -206,6 +207,9 @@ int is_event_sold_out(char* EID);
 int is_event_past(char* EID);
 int is_event_closed(char* EID);
 int create_eid_dir (int EID);
-int read_event_start_file(char* EID, char* event_name, char* event_date);
+int get_list_event_info(char* EID, char* event_name, char* event_date);
+int read_event_full_details(char* EID, char* UID, char* event_name,
+                            char* event_date, char* total_seats,
+                            char* reserved_seats, char* file_name);
 
 #endif
