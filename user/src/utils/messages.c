@@ -177,6 +177,9 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
         case STATUS_UNEXPECTED_RESPONSE:
             printf("%s failed: Unexpected response code\n", cmd_name);
             break;
+        case STATUS_UNEXPECTED_STATUS:
+            printf("%s failed: Unexpected status\n", cmd_name);
+            break;
         case STATUS_ALREADY_LOGGED_IN:
             printf("%s failed: User already logged in\n", cmd_name);
             break;           

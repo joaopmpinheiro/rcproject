@@ -59,6 +59,7 @@ typedef enum ReplyStatus {
     STATUS_RECV_FAILED,     // Failed to receive response
     STATUS_MALFORMED_RESPONSE, // Could not parse server response
     STATUS_UNEXPECTED_RESPONSE, // Unexpected response code
+    STATUS_UNEXPECTED_STATUS,    // Unexpected status
     
     // Special status
     STATUS_ALREADY_LOGGED_IN,   // User already logged in (for login)
