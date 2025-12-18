@@ -361,11 +361,14 @@ void myreservations_handler(Request* req, char* UID, char* password){
     }
 
     char response[4096];
-    if(format_list_of_user_reservations(UID, response, sizeof(response)) == ERROR) {
+    int err = format_list_of_user_reservations(UID, response, sizeof(response));
+    if (err <= 0) {
         send_udp_response("RMR ERR\n", req);
         fprintf(stderr, "Error formatting list of reservations for user with UID %s\n", UID);
         return;
     }
+
+    fprintf(stderr, "Formatted reservations response: %s", response);
     send_udp_response(response, req);
 } 
 

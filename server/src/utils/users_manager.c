@@ -169,24 +169,43 @@ int has_reservations(char* UID){
     return is_dir_empty(UID) ? FALSE : TRUE;
 }
 
+
+/**
+ * @brief Returns the number of reservations formatted into response.
+ * 
+ * @param UID 
+ * @param response 
+ * @param response_size 
+ * @return int 
+ */
 int format_list_of_user_reservations(char* UID, char* response, size_t response_size) {
     char path[128];
+    int count = 0;
     snprintf(path, sizeof(path), "USERS/%s/RESERVED", UID);
 
     struct dirent **namelist;
     int n = scandir(path, &namelist, NULL, alphasort);
     if (n < 0) {
-        perror("scandir");
+        perror("scandir");  
         return ERROR;
     }
 
+    int start = (n > 50) ? n - 50 : 0;
+
     snprintf(response, response_size, "RMR OK");
 
-    for (int i = 0; i < n; i++) {
+    for (int i = start; i < n; i++) {
         struct dirent *entry = namelist[i];
+        
+        /* Skip "." and ".." */
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0) {
+            free(entry);
+            continue;
+        }
+
         char file_path[256];
         snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
-        fprintf(stderr, "Reading reservation file: %s\n", file_path);
         FILE *fp = fopen(file_path, "r");
         if (!fp) {
             free(entry);
@@ -195,7 +214,7 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
 
         char eid[EID_LENGTH + 1] = {0};
         char reserved_seats[SEAT_COUNT_LENGTH + 1] ={0};
-        char date[15] = {0};    
+        char date[DAY_STR_SIZE + 1] = {0};    
         char time[TIME_LENGTH + 4] = {0};
         char file_content[128] = {0};
 
@@ -219,22 +238,21 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
             free(entry);
             continue;
         }
-        fprintf(stderr, "Read reservation: EID=%s, Seats=%s, Date=%s, Time=%s\n",
-                eid, reserved_seats, date, time);
 
         // Append reservation info to response
         char temp[64];
         snprintf(temp, sizeof(temp), " %s %s %s %s", eid, reserved_seats, date, time);
         strncat(response, temp, response_size - strlen(response) - 1);
+        count++;
         fclose(fp);
         free(entry);
     }
 
+    /* Free scandir list */
+    for (int i = 0; i < n; i++) free(namelist[i]);
     free(namelist);
     strncat(response, "\n", response_size - strlen(response) - 1);
-
-    fprintf(stderr, "response in format_list_of_user_reservations: %s\n", response);
-    return SUCCESS;
+    return count;
 }
 
 

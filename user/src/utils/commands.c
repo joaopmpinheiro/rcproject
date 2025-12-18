@@ -54,7 +54,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     status =  parse_udp_response_header(&resp_cursor, LOGIN);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
     
-    if(status != STATUS_OK &&
+    if (status != STATUS_OK &&
        status != STATUS_NOK &&
        status != STATUS_ERROR &&
        status != STATUS_SEND_FAILED &&
@@ -78,7 +78,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
 ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {
     // Verify arguments
-    if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
+    if (!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: UNR <uid> <password>
