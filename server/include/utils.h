@@ -200,10 +200,12 @@ int verify_correct_password(char* UID, char* password);
 
 // ------------ events_manager.c ---------------
 int event_exists(char* EID);
+int verify_event_dir(char* event_dir_name);
 int is_event_creator(char* UID, char* EID);
 int is_event_sold_out(char* EID);
 int is_event_past(char* EID);
-int create_eid_dir (int EID);
 int is_event_closed(char* EID);
+int create_eid_dir (int EID);
+int read_event_start_file(char* EID, char* event_name, char* event_date);
 
 #endif

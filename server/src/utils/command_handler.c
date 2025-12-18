@@ -95,7 +95,7 @@ void handle_tcp_request(Request* req) {
             close_event_handler(req);
             break;
         case LIST:
-            // list_events_handler();
+            list_events_handler(req);
             break;
         case SHOW:
             // show_events_handler();
@@ -302,23 +302,21 @@ int format_list_of_user_events(char* UID, char* message, size_t message_size) {
         char event_EID[4];
         strncpy(event_EID, entry->d_name, 3);
         event_EID[3] = '\0';
-
-        int state;
-        if (is_event_closed(event_EID) == SUCCESS) state = CLOSED;
-        else if (is_event_past(event_EID) == SUCCESS) state = PAST;
-        else if (is_event_sold_out(event_EID) == VALID) state = SOLD_OUT;
-        else state = ACCEPTING;
-
-        char temp[16];
-        snprintf(temp, sizeof(temp), " %s %c", event_EID, state);
-        strncat(message, temp, message_size - strlen(message) - 1);
-
-        free(entry); // free each dirent allocated by scandir
+        // Check event state
+        if (is_event_closed(event_EID) == SUCCESS) {
+            state = CLOSED;
+        } else if (is_event_past(event_EID) == SUCCESS) {
+            state = PAST;
+        } else if (is_event_sold_out(event_EID) == VALID) {
+            state = SOLD_OUT;
+        } else {
+            state = ACCEPTING;
+        }
+        snprintf(response, sizeof(response), "%s %c\n", event_EID, state);
+        send_udp_response(response, req);
     }
-    free(namelist); // free the array itself
-
-    strncat(message, "\n", message_size - strlen(message) - 1);
-    return SUCCESS;
+    send_udp_response("\n", req);
+    closedir(dir);
 }
 
 /*
@@ -623,15 +621,56 @@ void close_event_handler(Request* req){
     close(fd);
 }
 
-// void list_events_handler(Request* req){
-//     if (is_dir_empty("EVENTS")) {
-//         tcp_write(req->client_socket, "RLS NOK\n", 8);
-//         close(req->client_socket);
-//         return;
-//     }
-// 
-//     char response
-// }
+void list_events_handler(Request* req){
+    int fd = req->client_socket;
+    
+    // FIXME TODO MUDAR PORT PARA IP
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling list event (LST), using port %s", set.port);
+    server_log(log);
+    
+    // Send initial OK response
+    tcp_write(fd, "RLS OK ", 7);
+
+    char event_EID[EID_LENGTH + 1];
+    char event_name[MAX_EVENT_NAME + 1];
+    char event_date[EVENT_DATE_LENGTH + 1];
+    int state = ' ';
+
+    // Loop from 001 to 999
+    for (int eid = 1; eid <= 999; eid++) {
+        snprintf(event_EID, EID_LENGTH + 1, "%03d", eid);
+        
+        // Check if event exists
+        if (!event_exists(event_EID)) continue;
+
+        // Read event details
+        if (read_event_start_file(event_EID, event_name, event_date) == ERROR) continue;
+
+        // Determine event state
+        if (is_event_past(event_EID)) {
+            state = PAST;
+        } else if (is_event_sold_out(event_EID)) {
+            state = SOLD_OUT;
+        } else if (is_event_closed(event_EID)) {
+            state = CLOSED;
+        } else {
+            state = ACCEPTING;
+        }
+
+        // Append event details to response
+        // PROTOCOLO: <EID name state event_date>
+        char event_entry[256];
+        snprintf(event_entry, sizeof(event_entry), "%s %s %c %s ",
+                 event_EID, event_name, state, event_date);
+
+        tcp_write(fd, event_entry, strlen(event_entry));
+    }
+
+    tcp_write(fd, "\n", 1);
+    close(fd);
+}
 
 
 /*

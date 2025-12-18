@@ -1,5 +1,17 @@
 TODO:
 
+VER SE A ORDEM DE VERIFICAÇÃO ESTÁ CERTA 
+
+    if (is_event_closed(event_EID)) {
+        state = CLOSED;
+    } else if (is_event_past(event_EID)) {
+        state = PAST;
+    } else if (is_event_sold_out(event_EID)) {
+        state = SOLD_OUT;
+    } else {
+        state = ACCEPTING;
+    }
+
 verificação de dois pontos de seguida no nome do ficheiro para prevenir "../../whatever.jpg" funcionar
 
 ir buscar ao git o corrections.txt antigo
@@ -13,6 +25,8 @@ no list vai ser testado ter um folder de events corrompido? isto é só ter um f
 no create, quando tenho erro a ler os fields dou RCE ERR? ou só return
 
 TODO, maybe printar logs nos verifies falhados??
+
+TODO, pensar se vale a pena ler a data de forma diferente
 
 
 

@@ -8,10 +8,27 @@ int event_exists(char* EID){
     return dir_exists(EID_dirname);
 }
 
+int verify_event_dir(char* event_dir_name){
+    // Check length is exactly 3
+    if (strlen(event_dir_name) != 3) return INVALID;
+
+    // Check all 3 characters are digits
+    for (int i = 0; i < 3; i++) {
+        if (!isdigit((unsigned char)event_dir_name[i]))
+            return INVALID;
+    }
+    
+    // Check range 001-999
+    int eid = atoi(event_dir_name);
+    if (eid < 1 || eid > 999) return INVALID;
+    
+    return VALID;
+}
+
 int is_event_closed(char* EID){
     char state_path[30];
     sprintf(state_path, "EVENTS/%s/END_%s.txt", EID, EID);
-    return file_exists(state_path) ? SUCCESS : ERROR;
+    return file_exists(state_path) ? VALID : INVALID;
 }
 
 int is_event_creator(char* UID, char* EID){
@@ -120,6 +137,27 @@ int is_event_past(char* EID){
     return INVALID;    // Event is in the future
 }
 
+int read_event_start_file(char* EID, char* event_name, char* event_date) {
+    
+    char start_file_path[30];
+    sprintf(start_file_path, "EVENTS/%s/START_%s.txt", EID, EID);
+
+    FILE* fp = fopen(start_file_path, "r");
+    if (fp == NULL) return ERROR;
+
+    char date_str[11];  // DD-MM-YYYY
+    char time_str[6];   // HH:MM
+    // Format: UID event_name filename seat_count date time
+    if (fscanf(fp, "%*s %10s %*s %*s %10s %5s", event_name, date_str, time_str) != 3) {
+        fclose(fp);
+        return ERROR;
+    }
+
+    fclose(fp);
+    // Combine date and time into event_date
+    snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_str, time_str);
+    return SUCCESS;
+}
 
 int create_eid_dir (int EID){
     char EID_dirname[15];

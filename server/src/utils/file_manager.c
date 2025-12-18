@@ -96,7 +96,6 @@ char* read_file(const char* filename) {
     return buffer;
 }
 
-
 int remove_directory(const char *path) {
     return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS) ? ERROR : SUCCESS;
 }
