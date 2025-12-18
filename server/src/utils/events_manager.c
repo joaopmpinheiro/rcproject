@@ -269,9 +269,9 @@ int get_available_seats(char* EID) {
 }
 
 int make_reservation(char* UID, char* EID, int requested_seats){
-    int status = update_reservations_file(EID, requested_seats);
-    if (status != SUCCESS) return ERROR;
-    status = write_reservation(UID, EID, requested_seats);
+    int status = write_reservation(UID, EID, requested_seats);
     if (status != SUCCESS) return ERROR;
     return SUCCESS;
+    status = update_reservations_file(EID, requested_seats);
+    if (status != SUCCESS) return ERROR;
 }

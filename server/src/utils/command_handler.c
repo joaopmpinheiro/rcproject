@@ -878,7 +878,7 @@ void reserve_seats_handler(Request* req){
     if (!verify_uid_format(UID) ||
         !verify_password_format(password) ||
         !verify_eid_format(EID) ||
-        !verify_seat_count(seat_count)) {
+        !verify_reserved_seats(seat_count, "999")) {
         tcp_write(fd, "RRI ERR\n", 8);
         close(fd);
         return;
