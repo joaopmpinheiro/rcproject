@@ -258,7 +258,7 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
     if (n == ERROR) return STATUS_RECV_FAILED;
 
     response[n] = '\0';
-    
+    fprintf(stderr, "Received myreservations response: %s", response); 
     // PROTOCOL: RMR <status> [<event1ID date value> ...]
     char *resp_cursor = response;
     ReplyStatus status = parse_udp_response_header(&resp_cursor, MYRESERVATIONS);

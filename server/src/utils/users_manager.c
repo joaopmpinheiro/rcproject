@@ -241,7 +241,7 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
 
         // Append reservation info to response
         char temp[64];
-        snprintf(temp, sizeof(temp), " %s %s %s %s", eid, reserved_seats, date, time);
+        snprintf(temp, sizeof(temp), " %s %s %s %s", eid, date, time, reserved_seats);
         strncat(response, temp, response_size - strlen(response) - 1);
         count++;
         fclose(fp);
@@ -249,7 +249,7 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
     }
 
     /* Free scandir list */
-    for (int i = 0; i < n; i++) free(namelist[i]);
+    //  for (int i = 0; i < n; i++) free(namelist[i]);
     free(namelist);
     strncat(response, "\n", response_size - strlen(response) - 1);
     return count;

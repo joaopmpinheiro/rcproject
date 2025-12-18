@@ -19,7 +19,13 @@ int is_logged_in = LOGGED_OUT;
 
 char IP[MAX_HOSTNAME_LENGTH] = DEFAULT_IP;
 char PORT[6] = DEFAULT_PORT;
+int stop = 0;
 
+
+void sig_detected(int signum) {
+    (void)signum;
+    stop = 1;
+}
     
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
@@ -72,9 +78,10 @@ int main(int argc, char* argv[]) {
     RequestType command;
     ReplyStatus status;
 
-    while (1) {
+    while (!stop) {
         printf("> ");
         fflush(stdout);
+
         // Read user input
         if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) break;
 
@@ -93,5 +100,6 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
     }
+    close(udp_fd);
     return 0;
 }
