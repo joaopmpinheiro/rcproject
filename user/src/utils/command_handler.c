@@ -59,8 +59,8 @@ ReplyStatus command_handler(RequestType command, char** cursor, int udp_fd,
             break;
         case EXIT:
             if (is_logged_in) {
-                status = logout_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
-                print_result(LOGOUT, status, NULL);
+                printf("Please logout before exiting the application.\n");
+                break;
             }
             printf("Exiting application.\n");
             close(udp_fd);

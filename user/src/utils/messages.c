@@ -163,7 +163,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
             printf("%s failed: File size exceeds limit\n", cmd_name);
             break;
         case STATUS_NOT_LOGGED_IN_LOCAL:
-            printf("%s failed: User not logged in\n", cmd_name);
+            printf("%s failed: User not logged in (local)\n", cmd_name);
             break;
         case STATUS_SEND_FAILED:
             printf("%s failed: Failed to send request\n", cmd_name);

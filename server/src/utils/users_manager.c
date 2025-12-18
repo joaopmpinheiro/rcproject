@@ -185,17 +185,18 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
         struct dirent *entry = namelist[i];
         char file_path[256];
         snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
+        fprintf(stderr, "Reading reservation file: %s\n", file_path);
         FILE *fp = fopen(file_path, "r");
         if (!fp) {
             free(entry);
             continue;
         }
 
-        char eid[EID_LENGTH + 1];
-        char reserved_seats[SEAT_COUNT_LENGTH + 1];
-        char date[15];
-        char time[TIME_LENGTH + 3];
-        char file_content[128];
+        char eid[EID_LENGTH + 1] = {0};
+        char reserved_seats[SEAT_COUNT_LENGTH + 1] ={0};
+        char date[15] = {0};    
+        char time[TIME_LENGTH + 4] = {0};
+        char file_content[128] = {0};
 
         if (fgets(file_content, sizeof(file_content), fp) == NULL) {
             fclose(fp);

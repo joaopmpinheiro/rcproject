@@ -53,7 +53,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     status =  parse_udp_response_header(&resp_cursor, LOGIN);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
     
-    if (status != STATUS_OK) return status;
+    if (status != STATUS_OK && status != STATUS_REGISTERED) return status;
     // Update global state on successful login
     if ((status == STATUS_OK && !is_logged_in) || status == STATUS_REGISTERED) {
         is_logged_in = 1;
