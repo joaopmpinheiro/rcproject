@@ -232,6 +232,7 @@ ReplyStatus parse_change_password(char** cursor, char* old_password,
 ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
                               char* seats_reserved);                     
                             
+ReplyStatus parse_udp_response_header(char** cursor, RequestType request_type);                             
 
 
 

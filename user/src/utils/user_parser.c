@@ -91,3 +91,26 @@ ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
 
     return STATUS_UNASSIGNED;    
 }
+
+ReplyStatus parse_udp_response_header(char** cursor, RequestType request_type) {
+    // Parse response
+    char response_code[4], reply_status[4];
+    
+    // Extract response code
+    if(get_next_arg(cursor, response_code) == ERROR)
+        return STATUS_MALFORMED_RESPONSE;
+    
+    // Identify response type (check if it is ERR)
+    RequestType resp_type = identify_command_response(response_code);
+    if(is_end_of_message(cursor)){
+        if(resp_type == ERROR_REQUEST) return STATUS_ERROR;
+        else return STATUS_MALFORMED_RESPONSE;
+    }
+
+    // Extract reply status
+    if(get_next_arg(cursor, reply_status) == ERROR)
+        return STATUS_MALFORMED_RESPONSE;
+
+    if(resp_type != request_type) return STATUS_UNEXPECTED_RESPONSE;
+    return identify_status_code(reply_status);
+}

@@ -49,26 +49,11 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     if (status != STATUS_UNASSIGNED) return status;
     
     // Parse response
-    char response_code[4], reply_status[4];
     char *resp_cursor = response;
-
-    if(get_next_arg(&resp_cursor, response_code) == ERROR)
-        return STATUS_MALFORMED_RESPONSE;
+    status =  parse_udp_response_header(&resp_cursor, LOGIN);
+    if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
     
-    RequestType resp_type = identify_command_response(response_code);
-    if(is_end_of_message(&resp_cursor)){
-        if(resp_type == ERROR_REQUEST) return STATUS_ERROR;
-        else return STATUS_MALFORMED_RESPONSE;
-    }
-
-    if(get_next_arg(&resp_cursor, reply_status) == ERROR ||
-       !is_end_of_message(&resp_cursor))
-        return STATUS_MALFORMED_RESPONSE;
-
-    if(resp_type != LOGIN) return STATUS_UNEXPECTED_RESPONSE;
-    status = identify_status_code(reply_status);
-
-
+    if (status != STATUS_OK) return status;
     // Update global state on successful login
     if ((status == STATUS_OK && !is_logged_in) || status == STATUS_REGISTERED) {
         is_logged_in = 1;
@@ -97,8 +82,8 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     
     // Parse response
     char response_code[4], reply_status[4];
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, UNREGISTER, parsed, 2, reply_status);
+    char *resp_cursor = response;
+    status = parse_udp_response_header(&resp_cursor, UNREGISTER);
 
     // Clear global state on successful unregister
     if (status == STATUS_OK) {
