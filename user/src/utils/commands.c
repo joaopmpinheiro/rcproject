@@ -54,11 +54,11 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     status =  parse_udp_response_header(&resp_cursor, LOGIN);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
     
-    if(status != STATUS_OK ||
-       status != STATUS_NOK ||
-       status != STATUS_ERROR ||
-       status != STATUS_SEND_FAILED ||
-       status != STATUS_RECV_FAILED ||
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_ERROR &&
+       status != STATUS_SEND_FAILED &&
+       status != STATUS_RECV_FAILED &&
        status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_STATUS;
     }
@@ -71,7 +71,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
         strcpy(current_password, password);
         strcpy(current_uid, uid);
     }
-    else if (status == STATUS_OK)  is_logged_in = 1;
+    else if (status == STATUS_OK) is_logged_in = 1;
     return status;
 }
 
