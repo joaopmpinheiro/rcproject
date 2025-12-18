@@ -56,8 +56,8 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     // Expected responses: OK / NOK / REG
     if(status != STATUS_OK &&
        status != STATUS_NOK &&
-       status != STATUS_ERROR &&
        status != STATUS_REGISTERED &&
+       status != STATUS_ERROR &&
        status != STATUS_SEND_FAILED &&
        status != STATUS_RECV_FAILED &&
        status != STATUS_MALFORMED_RESPONSE) {
@@ -97,13 +97,17 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     char *resp_cursor = response;
     status = parse_udp_response_header(&resp_cursor, UNREGISTER);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
-
     // Expected responses: OK / NOK / UNR / WRP
-    if (status != STATUS_OK && 
-        status != STATUS_NOK && 
-        status != STATUS_USER_NOT_REGISTERED && 
-        status != STATUS_WRONG_PASSWORD)
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_USER_NOT_REGISTERED &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_SEND_FAILED &&
+       status != STATUS_RECV_FAILED &&
+       status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
 
     // Clear global state on successful unregister
     if (status == STATUS_OK) {
@@ -139,13 +143,18 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
     status = handle_response_code(response_code, LOGOUT, parsed, 2, reply_status);
 
     // Expected responses: OK / NOK / UNR / WRP
-    if (status != STATUS_OK && 
-        status != STATUS_NOK && 
-        status != STATUS_USER_NOT_REGISTERED && 
-        status != STATUS_WRONG_PASSWORD)
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_USER_NOT_REGISTERED &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_SEND_FAILED &&
+       status != STATUS_RECV_FAILED &&
+       status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
 
-    // Clear global state if we know we are logged out
+    // Clear global state if we know we are logged out or user doesn't exist
     if (status == STATUS_OK || status == STATUS_NOK || status == STATUS_USER_NOT_REGISTERED) {
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
@@ -185,13 +194,18 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
     if (strcmp(response_code, "RME") != 0) return STATUS_UNEXPECTED_RESPONSE;
     ReplyStatus status = identify_status_code(reply_status);
-
+    
     // Expected responses: OK / NOK / NLG / WRP
-    if (status != STATUS_OK && 
-        status != STATUS_NOK && 
-        status != STATUS_NOT_LOGGED_IN && 
-        status != STATUS_WRONG_PASSWORD)
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_NOT_LOGGED_IN &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_SEND_FAILED &&
+       status != STATUS_RECV_FAILED &&
+       status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
 
     // STATUS_OK
     char* event_list = response + 7;
@@ -264,11 +278,16 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
     ReplyStatus status = parse_udp_response_header(&resp_cursor, MYRESERVATIONS);
     
     // Expected responses: OK / NOK / NLG / WRP
-    if (status != STATUS_OK && 
-        status != STATUS_NOK && 
-        status != STATUS_NOT_LOGGED_IN && 
-        status != STATUS_WRONG_PASSWORD) 
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_NOT_LOGGED_IN &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_SEND_FAILED &&
+       status != STATUS_RECV_FAILED &&
+       status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
 
     // Only if status == OK, parse the reservation list
     if (status != STATUS_OK) return status;
@@ -301,6 +320,15 @@ ReplyStatus changepass_handler(char** cursor) {
     status = handle_response_code(response_code, CHANGEPASS, parsed, 2, reply_status);
 
     // Expected responses: OK / NOK / NLG / NID
+    if (status != STATUS_OK &&
+        status != STATUS_NOK &&
+        status != STATUS_NOT_LOGGED_IN &&
+        status != STATUS_USER_NOT_FOUND &&
+        status != STATUS_ERROR &&
+        status != STATUS_MALFORMED_RESPONSE) {
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
+
     // Update global state on successful password change
     if (status == STATUS_OK) {
         strcpy(current_password, new_password);
@@ -354,6 +382,15 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
     
     // Expected responses: OK / NOK / NLG / WRP
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_NOT_LOGGED_IN &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_MALFORMED_RESPONSE) {
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
+    
     if (status == STATUS_OK){
         event_message(eid);
         return STATUS_CUSTOM_OUTPUT;
@@ -383,15 +420,19 @@ ReplyStatus close_event_handler(char** cursor) {
     status = handle_response_code(response_code, CLOSE, parsed, 2, reply_status);
 
     // Expected responses: OK / NOK / NLG / NOE / EOW / SLD / PST / CLO / WRP
-    if (status != STATUS_OK && 
-        status != STATUS_NOK && 
-        status != STATUS_NOT_LOGGED_IN && 
-        status != STATUS_NO_EVENT_ID &&
-        status != STATUS_EVENT_WRONG_USER &&
-        status != STATUS_EVENT_SOLD_OUT &&
-        status != STATUS_PAST_EVENT &&
-        status != STATUS_EVENT_CLOSE_CLOSED)
-         return STATUS_UNEXPECTED_RESPONSE;
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_NOT_LOGGED_IN &&
+       status != STATUS_NO_EVENT_ID &&
+       status != STATUS_EVENT_WRONG_USER &&
+       status != STATUS_EVENT_SOLD_OUT &&
+       status != STATUS_PAST_EVENT &&
+       status != STATUS_EVENT_CLOSE_CLOSED &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_MALFORMED_RESPONSE) {
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
 
     return status;
 }
@@ -417,6 +458,13 @@ ReplyStatus list_handler(char** cursor) {
     ReplyStatus status = read_cmd_status(tcp_fd, LIST);
     
     // Expected responses: OK / NOK
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_ERROR &&
+       status != STATUS_MALFORMED_RESPONSE) {
+        close(tcp_fd);
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
     if (status != STATUS_OK){
         close(tcp_fd);
         return status;  
@@ -463,6 +511,14 @@ ReplyStatus show_handler(char** cursor){
                                        event_date, attendance_size,
                                        reserved_seats, file_name,
                                        file_size);
+    // Expected responses: OK / NOK
+    if(status != STATUS_OK &&
+       status != STATUS_NOK &&
+       status != STATUS_ERROR &&
+       status != STATUS_MALFORMED_RESPONSE) {
+        close(tcp_fd);
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
     if (status != STATUS_OK){
         close(tcp_fd);       
         return status;
@@ -508,6 +564,19 @@ ReplyStatus reserve_handler(char** cursor) {
     status = read_cmd_status(tcp_fd, RESERVE);
     
     // Expected responses: ACC / REJ / CLS / SLD / PST / NOK / NLG / WRP
+    if(status != STATUS_EVENT_RESERVATION_REJECTION &&
+       status != STATUS_EVENT_RESERVED &&
+       status != STATUS_EVENT_CLOSED &&
+       status != STATUS_EVENT_SOLD_OUT &&
+       status != STATUS_PAST_EVENT &&
+       status != STATUS_NOK &&
+       status != STATUS_NOT_LOGGED_IN &&
+       status != STATUS_WRONG_PASSWORD &&
+       status != STATUS_ERROR &&
+       status != STATUS_MALFORMED_RESPONSE) {
+        close(tcp_fd);
+        return STATUS_UNEXPECTED_RESPONSE;
+    }
     if(status != STATUS_EVENT_RESERVATION_REJECTION){
         close(tcp_fd);
         return status;  
