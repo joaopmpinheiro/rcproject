@@ -22,7 +22,7 @@ int is_end_of_message(char **cursor) {
 	while(**cursor == ' ' || **cursor == '\t') {
 		(*cursor)++;
 	}
-	return (**cursor == EOM) ? SUCCESS : ERROR;
+	return (**cursor == EOM) ? TRUE : FALSE;
 }
 
 int parse_cmd(char **cursor, char* cmd) {

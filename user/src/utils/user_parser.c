@@ -9,7 +9,7 @@
 
 ReplyStatus parse_eid(char **cursor, char* eid) {
     if(get_next_arg(cursor, eid) == ERROR ||
-       is_end_of_message(cursor) == ERROR)
+       !is_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
 
     if(!verify_eid_format(eid)) return STATUS_INVALID_EID;
@@ -19,7 +19,7 @@ ReplyStatus parse_eid(char **cursor, char* eid) {
 ReplyStatus parse_login(char **cursor, char* uid, char* password) {
     if(get_next_arg(cursor, uid) == ERROR ||
        get_next_arg(cursor, password) == ERROR ||
-       is_end_of_message(cursor) == ERROR)
+       !is_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
     if(!verify_uid_format(uid)) return STATUS_INVALID_UID;
     if(!verify_password_format(password)) return STATUS_INVALID_PASSWORD;
@@ -36,7 +36,7 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
     get_next_arg(cursor, day_str) == ERROR||
     get_next_arg(cursor, time_str) == ERROR ||
     get_next_arg(cursor, num_seats) == ERROR ||
-    is_end_of_message(cursor) == ERROR)
+    !is_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
 
     snprintf(date, EVENT_DATE_LENGTH + 1, "%s %s", day_str, time_str);
@@ -52,7 +52,7 @@ ReplyStatus parse_change_password(char **cursor, char* old_password,
                                   char* new_password, char* current_password) {
     if(get_next_arg(cursor, old_password) == ERROR ||
        get_next_arg(cursor, new_password) == ERROR ||
-       is_end_of_message(cursor) == ERROR)
+       !is_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
 
     if (!verify_password_format(old_password) ||
@@ -66,7 +66,7 @@ ReplyStatus parse_change_password(char **cursor, char* old_password,
 ReplyStatus parse_reserve(char **cursor, char* eid, char* num_seats) {
     if(get_next_arg(cursor, eid) == ERROR ||
        get_next_arg(cursor, num_seats) == ERROR ||
-       is_end_of_message(cursor) == ERROR)
+       !is_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
     if(!verify_eid_format(eid)) return STATUS_INVALID_EID;
     if(!verify_reserved_seats(num_seats, "999")) return STATUS_INVALID_SEAT_COUNT;

@@ -37,7 +37,7 @@ RequestType identify_command(char* command) {
 }
 
 
-void command_handler(RequestType command, char** cursor, int udp_fd,
+ReplyStatus command_handler(RequestType command, char** cursor, int udp_fd,
      struct sockaddr_in* server_udp_addr) {
     
     socklen_t udp_addr_len = sizeof(*server_udp_addr);
@@ -92,4 +92,5 @@ void command_handler(RequestType command, char** cursor, int udp_fd,
             break;
     }
     if(status != STATUS_UNASSIGNED) print_result(command, status, extra_info);
+    return status;
 }

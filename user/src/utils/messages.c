@@ -1,5 +1,7 @@
 #include "../../include/utils.h"
 #include "../../common/data.h"
+#include "../../include/client_data.h"
+
 
 #include <stdio.h>
 
@@ -119,7 +121,7 @@ void print_result(RequestType command, ReplyStatus status, char* extra_info) {
             printf("%s successful: Seats successfully reserved\n", cmd_name);
             break;      
         case STATUS_MALFORMED_COMMAND:
-            printf("%s failed: Malformed command\n", cmd_name);
+            printf("%s failed: Malformed command. Closing connection\n", cmd_name);
             break;
         case STATUS_ERROR:
             printf("%s failed: Server was unable to process the request\n", cmd_name);

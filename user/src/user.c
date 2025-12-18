@@ -83,7 +83,10 @@ int main(int argc, char* argv[]) {
         char* cursor = input_buffer;
         if (parse_cmd(&cursor, cmd) == ERROR) continue;
         RequestType command = identify_command(cmd);
-        command_handler(command, &cursor, udp_fd, &server_udp_addr);
+        if(command_handler(command, &cursor, udp_fd, &server_udp_addr) == STATUS_MALFORMED_COMMAND) {
+            close(udp_fd);
+            exit(1);
+        }
     }
     return 0;
 }

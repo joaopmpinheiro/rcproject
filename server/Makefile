@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -O2 \
+CFLAGS = -std=c11 -g -Wall -Wextra -O2 \
 	-Iinclude -I../common -D_POSIX_C_SOURCE=200809L
 
 SRCDIR = src

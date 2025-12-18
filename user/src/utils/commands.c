@@ -27,7 +27,6 @@ int verify_file(char* file_name) {
 }
 
 // --------------- UDP ----------------
-
 ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
             socklen_t udp_addr_len) {
     if (is_logged_in) return STATUS_ALREADY_LOGGED_IN;
@@ -41,6 +40,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     // PROTOCOL: LIN <uid> <password>
     char request[256], response[256];
     ssize_t response_size = 256;
+    
     snprintf(request, sizeof(request), "LIN %s %s\n", uid, password);
 
     // Send request to server and receive response
@@ -50,8 +50,24 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     
     // Parse response
     char response_code[4], reply_status[4];
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, LOGIN, parsed, 2, reply_status);
+    char *resp_cursor = response;
+
+    if(get_next_arg(&resp_cursor, response_code) == ERROR)
+        return STATUS_MALFORMED_RESPONSE;
+    
+    RequestType resp_type = identify_command_response(response_code);
+    if(is_end_of_message(&resp_cursor)){
+        if(resp_type == ERROR_REQUEST) return STATUS_ERROR;
+        else return STATUS_MALFORMED_RESPONSE;
+    }
+
+    if(get_next_arg(&resp_cursor, reply_status) == ERROR ||
+       !is_end_of_message(&resp_cursor))
+        return STATUS_MALFORMED_RESPONSE;
+
+    if(resp_type != LOGIN) return STATUS_UNEXPECTED_RESPONSE;
+    status = identify_status_code(reply_status);
+
 
     // Update global state on successful login
     if ((status == STATUS_OK && !is_logged_in) || status == STATUS_REGISTERED) {
@@ -66,7 +82,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
 ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {
     // Verify arguments
-    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: UNR <uid> <password>
@@ -98,7 +114,7 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
      socklen_t udp_addr_len) {
 
     // Verify arguments
-    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     char request[256], response[256];
@@ -130,7 +146,7 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
 ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                             socklen_t udp_addr_len) {
     ssize_t n;
-    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: LME <uid> <password>
@@ -209,7 +225,7 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
                                 struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {
     ssize_t n;
-    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: LMR <uid> <password>
@@ -346,7 +362,7 @@ ReplyStatus close_event_handler(char** cursor) {
 }
 
 ReplyStatus list_handler(char** cursor) {
-    if(is_end_of_message(cursor) == ERROR) return STATUS_INVALID_ARGS;
+    if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
 
     // PROTOCOL: LST <uid> <password>
     char request[256];
