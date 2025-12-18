@@ -1,5 +1,7 @@
 TODO:
 
+tirar flag islogged in quando LOGOUT DEVOLVE NOK
+
 VER SE A ORDEM DE VERIFICAÇÃO ESTÁ CERTA 
 
     if (is_event_closed(event_EID)) {
