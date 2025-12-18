@@ -237,22 +237,24 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
     if (n == ERROR) return STATUS_RECV_FAILED;
 
     response[n] = '\0';
-    char response_code[4];
-    char reply_status[4];
-    char event_list[8192];
+    
+    // PROTOCOL: RMR <status> [<event1ID date value> ...]
+    char *resp_cursor = response;
+    ReplyStatus status = parse_udp_response_header(&resp_cursor, MYRESERVATIONS);
+    
+    // Expected responses: OK / NOK / NLG / WRP / ERR
+    if (status != STATUS_OK && 
+        status != STATUS_NOK && 
+        status != STATUS_NOT_LOGGED_IN && 
+        status != STATUS_WRONG_PASSWORD && 
+        status != STATUS_ERROR) 
+        return STATUS_UNEXPECTED_RESPONSE;
 
-    // PROTOCOL: RMR <status> [<event1ID name event_date seats_reserved> ...]
-    int parsed = sscanf(response, "%3s %3s %[^\n]", response_code, reply_status, event_list);
-    if(parsed < 1) return STATUS_RECV_FAILED;
-    RequestType cmd = identify_command_response(response_code);
-    if(cmd == ERROR_REQUEST) return CMD_ERROR;
-    if(cmd != MYRESERVATIONS) return STATUS_UNEXPECTED_RESPONSE;
-    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-    ReplyStatus status = identify_status_code(reply_status);
-    if(status != STATUS_OK) return status;
-    char *cursor_lst = event_list;
-    return show_myreservations(cursor_lst);
-}  
+    // Only if status == OK, parse the reservation list
+    if (status != STATUS_OK) return status;
+
+    return show_myreservations(resp_cursor);
+}
 
 
 // ------------- TCP -------------
@@ -339,10 +341,13 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
 }
 
 ReplyStatus close_event_handler(char** cursor) {
-    char eid[4];
-    ReplyStatus status = parse_eid(cursor, eid);
+    char raw_eid[4];
+    ReplyStatus status = parse_eid(cursor, raw_eid);
     if (status != STATUS_UNASSIGNED) return status;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
+
+    char eid[4];
+    if (convert_to_3_digit(raw_eid, eid) == ERROR) return STATUS_INVALID_EID;
 
     // PROTOCOL: CLO <uid> <password> <eid>
     char request[256], response[256];
@@ -354,6 +359,17 @@ ReplyStatus close_event_handler(char** cursor) {
     char response_code[4], reply_status[4];
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
     status = handle_response_code(response_code, CLOSE, parsed, 2, reply_status);
+
+    // Expected responses: OK/NOK/NLG/NOE/EOW/SLD/PST/CLO
+    if (status != STATUS_OK && 
+        status != STATUS_NOK && 
+        status != STATUS_NOT_LOGGED_IN && 
+        status != STATUS_NO_EVENT_ID &&
+        status != STATUS_EVENT_WRONG_USER &&
+        status != STATUS_EVENT_SOLD_OUT &&
+        status != STATUS_PAST_EVENT &&
+        status != STATUS_EVENT_CLOSE_CLOSED)
+         return STATUS_UNEXPECTED_RESPONSE;
 
     return status;
 }
@@ -388,9 +404,13 @@ ReplyStatus list_handler(char** cursor) {
 }
 
 ReplyStatus show_handler(char** cursor){
-    char eid[4];
-    ReplyStatus status = parse_eid(cursor, eid);
+    char raw_eid[4];
+    ReplyStatus status = parse_eid(cursor, raw_eid);
     if (status != STATUS_UNASSIGNED) return status;
+
+    char eid[4];
+    if (convert_to_3_digit(raw_eid, eid) == ERROR)
+        return STATUS_INVALID_EID;
 
     // PROTOCOL: SED <eid>
     char request[256];

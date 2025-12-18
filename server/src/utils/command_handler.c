@@ -112,8 +112,6 @@ void handle_tcp_request(Request* req) {
     }
 }
 
-
-
 // ------------ UDP Requests ---------------
 void login_handler(Request* req, char* UID, char* password) {
     sscanf(req->buffer, "LIN %s %s", UID, password);
@@ -693,7 +691,6 @@ void close_event_handler(Request* req){
         close(fd);
         return;
     }
-
 
     if (is_event_sold_out(EID)) {
         tcp_write(fd, "RCL SLD\n", 8);

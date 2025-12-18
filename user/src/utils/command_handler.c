@@ -86,7 +86,7 @@ ReplyStatus command_handler(RequestType command, char** cursor, int udp_fd,
             break;
         case MYRESERVATIONS:
             status = myreservations_handler(cursor, udp_fd, server_udp_addr, udp_addr_len);
-            break; 
+            break;
         default:
             printf("Unknown command\n");
             break;
