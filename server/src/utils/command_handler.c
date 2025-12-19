@@ -386,7 +386,6 @@ static int read_field_or_error(int fd, char* dst, size_t len, char* code) {
     if (tcp_read_field(fd, dst, len) == ERROR) {
         snprintf(response, sizeof(response), "%s ERR\n", code);
         tcp_write(fd, response, strlen(response));
-        close(fd);
         return ERROR;
     }
     return SUCCESS;
@@ -517,7 +516,6 @@ void create_event_handler(Request* req){
 
     if (!verify_file_size(file_size_str)) {
         tcp_write(fd, "RCE ERR\n", 8);
-        close(fd);
         return;
     }
 
@@ -534,28 +532,25 @@ void create_event_handler(Request* req){
         !verify_seat_count(seat_count) ||
         !verify_file_name_format(file_name)) {
         tcp_write(fd, "RCE ERR\n", 8);
-        close(fd);
         return;
     }
 
     if (!is_logged_in(UID)) {
         tcp_write(fd, "RCE NLG\n", 8);
-        close(fd);
         return;
     }
 
     if (!verify_correct_password(UID, password)) {
         tcp_write(fd, "RCE WRP\n", 8);
-        close(fd);
         return;
     }
+  
 
     // Allocate buffer for file content
     file_size = (size_t)atol(file_size_str);
     file_content = (char*)malloc(file_size + 1);
     if (file_content == NULL) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
 
@@ -567,7 +562,6 @@ void create_event_handler(Request* req){
         if (n <= 0) {
             free(file_content);
             tcp_write(fd, "RCE ERR\n", 8);
-            close(fd);
             return;
         }
         total_read += n;
@@ -578,20 +572,17 @@ void create_event_handler(Request* req){
     // TODO: funçao de rollback, pensar nisso
     if (find_available_eid(EID) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (create_eid_dir(atoi(EID)) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (write_event_start_file(EID, UID, event_name, file_name, seat_count,
                                event_date) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
 
@@ -599,19 +590,16 @@ void create_event_handler(Request* req){
     if (write_event_information_file(EID, UID, event_name, file_name, seat_count,
                                event_date) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (update_reservations_file(EID, 0) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (write_description_file(EID, file_name, file_size, file_content) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
-        close(fd);
         return;
     }
     
@@ -621,7 +609,6 @@ void create_event_handler(Request* req){
     char response[16];
     snprintf(response, sizeof(response), "RCE OK %s\n", EID);
     tcp_write(fd, response, strlen(response));
-    close(fd);
 }
 
 /*
@@ -667,61 +654,51 @@ void close_event_handler(Request* req){
         !verify_eid_format(EID)) {
         // TODO, maybe printar logs nestes casos (?)
         tcp_write(fd, "RCE ERR\n", 8);
-        close(fd);
         return;
     }
 
     if (!is_logged_in(UID)) {
         tcp_write(fd, "RCL NLG\n", 8);
-        close(fd);
         return;
     }
 
     if (!verify_correct_password(UID, password) || !user_exists(UID)) {
         tcp_write(fd, "RCL NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (!event_exists(EID)) {
         tcp_write(fd, "RCL NOE\n", 8);
-        close(fd);
         return;
     }
 
     if (!is_event_creator(UID, EID)) {
         tcp_write(fd, "RCL EOW\n", 8);
-        close(fd);
         return;
     }
 
     if (is_event_sold_out(EID)) {
         tcp_write(fd, "RCL SLD\n", 8);
-        close(fd);
         return;
     }
 
     if (is_event_closed(EID)) {
         fprintf(stderr, "Event %s is already closed.\n", EID);
         tcp_write(fd, "RCL CLO\n", 8);
-        close(fd);
         return;
     }
 
     if (is_event_past(EID)) {
         tcp_write(fd, "RCL PST\n", 8);
-        close(fd);
         return;
     }
 
     if (write_event_end_file(EID) == ERROR) {
         tcp_write(fd, "RCL ERR\n", 8);
-        close(fd);
         return;
     }
 
-    tcp_write(fd, "RCL OK\n", 7);
-    close(fd);
+    tcp_write(fd, "RCL OK\n", 7); 
 }
 
 /**
@@ -743,8 +720,7 @@ void list_events_handler(Request* req){
     server_log(log);
 
     if (is_dir_empty("EVENTS")) {
-        tcp_write(fd, "RLS NOK\n", 7);
-        close(fd);
+        tcp_write(fd, "RLS NOK\n", 7);   
         return;
     }
     
@@ -782,7 +758,7 @@ void list_events_handler(Request* req){
     }
 
     tcp_write(fd, "\n", 1);
-    close(fd);
+    
 }
 
 /**
@@ -812,13 +788,11 @@ void show_event_handler(Request* req){
     // Validate EID
     if (!verify_eid_format(EID)) {
         tcp_write(fd, "RSE NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (!event_exists(EID)) {
         tcp_write(fd, "RSE NOK\n", 8);
-        close(fd);
         return;
     }
 
@@ -827,7 +801,6 @@ void show_event_handler(Request* req){
     long file_size;
     if (format_event_details(EID, response, sizeof(response), file_name, &file_size) == ERROR) {
         tcp_write(fd, "RSE NOK\n", 8);
-        close(fd);
         return;
     }
     fprintf(stderr, "response %s\n", response);
@@ -839,7 +812,7 @@ void show_event_handler(Request* req){
     tcp_send_file(fd, description_path);
     
     shutdown(fd, SHUT_WR);
-    close(fd);
+    
 }
 
 int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size) {
@@ -936,49 +909,41 @@ void reserve_seats_handler(Request* req){
         !verify_eid_format(EID) ||
         !verify_reserved_seats(seat_count, "999")) {
         tcp_write(fd, "RRI ERR\n", 8);
-        close(fd);
         return;
     }
 
     if (!is_logged_in(UID)) {
         tcp_write(fd, "RRI NLG\n", 8);
-        close(fd);
         return;
     }
 
     if (!verify_correct_password(UID, password) || !user_exists(UID)) {
         tcp_write(fd, "RRI WRP\n", 8);
-        close(fd);
         return;
     }
 
     if (!event_exists(EID)) {
         tcp_write(fd, "RRI NOK\n", 8);
-        close(fd);
         return;
     }
 
     if (is_event_closed(EID)) {
         tcp_write(fd, "RRI CLS\n", 8);
-        close(fd);
         return;
     }
 
     if (is_event_sold_out(EID)) {
         tcp_write(fd, "RRI SLD\n", 8);
-        close(fd);
         return;
     }
 
     if (is_event_past(EID)) {
         tcp_write(fd, "RRI PST\n", 8);
-        close(fd);
         return;
     }
     int available_seats = get_available_seats(EID);
     if(available_seats == ERROR) {
         tcp_write(fd, "RRI ERR\n", 8);
-        close(fd);
         return;
     }
 
@@ -987,24 +952,21 @@ void reserve_seats_handler(Request* req){
         char response[BUFFER_SIZE];
         snprintf(response, sizeof(response), "RRI REJ %d\n", available_seats);
         tcp_write(fd, response, strlen(response));
-        close(fd);
         return;
     }
 
     if (update_reservations_file(EID, requested_seats) == ERROR) {
         tcp_write(fd, "RRI ERR\n", 8);
-        close(fd);
         return;
     }
 
     // Create reservation record files
     if (make_reservation(UID, EID, requested_seats) == ERROR) {
         tcp_write(fd, "RRI ERR\n", 8);
-        close(fd);
         return;
     }
 
     tcp_write(fd, "RRI ACC\n", 8);
-    close(fd);
 }
 
+    
