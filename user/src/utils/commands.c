@@ -97,6 +97,7 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     char *resp_cursor = response;
     status = parse_udp_response_header(&resp_cursor, UNREGISTER);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
+
     // Expected responses: OK / NOK / UNR / WRP
     if(status != STATUS_OK &&
        status != STATUS_NOK &&
@@ -110,7 +111,9 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     }
 
     // Clear global state on successful unregister
-    if (status == STATUS_OK) {
+    if (status == STATUS_OK || 
+        status == STATUS_USER_NOT_REGISTERED || 
+        status == STATUS_NOK) {
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
@@ -390,7 +393,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
        status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
     }
-    
+
     if (status == STATUS_OK){
         event_message(eid);
         return STATUS_CUSTOM_OUTPUT;
