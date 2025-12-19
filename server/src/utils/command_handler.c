@@ -249,11 +249,13 @@ void myevents_handler(Request* req, char* UID, char* password){
         fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
+
     if(status == INVALID) {
         send_udp_response("RME WRP\n", req);
         return;
     }
-    if(has_events(UID) == INVALID) {
+
+    if(has_events(UID) == FALSE) {
         send_udp_response("RME NOK\n", req);
         return;
     }
@@ -776,8 +778,10 @@ void show_event_handler(Request* req){
     int fd = req->client_socket;
     char protocol[4] = "RSE";
 
+    printf(stderr, "Starting show_event_handler\n");
     int status = read_field_or_error(fd, EID, EID_LENGTH, protocol);
     if (status == ERROR) return;
+    printf(stderr, "EID received: %s\n", EID);
 
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
@@ -786,11 +790,13 @@ void show_event_handler(Request* req){
 
     // Validate EID
     if (!verify_eid_format(EID)) {
+        printf(stderr, "Invalid EID format: %s\n", EID);
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }
 
     if (!event_exists(EID)) {
+        printf(stderr, "Event with EID %s does not exist.\n", EID);
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }
@@ -799,6 +805,7 @@ void show_event_handler(Request* req){
     char file_name[FILE_NAME_LENGTH + 1];
     long file_size;
     if (format_event_details(EID, response, sizeof(response), file_name, &file_size) == ERROR) {
+        printf(stderr, "Error formatting event details for EID %s\n", EID);
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }

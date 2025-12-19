@@ -218,18 +218,14 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
     }
+    if (status != STATUS_OK) return status;    
+    
 
-    // STATUS_OK
     char* event_list = response + 7;
 
-    printf("Your events:\n");
-    printf("%-5s %-10s\n", "EID", "State");
-    printf("-------------------\n");
+    printf("\n%-5s %-10s\n", "EID", "State");
+    printf("===================\n");
 
-    if (strlen(event_list) == 0) {
-        printf("(no events)\n");
-        return STATUS_CUSTOM_OUTPUT;
-    }
 
     char eid[4];
     int state;

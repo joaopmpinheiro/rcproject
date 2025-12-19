@@ -16,6 +16,9 @@ server/server
 *.txt
 !corrections.txt
 
+# Ignore reports
+*.html
+
 # Ignore USERS and ENVENTS
 /EVENTS/*
 /USERS/*
