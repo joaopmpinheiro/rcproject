@@ -228,7 +228,7 @@ ReplyStatus parse_reserve(char **cursor, char* eid, char* num_seats);
 ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
                              char* date, char* num_seats);
 ReplyStatus parse_change_password(char** cursor, char* old_password,
-                                 char* new_password, char* current_password); 
+                                 char* new_password); 
 ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
                               char* seats_reserved);                     
                             

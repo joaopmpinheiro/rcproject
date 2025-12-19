@@ -300,8 +300,7 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
 ReplyStatus changepass_handler(char** cursor) {
     // Verify arguments
     char new_password[PASSWORD_LENGTH + 1], old_password[PASSWORD_LENGTH + 1];
-    ReplyStatus status = parse_change_password(cursor, old_password, new_password,
-                                               current_password);
+    ReplyStatus status = parse_change_password(cursor, old_password, new_password);
     if (status != STATUS_UNASSIGNED) return status;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 

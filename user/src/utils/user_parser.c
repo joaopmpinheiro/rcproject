@@ -44,14 +44,14 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
     snprintf(date, EVENT_DATE_LENGTH + 1, "%s %s", day_str, time_str);
     if(!verify_event_name_format(event_name)) return STATUS_INVALID_EVENT_NAME;
     if(!verify_file_name_format(file_name)) return STATUS_INVALID_FILE;
-/*     if(!verify_event_date_format(date)) return STATUS_INVALID_EVENT_DATE;
- */    if(!verify_seat_count(num_seats)) return STATUS_INVALID_SEAT_COUNT;
+    if(!verify_event_date_format(date)) return STATUS_INVALID_EVENT_DATE;
+    if(!verify_seat_count(num_seats)) return STATUS_INVALID_SEAT_COUNT;
     return STATUS_UNASSIGNED;
 }
 
 
 ReplyStatus parse_change_password(char **cursor, char* old_password,
-                                  char* new_password, char* current_password) {
+                                  char* new_password) {
     if(get_next_arg(cursor, old_password) == ERROR ||
        get_next_arg(cursor, new_password) == ERROR ||
        !is_end_of_message(cursor))

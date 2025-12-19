@@ -52,7 +52,7 @@ void handle_udp_request(Request* req) {
     char password[PASSWORD_LENGTH + 1];
     if(get_next_arg(&cursor, uid) == ERROR ||
        get_next_arg(&cursor, password) == ERROR ||
-       is_end_of_message(&cursor) == ERROR ||
+       is_end_of_message(&cursor) == FALSE ||
        !verify_uid_format(uid) ||
        !verify_password_format(password)) {
         char response[16]; 
@@ -559,7 +559,7 @@ void create_event_handler(Request* req){
     if (!verify_uid_format(UID) ||
         !verify_password_format(password) ||
         !verify_event_name_format(event_name) ||
-        //!verify_event_date_format(event_date) ||
+        !verify_event_date_format(event_date) ||
         !verify_seat_count(seat_count) ||
         !verify_file_name_format(file_name)) {
         printf("Field validation failed\n");
@@ -568,7 +568,12 @@ void create_event_handler(Request* req){
         consume_file(fd, file_size);
         return;
     }
-
+    if(!user_exists(UID)) {
+        tcp_write(fd, "RCE NOK\n", 8);
+        file_size = (size_t)atol(file_size_str);
+        consume_file(fd, file_size);
+        return;
+    }
     if (!is_logged_in(UID)) {
         tcp_write(fd, "RCE NLG\n", 8);
         file_size = (size_t)atol(file_size_str);
