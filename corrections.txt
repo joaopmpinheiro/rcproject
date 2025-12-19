@@ -24,11 +24,15 @@ TODO:
     - RESERVE RESERVATIONS POR EOM checking 
     - CTRL C SERVER-SIDE 
     - REVER STATUS TODOS DO SERVER ✅
-    - UNREGISTER E LOGOUT 
+    - UNREGISTER E LOGOUT ✅
     - SERVER CHAMAR-SE ES (compilado) 
     - PASS SER 8 DIGITOS EXATAMENTE (read field or error nao vê (ver reserve seats)) ✅
     - DOUBLE CHECK SE EID É SEMPRE PADDED (1 -> 001) ✅
-    - O QUE É QUE SE PASSA COM VERIFICAR O TEMPO NO CREATE PQP
-    - WRONG PASSWORD RECEIVED quer dizer que temos que dar logged out
+    - O QUE É QUE SE PASSA COM VERIFICAR O TEMPO NO CREATE PQP ✅
+    - fazer as bostinhass das confirmacoes e confirmar q tds comandos dao
+    - ver se temos timeout no tcp 
+    - READ ME: por que tem q se estar dentro do ./server e ./user 
+    - wrp deve dar logout ao user ✅
+    - abulir papai nowel
 
 DOUBT:

@@ -113,7 +113,8 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     // Clear global state on successful unregister
     if (status == STATUS_OK || 
         status == STATUS_USER_NOT_REGISTERED || 
-        status == STATUS_NOK) {
+        status == STATUS_NOK ||
+        status == STATUS_WRONG_PASSWORD){
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
@@ -158,7 +159,10 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
     }
 
     // Clear global state if we know we are logged out or user doesn't exist
-    if (status == STATUS_OK || status == STATUS_NOK || status == STATUS_USER_NOT_REGISTERED) {
+    if (status == STATUS_OK ||
+        status == STATUS_NOK ||
+        status == STATUS_USER_NOT_REGISTERED ||
+        status == STATUS_WRONG_PASSWORD) {
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
@@ -173,17 +177,15 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     if(!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
-    // TODO @marta
     // PROTOCOL: LME <uid> <password>
     char request[256];
     snprintf(request, sizeof(request), "LME %s %s\n", current_uid, current_password);
-
     if (sendto(udp_fd, request, strlen(request), 0, (struct sockaddr*)server_udp_addr,
                 udp_addr_len) == ERROR) return STATUS_SEND_FAILED;
 
     char response[8192];
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
-    if (n == ERROR) return STATUS_RECV_FAILED;
+    if (n < 0) return STATUS_RECV_FAILED;
 
     response[n] = '\0';
 
@@ -191,7 +193,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     char reply_status[4];
 
     int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-
+    if(parsed == 1 && strcmp(reply_status, "ERR") == 0) return STATUS_ERROR;
     if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
     
     // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
@@ -208,6 +210,13 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
        status != STATUS_RECV_FAILED &&
        status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
+
+    // IF wrong password or not logged in, clear global state
+    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
     }
 
     // STATUS_OK
@@ -292,6 +301,13 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
         return STATUS_UNEXPECTED_RESPONSE;
     }
 
+    // If wrong password or not logged in, clear global state
+    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
+    }
+
     // Only if status == OK, parse the reservation list
     if (status != STATUS_OK) return status;
 
@@ -330,6 +346,13 @@ ReplyStatus changepass_handler(char** cursor) {
         status != STATUS_ERROR &&
         status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
+
+    // If wrong password or not logged in, clear global state
+    if(status == STATUS_NOT_LOGGED_IN || status == STATUS_USER_NOT_FOUND){
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
     }
 
     // Update global state on successful password change
@@ -394,6 +417,13 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
         return STATUS_UNEXPECTED_RESPONSE;
     }
 
+    // If wrong password or not logged in, clear global state
+    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
+    }
+
     if (status == STATUS_OK){
         event_message(eid);
         return STATUS_CUSTOM_OUTPUT;
@@ -435,6 +465,13 @@ ReplyStatus close_event_handler(char** cursor) {
        status != STATUS_ERROR &&
        status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
+    }
+
+    // If wrong password or not logged in, clear global state
+    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
     }
 
     return status;
@@ -580,6 +617,14 @@ ReplyStatus reserve_handler(char** cursor) {
         close(tcp_fd);
         return STATUS_UNEXPECTED_RESPONSE;
     }
+
+    // If wrong password or not logged in, clear global state
+    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
+        is_logged_in = 0;
+        memset(current_password, 0, sizeof(current_password));
+        memset(current_uid, 0, sizeof(current_uid));
+    }
+
     if(status != STATUS_EVENT_RESERVATION_REJECTION){
         close(tcp_fd);
         return status;  
