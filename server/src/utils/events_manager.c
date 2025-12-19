@@ -94,9 +94,8 @@ int is_event_past(char* EID){
     sprintf(event_info_fname, "EVENTS/%s/START_%s.txt", EID, EID);
 
     FILE* fp = fopen(event_info_fname, "r");
-    if (fp == NULL) {
-        return FALSE;
-    }
+    if (fp == NULL) return FALSE;
+    
 
     char date_str[11];  // DD-MM-YYYY
     char time_str[6];   // HH:MM
@@ -116,7 +115,6 @@ int is_event_past(char* EID){
 
     // Get current time
     time_t now = time(NULL);
-    struct tm* current_time = localtime(&now);
 
     // Create a struct tm for the event time
     struct tm event_tm = {0};
@@ -129,15 +127,9 @@ int is_event_past(char* EID){
     event_tm.tm_isdst = -1;           // auto-detect DST
 
     time_t event_time = mktime(&event_tm);
-    if (event_time == -1) {
-        return FALSE;
-    }
+    if (event_time == -1) return FALSE;
 
-    // Compare times
-    if (event_time < now) {
-        return TRUE;  // Event is in the past
-    }
-    return FALSE;    // Event is in the future
+    return (event_time < now) ? TRUE : FALSE;
 }
 
 

@@ -82,9 +82,11 @@ void handle_udp_request(Request* req) {
 }
 
 void handle_tcp_request(Request* req) {
-    char command_buff[COMMAND_LENGTH + 1] = {0};
+    char command_buff[COMMAND_LENGTH + 1];
 
-    strncpy(command_buff, req->buffer, COMMAND_LENGTH);
+    memcpy(command_buff, req->buffer, COMMAND_LENGTH);
+    command_buff[COMMAND_LENGTH] = '\0';
+
     RequestType command = identify_command_request(command_buff);
 
     switch (command) {
@@ -772,10 +774,8 @@ void show_event_handler(Request* req){
     int fd = req->client_socket;
     char protocol[4] = "RSE";
 
-    printf(stderr, "Starting show_event_handler\n");
     int status = read_field_or_error(fd, EID, EID_LENGTH, protocol);
     if (status == ERROR) return;
-    printf(stderr, "EID received: %s\n", EID);
 
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
@@ -784,13 +784,11 @@ void show_event_handler(Request* req){
 
     // Validate EID
     if (!verify_eid_format(EID)) {
-        printf(stderr, "Invalid EID format: %s\n", EID);
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }
 
     if (!event_exists(EID)) {
-        printf(stderr, "Event with EID %s does not exist.\n", EID);
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }
@@ -799,14 +797,12 @@ void show_event_handler(Request* req){
     char file_name[FILE_NAME_LENGTH + 1];
     long file_size;
     if (format_event_details(EID, response, sizeof(response), file_name, &file_size) == ERROR) {
-        printf(stderr, "Error formatting event details for EID %s\n", EID);
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }
 
     char description_path[128];
     snprintf(description_path, sizeof(description_path), "EVENTS/%s/DESCRIPTION/%s", EID, file_name);
-    fprintf(stderr, "description path %s\n", description_path);
     tcp_write(fd, response, strlen(response));
     tcp_send_file(fd, description_path);
 }

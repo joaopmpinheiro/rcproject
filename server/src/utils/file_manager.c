@@ -118,7 +118,7 @@ int find_available_eid(char* eid_str) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
         // Check if entry is a directory and is a valid 3-digit number
-        char full_path[256];
+        char full_path[512];
         snprintf(full_path, sizeof(full_path), "EVENTS/%s", entry->d_name);
         struct stat st;
         if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) {

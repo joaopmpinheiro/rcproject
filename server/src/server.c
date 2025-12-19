@@ -5,6 +5,7 @@ Settings set = {0};
 
 // POSIX async-signal safe functions
 void sig_detected(int signum) {
+    (void)signum; // Unused parameter
     close(set.udp_socket);
     close(set.tcp_socket);
     _exit(EXIT_SUCCESS);

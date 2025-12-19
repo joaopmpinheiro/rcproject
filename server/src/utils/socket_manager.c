@@ -64,12 +64,8 @@ void tcp_connection() {
         return;
     }
 
-    // create a new request to be used by handle_request
+    // Create a new request to be used by handle_request
     Request req = {.client_socket = client_socket, .client_addr = client_addr, .addr_len = addr_len, .is_tcp = 1};
     strncpy(req.buffer, request_type, sizeof(req.buffer));
     handle_tcp_request(&req);
-    /* if (client_socket >= 0) {
-        Task task = {.client_socket = client_socket, .client_addr = client_addr, .addr_len = addr_len, .is_tcp = 1};
-        task_queue_push(&task_queue, task);
-    } */
 }

@@ -92,7 +92,6 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     if (status != STATUS_UNASSIGNED) return status;
     
     // Parse response
-    char response_code[4], reply_status[4];
     char *resp_cursor = response;
     status = parse_udp_response_header(&resp_cursor, UNREGISTER);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;

@@ -203,9 +203,9 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
             strcmp(entry->d_name, "..") == 0) {
             free(entry);
             continue;
-        }
+        }   
 
-        char file_path[256];
+        char file_path[512];
         snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
         FILE *fp = fopen(file_path, "r");
         if (!fp) {

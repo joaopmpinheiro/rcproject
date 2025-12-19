@@ -22,7 +22,7 @@ confirmar que os read_tcp_field estao a fazer != SUCCESS ou == ERROR
 TODO:
 
     - RESERVE RESERVATIONS POR EOM checking 
-    - CTRL C SERVER-SIDE 
+    - CTRL C SERVER-SIDE  ✅
     - REVER STATUS TODOS DO SERVER ✅
     - UNREGISTER E LOGOUT ✅
     - SERVER CHAMAR-SE ES (compilado) 
@@ -34,5 +34,7 @@ TODO:
     - READ ME: por que tem q se estar dentro do ./server e ./user 
     - wrp deve dar logout ao user ✅
     - abulir papai nowel
+    - abrir no clion para matar as funcoes q nao usamos
+    - apagar stderr de debug
 
 DOUBT:

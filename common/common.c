@@ -48,12 +48,11 @@ int tcp_send_file(int fd, char* file_name) {
 
 
 int tcp_read(int fd, void* buf, size_t len) {
-    ssize_t bytes_read = 0;
-    ssize_t n;
+    size_t bytes_read = 0;
+    size_t n;
     while (bytes_read < len - 1) {
         n = read(fd, buf + bytes_read, len - 1 - bytes_read);
         if (n <= 0) break; // Connection closed
-        if (n < 0) return ERROR; // Read error
         bytes_read += n;
         if (((char*)buf)[bytes_read - 1] == '\n') break; // End of message 
     }
