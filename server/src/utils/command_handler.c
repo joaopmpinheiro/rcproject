@@ -8,7 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+/**
+ * @brief Validates basic UID and password format from request buffer
+ * @param req Request containing buffer with command, UID, and password
+ * @return VALID if format is correct, INVALID if verification fails
+ * @note Internal helper - validates only format, not authentication
+ */
 int verify_uid_password(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) return INVALID;
 
@@ -473,13 +478,17 @@ void change_password_handler(Request* req){
 }
 
 
-/*
-input: 
-    name: string with event name
-    event_fname: file
-    event_date: date and time 
-    num_attendees: interger
-USER: successful or not and EID
+/**
+ * @brief Handles create event request: CRE UID password event_name event_date seat_count 
+ * file_name file_size file_content
+ * 
+ * Sends to user: 
+ * RCE OK EID - successful event creation,
+ * RCE NOK - failed event creation
+ * RCE NLG - user not logged in
+ * RCE WRP - wrong password
+ * RCE ERR - error in request or server
+ * @param req 
 */
 void create_event_handler(Request* req){
     char UID[UID_LENGTH + 1];
@@ -636,17 +645,22 @@ void create_event_handler(Request* req){
     tcp_write(fd, response, strlen(response));
 }
 
-/*
-input:
-    eid: integer
-    user: nao sei se vem no log in mas verificar que é o user que criou o evento
-Before closing, check the status of the event.
-USER:
-- no event: wrong user or non-existing EID
-- event already expired: if the date has passed
-- event is sold out: if the event is fully reserved
-- sucessful event closure
-*/
+/**
+ * @brief Handles close event request: CLS UID password EID
+ * 
+ * Sends to user:
+ * RCL OK - successful event closure
+ * RCL NLG - user not logged in
+ * RCL NOK - wrong password
+ * RCL NOE - no event with given EID
+ * RCL EOW - user is not the event creator
+ * RCL SLD - event is sold out
+ * RCL PST - event date has already passed
+ * RCL CLO - event is already closed
+ * RCL ERR - error in request or server
+ * 
+ * @param req 
+ */
 void close_event_handler(Request* req){
     char UID[UID_LENGTH + 1];
     char password[PASSWORD_LENGTH + 1];
@@ -832,6 +846,16 @@ void show_event_handler(Request* req){
     tcp_send_file(fd, description_path);
 }
 
+/**
+ * @brief Formats event details for show event response
+ * 
+ * @param EID 
+ * @param message 
+ * @param message_size 
+ * @param file_name 
+ * @param file_size 
+ * @return int 
+ */
 int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size) {
     char UID[UID_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
@@ -844,10 +868,9 @@ int format_event_details(char* EID, char* message, size_t message_size, char* fi
                             reserved_seats, file_name) == ERROR)
         return ERROR;
     
-    if (!verify_eid_format(EID) ||
-        !verify_uid_format(UID) ||
+    if (!verify_uid_format(UID) ||
         !verify_event_name_format(event_name) ||
-        //!verify_event_date_format(event_date) ||
+        !verify_event_date_format(event_date) ||
         !verify_seat_count(total_seats) ||
         !verify_reserved_seats(reserved_seats, total_seats) ||
         !verify_file_name_format(file_name)) 
@@ -869,17 +892,6 @@ int format_event_details(char* EID, char* message, size_t message_size, char* fi
              file_name, *file_size);
     return SUCCESS;
 }
-
-
-/*
-input:
-    eid: integer
-    num_seats: integer
-USER: s
-- accepted
-- refused + num of available seats (if num_seats > available seats)
-- no longer active
-*/
 
 /**
  * @brief Handles reserve seats request: RES UID password EID num_seats

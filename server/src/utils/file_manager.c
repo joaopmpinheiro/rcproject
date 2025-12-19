@@ -15,10 +15,9 @@ static int unlink_cb(const char *fpath,
 }
 
 /**
- * @brief Checks if the description file exists and returns its size.
- * 
- * @param fname 
- * @return int - size of the file or EMPTY_FILE if it doesn't exist or if it's empty.
+ * @brief Checks file status and creates EVENTS/USERS directories if needed
+ * @param fname Filename to check
+ * @return SUCCESS if ready, ERROR on critical failure
  */
 int check_file(char *fname){
     struct stat filestat;
@@ -29,11 +28,21 @@ int check_file(char *fname){
     return filestat.st_size;
 }
 
+/**
+ * @brief Checks if file exists
+ * @param filename Path to file
+ * @return TRUE if file exists, FALSE otherwise
+ */
 int file_exists(const char* filename) {
     struct stat buffer;
     return (stat(filename, &buffer) == 0) ? TRUE : FALSE;
 }
 
+/**
+ * @brief Checks if directory exists
+ * @param path Path to directory
+ * @return TRUE if directory exists, FALSE otherwise
+ */
 int dir_exists(const char* path) {
     struct stat info;
 
@@ -42,6 +51,11 @@ int dir_exists(const char* path) {
     return FALSE;
 }
 
+/**
+ * @brief Checks if directory is empty (no files/subdirectories)
+ * @param path Path to directory
+ * @return TRUE if empty, FALSE if contains entries
+ */
 int is_dir_empty(const char* path) {
     if (!dir_exists(path)) return FALSE;
     DIR* dir = opendir(path);
@@ -59,6 +73,12 @@ int is_dir_empty(const char* path) {
     return TRUE;
 }
 
+/**
+ * @brief Reads entire file into dynamically allocated buffer
+ * @param filename Path to file to read
+ * @return Pointer to allocated buffer containing file contents, NULL on error
+ * @note Caller must free returned buffer
+ */
 char* read_file(const char* filename) {
     FILE* fp = fopen(filename, "r");
     if (fp == NULL) {
@@ -95,10 +115,20 @@ char* read_file(const char* filename) {
     return buffer;
 }
 
+/**
+ * @brief Recursively removes directory and all contents
+ * @param path Path to directory to remove
+ * @return SUCCESS if removed, ERROR on failure
+ */
 int remove_directory(const char *path) {
     return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS) ? ERROR : SUCCESS;
 }
 
+/**
+ * @brief Finds next available Event ID (001-999) in EVENTS directory
+ * @param eid_str Output buffer for 3-digit EID string
+ * @return SUCCESS if found, ERROR if all EIDs exhausted
+ */
 int find_available_eid(char* eid_str) {
     if (eid_str == NULL) return ERROR;
 
@@ -144,6 +174,16 @@ int find_available_eid(char* eid_str) {
     return ERROR;
 }
 
+/**
+ * @brief Writes event start file with metadata
+ * @param eid Event ID
+ * @param uid User ID
+ * @param event_name Event name
+ * @param desc_fname Description filename
+ * @param event_attend Total attendance/seats
+ * @param event_date Event date and time
+ * @return SUCCESS if written, ERROR on failure
+ */
 int write_event_start_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
                            const char* event_date) {
@@ -170,6 +210,11 @@ int write_event_start_file(const char* eid, const char* uid, const char* event_n
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
+/**
+ * @brief Creates END_EID.txt marker file to indicate event closure
+ * @param eid Event ID
+ * @return SUCCESS if created, ERROR on failure
+ */
 int write_event_end_file(const char* eid) {
     if (eid == NULL) return ERROR;
 
@@ -193,6 +238,16 @@ int write_event_end_file(const char* eid) {
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
+/**
+ * @brief Writes event information file in user's CREATED directory
+ * @param eid Event ID
+ * @param uid User ID
+ * @param event_name Event name
+ * @param desc_fname Description filename
+ * @param event_attend Total attendance/seats
+ * @param event_date Event date and time
+ * @return SUCCESS if written, ERROR on failure
+ */
 int write_event_information_file(const char* eid, const char* uid, const char* event_name,
                            const char* desc_fname, const char* event_attend,
                            const char* event_date) {
@@ -220,6 +275,12 @@ int write_event_information_file(const char* eid, const char* uid, const char* e
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
+/**
+ * @brief Updates RES_EID.txt with current reservation count
+ * @param eid Event ID
+ * @param reserved_seats Total seats reserved
+ * @return SUCCESS if updated, ERROR on failure
+ */
 int update_reservations_file(const char* eid, int reserved_seats) {
     if (eid == NULL) return ERROR;
 
@@ -253,6 +314,14 @@ int update_reservations_file(const char* eid, int reserved_seats) {
     return (ret > 0) ? SUCCESS : ERROR;
 }
 
+/**
+ * @brief Stores event description file in EVENTS/EID/DESCRIPTION/
+ * @param eid Event ID
+ * @param file_name Filename for the description
+ * @param file_size Size of file content
+ * @param file_content Binary file content to store
+ * @return SUCCESS if stored, ERROR on failure
+ */
 int write_description_file(const char* eid, const char* file_name, size_t file_size, const char* file_content) {
     if (eid == NULL || file_name == NULL || file_content == NULL) {
         return ERROR;
@@ -284,6 +353,13 @@ int write_description_file(const char* eid, const char* file_name, size_t file_s
 }
 
 
+/**
+ * @brief Records reservation with date and seat count in USERS/UID/RESERVED/EID.txt
+ * @param UID User ID making reservation
+ * @param EID Event ID
+ * @param num_seats Number of seats reserved
+ * @return SUCCESS if recorded, ERROR on failure
+ */
 int write_reservation(char* UID, char* EID, int num_seats) {
     if (!UID || !EID || num_seats <= 0) return ERROR;
 

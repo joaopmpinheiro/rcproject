@@ -2,15 +2,11 @@
 #include "../../include/utils.h"
 #include "../../common/parser.h"
 
-
 /**
- * @brief 
- * 
- * @param UID 
- * @param password 
- * @return VALID if password matches,
- * INVALID otherwise,
- * ERROR if there was a problem getting the password
+ * @brief Verifies if provided password matches user's stored password
+ * @param UID User ID to verify
+ * @param password Password to check
+ * @return ERROR if verification failed, INVALID if password incorrect, VALID if correct
  */
 int verify_correct_password(char* UID, char* password){
     char stored_password[PASSWORD_LENGTH + 1];
@@ -21,12 +17,22 @@ int verify_correct_password(char* UID, char* password){
     return INVALID;
 }
 
+/**
+ * @brief Checks if user directory exists
+ * @param UID User ID to check
+ * @return TRUE if user exists, FALSE otherwise
+ */
 int user_exists(char* UID){
     char UID_dirname[20];
     sprintf(UID_dirname, "USERS/%s", UID);
     return dir_exists(UID_dirname);
 }
 
+/**
+ * @brief Creates user directory structure (USERS/UID/CREATED and USERS/UID/RESERVED)
+ * @param UID User ID for new user
+ * @return SUCCESS if created, ERROR if failed
+ */
 int create_user (char* UID){
     char UID_dirname[32];
     char created_dirname[64];
@@ -54,12 +60,23 @@ int create_user (char* UID){
     return SUCCESS;
 }
 
+/**
+ * @brief Recursively removes entire user directory and all contents
+ * @param UID User ID to remove
+ * @return SUCCESS if removed, ERROR if failed
+ */
 int remove_user(char* UID){
     char UID_dirname[32];
     sprintf(UID_dirname, "USERS/%s", UID);
     return remove_directory(UID_dirname);
 }
 
+/**
+ * @brief Creates new user with directory structure and stores password
+ * @param UID User ID for new user
+ * @param password Password to store (must be 8 alphanumeric chars)
+ * @return SUCCESS if created, ERROR if failed
+ */
 int create_new_user(char* UID, char* password){
     int ret;
 
@@ -75,12 +92,22 @@ int create_new_user(char* UID, char* password){
     return SUCCESS;
 }
 
+/**
+ * @brief Checks if user has active login session
+ * @param UID User ID to check
+ * @return TRUE if login marker file exists, FALSE otherwise
+ */
 int is_logged_in(char* UID){
     char login_filename[35];
     sprintf(login_filename, "USERS/%s/%slogin.txt", UID, UID);
     return file_exists(login_filename);
 }
 
+/**
+ * @brief Creates login marker file to indicate active session
+ * @param UID User ID logging in
+ * @return SUCCESS if created, ERROR if failed
+ */
 int write_login(char* UID){
     char login_filename[35];
     FILE* fp;
@@ -95,6 +122,11 @@ int write_login(char* UID){
     return SUCCESS;
 }
 
+/**
+ * @brief Removes login marker file to terminate session
+ * @param UID User ID logging out
+ * @return SUCCESS if removed, ERROR if failed
+ */
 int erase_login(char* UID){
     char login_filename[35];
     sprintf(login_filename, "USERS/%s/%slogin.txt", UID, UID);
@@ -102,6 +134,12 @@ int erase_login(char* UID){
     return SUCCESS;
 }
 
+/**
+ * @brief Retrieves user's stored password
+ * @param UID User ID
+ * @param password Output buffer for password
+ * @return SUCCESS if retrieved, ERROR if failed
+ */
 int get_password(char* UID, char* password){
     char password_filename[40];
     FILE* fp;
@@ -121,6 +159,12 @@ int get_password(char* UID, char* password){
     return SUCCESS;
 }
 
+/**
+ * @brief Updates user's password
+ * @param UID User ID
+ * @param password New password to store
+ * @return SUCCESS if updated, ERROR if failed
+ */
 int write_password(char* UID, char* password){
     char password_filename[40];
     FILE* fp;
@@ -135,6 +179,11 @@ int write_password(char* UID, char* password){
     return SUCCESS;
 }
 
+/**
+ * @brief Validates that filename is a valid event file (3 digits + .txt)
+ * @param event_file_name Filename to validate
+ * @return VALID if valid event filename, INVALID otherwise
+ */
 int verify_event_file(char* event_file_name){
     if (strlen(event_file_name) != 7) return INVALID;
 
@@ -146,6 +195,11 @@ int verify_event_file(char* event_file_name){
     return strcmp(event_file_name + 3, ".txt") == 0 ? VALID : INVALID;
 }
 
+/**
+ * @brief Validates that filename is a valid reservation file (3 digits + .txt)
+ * @param reservation_file_name Filename to validate
+ * @return VALID if valid reservation filename, INVALID otherwise
+ */
 int verify_reservation_file(char* reservation_file_name){
     if (strlen(reservation_file_name) != 27) return INVALID;
 
@@ -157,6 +211,11 @@ int verify_reservation_file(char* reservation_file_name){
     return VALID;
 }
 
+/**
+ * @brief Checks if user has any created events
+ * @param UID User ID to check
+ * @return TRUE if CREATED directory exists and is not empty, FALSE otherwise
+ */
 int has_events(char* UID){
     char path[32];
     snprintf(path, sizeof(path), "USERS/%s/CREATED", UID);
@@ -164,20 +223,24 @@ int has_events(char* UID){
 }
 
 
+/**
+ * @brief Checks if user has any reservations
+ * @param UID User ID to check
+ * @return TRUE if RESERVED directory exists and is not empty, FALSE otherwise
+ */
 int has_reservations(char* UID){
     char path[32];
     snprintf(path, sizeof(path), "USERS/%s/RESERVED", UID);
     return is_dir_empty(path) ? FALSE : TRUE;
 }
 
-
 /**
- * @brief Returns the number of reservations formatted into response.
- * 
- * @param UID 
- * @param response 
- * @param response_size 
- * @return int 
+ * @brief Formats user's reservations into UDP response message
+ * @param UID User ID to list reservations for
+ * @param response Output buffer for response message
+ * @param response_size Size of output buffer
+ * @return Number of reservations formatted (<=50), ERROR on failure
+ * @note Returns maximum 50 most recent reservations
  */
 int format_list_of_user_reservations(char* UID, char* response, size_t response_size) {
     char path[128];
@@ -255,34 +318,3 @@ int format_list_of_user_reservations(char* UID, char* response, size_t response_
     strncat(response, "\n", response_size - strlen(response) - 1);
     return count;
 }
-
-
-
-/* int get_event_list(char *EID, EVENTLIST *list){
-    char* UID
-    struct dirent **filelist;
-    int n_entries, eventsID, i_ent = 0;
-    char dirname[55];
-
-    sprintf(dirname, "USERS/%s/CREATED", EID);
-    n_entries = scandir(dirname, &filelist, NULL, alphasort);
-
-    events_num = 0;
-    if (n_entries =< 0){
-        return ERROR;
-    }
-    else{
-        while (i_ent < n_entries){
-            if (filelist[i_ent]->d_name[0] != '.'){
-               memcpy(list->EID[events_num], filelist[i_ent]->d_name, 3);
-               list->EID[events_num][3] = 0;
-               events_num++;
-            }
-            free(filelist[i_ent]);
-            i_ent++;
-        }
-        list->num_events = events_num;
-        free(filelist);
-    }
-    return events_num;
-} */

@@ -2,6 +2,12 @@
 #include "../../include/utils.h"
 #include "../../common/verifications.h"
 
+/**
+ * @brief Parses command line arguments and updates server settings
+ * @param argc Argument count
+ * @param argv Argument values (argv[0] is program name)
+ * @note -p specifies port, -v enables verbose mode
+ */
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
     set.port = DEFAULT_PORT;
@@ -27,6 +33,11 @@ void parse_arguments(int argc, char *argv[]) {
     }
 }
 
+/**
+ * @brief Creates and configures socket for UDP or TCP
+ * @param flag SOCK_DGRAM for UDP, SOCK_STREAM for TCP
+ * @return File descriptor for new socket, ERROR on failure
+ */
 int socket_setup(int flag){
     struct addrinfo hints, *res;
 
@@ -59,6 +70,10 @@ int socket_setup(int flag){
 }
 
 
+/**
+ * @brief Sets up UDP socket for receiving datagrams
+ * @return SUCCESS if setup complete, ERROR on failure
+ */
 int udp_setup(){
     set.udp_socket = socket_setup(SOCK_DGRAM);
     if(set.udp_socket == ERROR){
@@ -69,6 +84,10 @@ int udp_setup(){
     return 0;
 }
 
+/**
+ * @brief Sets up TCP socket for accepting connections
+ * @return SUCCESS if setup complete, ERROR on failure
+ */
 int tcp_setup(){
     set.tcp_socket = socket_setup(SOCK_STREAM);
     if(set.tcp_socket == ERROR){
@@ -86,6 +105,10 @@ int tcp_setup(){
 }
 
 
+/**
+ * @brief Initializes complete server: sockets, file structure, fd_sets
+ * Calls udp_setup(), tcp_setup() and initializes select() file descriptor sets
+ */
 void server_setup(){
     if (udp_setup() == ERROR) exit(EXIT_FAILURE);
     if (tcp_setup() == ERROR) {

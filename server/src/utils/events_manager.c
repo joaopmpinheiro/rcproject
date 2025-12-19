@@ -2,19 +2,33 @@
 #include "../../include/utils.h"
 #include <time.h>
 
+/**
+ * @brief Checks if event directory exists
+ * @param EID Event ID to check
+ * @return TRUE if EVENTS/EID directory exists, FALSE otherwise
+ */
 int event_exists(char* EID){
     char EID_dirname[20];
     sprintf(EID_dirname, "EVENTS/%s", EID);
     return dir_exists(EID_dirname);
 }
 
-// VALID if event is closed INVALID otherwise
+/**
+ * @brief Checks if event has been closed by owner
+ * @param EID Event ID to check
+ * @return TRUE if END_EID.txt marker file exists, FALSE otherwise
+ */
 int is_event_closed(char* EID){
     char state_path[30];
     sprintf(state_path, "EVENTS/%s/END_%s.txt", EID, EID);
     return file_exists(state_path) ? TRUE : FALSE;
 }
 
+/**
+ * @brief Validates that directory name is a valid event (3 digits)
+ * @param event_dir_name Directory name to validate
+ * @return VALID if valid event directory name, INVALID otherwise
+ */
 int verify_event_dir(char* event_dir_name){
     // Check length is exactly 3
     if (strlen(event_dir_name) != 3) return INVALID;
@@ -32,6 +46,12 @@ int verify_event_dir(char* event_dir_name){
     return VALID;
 }
 
+/**
+ * @brief Checks if user created the event
+ * @param UID User ID to check
+ * @param EID Event ID to verify ownership
+ * @return TRUE if USERS/UID/CREATED/EID.txt exists, FALSE otherwise
+ */
 int is_event_creator(char* UID, char* EID){
     char event_info_fname[30];
     sprintf(event_info_fname, "EVENTS/%s/START_%s.txt", EID, EID);
@@ -54,6 +74,11 @@ int is_event_creator(char* UID, char* EID){
     return FALSE;
 }
 
+/**
+ * @brief Checks if all event seats are reserved
+ * @param EID Event ID to check
+ * @return TRUE if reserved seats >= total seats, FALSE if seats available
+ */
 int is_event_sold_out(char* EID){
     char event_info_fname[30];
     char reservations_fname[30];
@@ -89,6 +114,11 @@ int is_event_sold_out(char* EID){
     return FALSE;
 }
 
+/**
+ * @brief Checks if event date has passed
+ * @param EID Event ID to check
+ * @return TRUE if current time >= event time, FALSE if event is future
+ */
 int is_event_past(char* EID){
     char event_info_fname[30];
     sprintf(event_info_fname, "EVENTS/%s/START_%s.txt", EID, EID);
@@ -133,6 +163,13 @@ int is_event_past(char* EID){
 }
 
 
+/**
+ * @brief Retrieves event name and date for list responses
+ * @param EID Event ID
+ * @param event_name Output buffer for event name
+ * @param event_date Output buffer for event date (DD-MM-YYYY HH:MM)
+ * @return SUCCESS if retrieved, ERROR if failed
+ */
 int get_list_event_info(char* EID, char* event_name, char* event_date) {
     
     char start_file_path[30];
@@ -156,6 +193,11 @@ int get_list_event_info(char* EID, char* event_name, char* event_date) {
     return SUCCESS;
 }
 
+/**
+ * @brief Creates event directory structure (EVENTS/EID with subdirectories)
+ * @param EID Event ID (will be zero-padded to 3 digits)
+ * @return SUCCESS if created, DIR_ALREADY_EXISTS if exists, ERROR on failure
+ */
 int create_eid_dir (int EID){
     char EID_dirname[15];
     char RES_dirname[25];
@@ -189,7 +231,17 @@ int create_eid_dir (int EID){
     return SUCCESS;
 }
 
-
+/**
+ * @brief Reads full event details from START_EID.txt and RES_EID.txt
+ * @param EID Event ID
+ * @param UID Output buffer for event creator's User ID
+ * @param event_name Output buffer for event name
+ * @param event_date Output buffer for event date (DD-MM-YYYY HH:MM)
+ * @param total_seats Output buffer for total seats
+ * @param reserved_seats Output buffer for reserved seats
+ * @param file_name Output buffer for description filename
+ * @return SUCCESS if read successfully, ERROR on failure
+ */
 int read_event_full_details(char* EID, char* UID, char* event_name,
                             char* event_date, char* total_seats,
                             char* reserved_seats, char* file_name){
@@ -229,6 +281,11 @@ int read_event_full_details(char* EID, char* UID, char* event_name,
 }
 
 
+/**
+ * @brief Calculates number of unreserved seats for event
+ * @param EID Event ID
+ * @return Number of available seats, ERROR if calculation failed
+ */
 int get_available_seats(char* EID) {
     char event_info_fname[30];
     char reservations_fname[30];
@@ -261,6 +318,13 @@ int get_available_seats(char* EID) {
     return seat_count - reserved_seats;
 }
 
+/**
+ * @brief Records reservation in user's RESERVED directory
+ * @param UID User making reservation
+ * @param EID Event ID
+ * @param requested_seats Number of seats reserved
+ * @return SUCCESS if recorded, ERROR on failure
+ */
 int make_reservation(char* UID, char* EID, int requested_seats){
     int status = write_reservation(UID, EID, requested_seats);
     if (status != SUCCESS) return ERROR;

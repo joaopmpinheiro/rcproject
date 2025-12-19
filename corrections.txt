@@ -25,17 +25,17 @@ TODO:
     - CTRL C SERVER-SIDE  ✅
     - REVER STATUS TODOS DO SERVER ✅
     - UNREGISTER E LOGOUT ✅
-    - SERVER CHAMAR-SE ES (compilado) 
+    - SERVER CHAMAR-SE ES (compilado) ✅
     - PASS SER 8 DIGITOS EXATAMENTE (read field or error nao vê (ver reserve seats)) ✅
     - DOUBLE CHECK SE EID É SEMPRE PADDED (1 -> 001) ✅
     - O QUE É QUE SE PASSA COM VERIFICAR O TEMPO NO CREATE PQP ✅
-    - fazer as bostinhass das confirmacoes e confirmar q tds comandos dao
-    - ver se temos timeout no tcp -> nao temos mas ele da close com o ctrl c do server, se n
+    - fazer as bostinhass das confirmacoes e confirmar q tds comandos dao 
+    - ver se temos timeout no tcp -> nao temos mas ele da close com o ctrl c do server, se n 
     - READ ME: por que tem q se estar dentro do ./server e ./user 
     - wrp deve dar logout ao user ✅
-    - abulir papai nowel
+    - abulir papai nowel ✅
     - abrir no clion para matar as funcoes q nao usamos
-    - apagar stderr de debug
-    - IP NO VERBOSE AHHH
+    - apagar stderr de debug 
+    - IP NO VERBOSE AHHH ✅
 
 DOUBT:
