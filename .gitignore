@@ -18,6 +18,7 @@ server/ES
 
 # Ignore reports
 *.html
+*.py
 
 # Ignore USERS and ENVENTS
 /EVENTS/*
