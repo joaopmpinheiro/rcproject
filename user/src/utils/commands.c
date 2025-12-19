@@ -397,9 +397,28 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     tcp_read(tcp_fd, request_header, sizeof(request_header));
     close(tcp_fd);
     char response_code[4], reply_status[4], eid[4];
+    char *cursor_resp = request_header;
+    
+    if(get_next_arg(&cursor_resp, response_code) == ERROR)
+        return STATUS_MALFORMED_RESPONSE;
+    
+    // Identify response type (check if it is ERR)
+    RequestType resp_type = identify_command_response(response_code);
+    if(is_end_of_message(cursor)){
+        if(resp_type == ERROR_REQUEST) return STATUS_ERROR;
+        else return STATUS_MALFORMED_RESPONSE;
+    }
 
-    int parsed = sscanf(request_header, "%3s %3s %3s", response_code, reply_status, eid);
-    status = handle_response_code(response_code, CREATE, parsed, 3, reply_status);
+    // Extract reply status
+    if(get_next_arg(&cursor_resp, reply_status) == ERROR)
+        return STATUS_MALFORMED_RESPONSE;
+
+    if(resp_type != CREATE) return STATUS_UNEXPECTED_RESPONSE;
+  
+    if(get_next_arg(&cursor_resp, response_code) == ERROR)
+        return STATUS_MALFORMED_RESPONSE;
+
+    status = identify_status_code(response_code);
     
     // Expected responses: OK / NOK / NLG / WRP
     if(status != STATUS_OK &&
@@ -410,7 +429,6 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
        status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
     }
-
     // If wrong password or not logged in, clear global state
     if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
         is_logged_in = 0;
@@ -419,6 +437,9 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     }
 
     if (status == STATUS_OK){
+        if(get_next_arg(&cursor_resp, eid) == ERROR ||
+           !is_end_of_message(&cursor_resp))
+            return STATUS_MALFORMED_RESPONSE;
         event_message(eid);
         return STATUS_CUSTOM_OUTPUT;
     }

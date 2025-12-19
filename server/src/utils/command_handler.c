@@ -395,6 +395,19 @@ static int read_field_or_error(int fd, char* dst, size_t len, char* code) {
     return SUCCESS;
 }
 
+// Helper function to consume remaining file content from socket
+static void consume_file(int fd, size_t file_size) {
+    char buffer[4096];
+    size_t total_read = 0;
+    while (total_read < file_size) {
+        size_t to_read = (file_size - total_read) < sizeof(buffer) ? 
+                       (file_size - total_read) : sizeof(buffer);
+        ssize_t n = read(fd, buffer, to_read);
+        if (n <= 0) break;
+        total_read += n;
+    }
+}
+
 
 
 /**
@@ -519,6 +532,8 @@ void create_event_handler(Request* req){
 
     if (!verify_file_size(file_size_str)) {
         tcp_write(fd, "RCE ERR\n", 8);
+        file_size = (size_t)atol(file_size_str);
+        consume_file(fd, file_size);
         return;
     }
 
@@ -534,17 +549,24 @@ void create_event_handler(Request* req){
         !verify_event_date_format(event_date) ||
         !verify_seat_count(seat_count) ||
         !verify_file_name_format(file_name)) {
+        printf("Field validation failed\n");
         tcp_write(fd, "RCE ERR\n", 8);
+        file_size = (size_t)atol(file_size_str);
+        consume_file(fd, file_size);
         return;
     }
 
     if (!is_logged_in(UID)) {
         tcp_write(fd, "RCE NLG\n", 8);
+        file_size = (size_t)atol(file_size_str);
+        consume_file(fd, file_size);
         return;
     }
 
     if (!verify_correct_password(UID, password)) {
         tcp_write(fd, "RCE WRP\n", 8);
+        file_size = (size_t)atol(file_size_str);
+        consume_file(fd, file_size);
         return;
     }
   
