@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     
     struct sockaddr_in server_udp_addr;
     int udp_fd = setup_udp(IP, PORT, &server_udp_addr);
-    if (udp_fd == ERROR) {
+    if (udp_fd == ERROR) {  
         fprintf(stderr, "UDP setup failed\n");
         return ERROR;
     }

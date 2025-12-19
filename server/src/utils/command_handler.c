@@ -779,7 +779,6 @@ void show_event_handler(Request* req){
     int status = read_field_or_error(fd, EID, EID_LENGTH, protocol);
     if (status == ERROR) return;
 
-    // FIXME isto é burro e podia ser chamaadoo no command handler
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
      "Handling show event (SHO), for EID %s, using port %s", EID, set.port);
@@ -810,9 +809,6 @@ void show_event_handler(Request* req){
     fprintf(stderr, "description path %s\n", description_path);
     tcp_write(fd, response, strlen(response));
     tcp_send_file(fd, description_path);
-    
-    shutdown(fd, SHUT_WR);
-    
 }
 
 int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size) {
