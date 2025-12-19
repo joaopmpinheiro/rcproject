@@ -15,6 +15,7 @@ server/ES
 *.png
 *.txt
 !corrections.txt
+*.xlsx
 
 # Ignore reports
 *.html

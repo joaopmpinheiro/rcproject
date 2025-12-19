@@ -57,11 +57,67 @@
 
 #define EOM '\n'
 
+/**
+ * @brief Sends a message over a TCP connection, handling partial writes.
+ * 
+ * @param fd File descriptor of the TCP socket
+ * @param message Null-terminated message string to send
+ * @return int SUCCESS if message sent completely, ERROR on failure
+ */
 int tcp_send_message(int fd, char *message);
+
+/**
+ * @brief Sends a file's contents over a TCP connection.
+ * 
+ * Reads the file in chunks and sends each chunk, handling partial writes.
+ * Appends a newline character to indicate end of file transfer.
+ * 
+ * @param fd File descriptor of the TCP socket
+ * @param file_name Path to the file to send
+ * @return int SUCCESS if file sent completely, ERROR on failure
+ */
 int tcp_send_file(int fd, char *file_name);
+
+/**
+ * @brief Reads data from a TCP socket until newline or buffer is full.
+ * 
+ * @param fd File descriptor of the TCP socket
+ * @param buf Buffer to store the read data
+ * @param len Maximum number of bytes to read
+ * @return int SUCCESS on completion
+ */
 int tcp_read(int fd, void *buf, size_t len);
+
+/**
+ * @brief Writes data to a TCP socket, handling partial writes.
+ * 
+ * @param fd File descriptor of the TCP socket
+ * @param buffer Data buffer to write
+ * @param length Number of bytes to write
+ * @return int SUCCESS if all bytes written, ERROR on failure
+ */
 int tcp_write(int fd, const char* buffer, size_t length);
+
+/**
+ * @brief Reads a single space-delimited field from a TCP socket.
+ * 
+ * Skips leading spaces and reads until the next space or newline.
+ * 
+ * @param fd File descriptor of the TCP socket
+ * @param buffer Buffer to store the field
+ * @param max_len Maximum length of the field
+ * @return int SUCCESS if terminated by space, EOM if terminated by newline, ERROR on failure
+ */
 int tcp_read_field(int fd, char* buffer, size_t max_len);
+
+/**
+ * @brief Receives a file over TCP and writes it to disk.
+ * 
+ * @param fd File descriptor of the TCP socket
+ * @param file_name Path where the file will be saved
+ * @param file_size Expected size of the file in bytes
+ * @return int SUCCESS if file received completely, ERROR on failure
+ */
 int tcp_read_file(int fd, char *file_name, long file_size);
 
 /**
