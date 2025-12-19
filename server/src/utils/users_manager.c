@@ -158,14 +158,16 @@ int verify_reservation_file(char* reservation_file_name){
 }
 
 int has_events(char* UID){
-    sscanf(UID, "USERS/%s/CREATED", UID);
-    return is_dir_empty(UID) ? FALSE : TRUE;
+    char path[32];
+    snprintf(path, sizeof(path), "USERS/%s/CREATED", UID);
+    return is_dir_empty(path) ? FALSE : TRUE;
 }
 
 
 int has_reservations(char* UID){
-    sscanf(UID, "USERS/%s/RESERVED", UID);
-    return is_dir_empty(UID) ? FALSE : TRUE;
+    char path[32];
+    snprintf(path, sizeof(path), "USERS/%s/RESERVED", UID);
+    return is_dir_empty(path) ? FALSE : TRUE;
 }
 
 
