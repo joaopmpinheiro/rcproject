@@ -64,7 +64,7 @@ ReplyStatus read_show_response_header(int tcp_fd,
     snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", str_day, str_time);
     if(!verify_uid_format(uid) ||
        !verify_event_name_format(event_name) ||
-       !verify_event_date_format(event_date) ||
+       //!verify_event_date_format(event_date) ||
        !verify_seat_count(attendance_size) ||
        !verify_reserved_seats(reserved_seats, attendance_size) ||
        !verify_file_name_format(file_name) ||
