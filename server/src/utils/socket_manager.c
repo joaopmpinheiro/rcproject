@@ -6,7 +6,6 @@ int select_handler() {
     set.temp_fds = set.read_fds;
 
     if (select(max_fd + 1, &set.temp_fds, NULL, NULL, &set.timeout) < 0) {
-        // FIXME TODO: ns se tá certo
         server_log("Select error");
         return ERROR;
     }
@@ -27,9 +26,7 @@ void udp_connection() {
     ssize_t received_bytes = recvfrom(set.udp_socket, buffer, sizeof(buffer) - 1, 0,
                             (struct sockaddr *)&client_addr, &addr_len);
     
-    // FIXME: isto pode/deve se fazer??
     if (received_bytes < 0) {
-        // FIX ME TODO: ns se tá certo
         server_log("UDP Receive failed");
         return;
     }
@@ -39,7 +36,6 @@ void udp_connection() {
         buffer[received_bytes] = '\0';
 
         // create a new request to be used by handle_request
-        // TODO: implement threading for UDP requests
         Request req = {.client_addr = client_addr, .addr_len = addr_len, .is_tcp = 0};
         strncpy(req.buffer, buffer, sizeof(req.buffer));
         handle_udp_request(&req);
@@ -63,7 +59,6 @@ void tcp_connection() {
     // Read only the 3-letter command using the helper that handles delimiters
     ssize_t cmd_len = tcp_read_field(client_socket, request_type, 3);
     if (cmd_len <= 0) {
-        // é supost printar aqui tbm? FIXME TODO
         server_log("TCP Read failed or connection closed");
         close(client_socket);
         return;

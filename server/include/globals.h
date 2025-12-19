@@ -26,7 +26,7 @@
 #define ERROR -1
 #define EMPTY_FILE -2
 #define DIR_ALREADY_EXISTS -3
-#define MAX_TCP_CLIENTS 5 //TODO: isto é uma cena? TODO: tirar esta cena (lmao)
+#define MAX_TCP_CLIENTS 10 
 
 #define PAST '0'
 #define ACCEPTING '1'

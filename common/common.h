@@ -11,7 +11,7 @@
 #define BASE_PORT 58000
 #define GROUP_NUMBER 32
 #define DEFAULT_PORT "58032"
-#define DEFAULT_IP "127.0.0.1" // TODO CONFIRM  eu acho q é o tejo aqui
+#define DEFAULT_IP "127.0.0.1" 
 #define MAX_HOSTNAME_LENGTH 256
 #define PORTMAX 65535
 #define PORTMIN 0
@@ -19,7 +19,6 @@
 #define TRUE 1
 #define FALSE 0
 
-// TODO por todos os defines no mesmo sitio
 #define TIMEOUT_SECONDS 5
 #define PASSWORD_LENGTH 8
 #define COMMAND_LENGTH 3

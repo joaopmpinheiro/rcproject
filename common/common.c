@@ -47,7 +47,6 @@ int tcp_send_file(int fd, char* file_name) {
 }
 
 
-// TODO FIXME: olhadela wtf void* buf typecast ?!?!?!
 int tcp_read(int fd, void* buf, size_t len) {
     ssize_t bytes_read = 0;
     ssize_t n;
@@ -56,7 +55,6 @@ int tcp_read(int fd, void* buf, size_t len) {
         if (n <= 0) break; // Connection closed
         if (n < 0) return ERROR; // Read error
         bytes_read += n;
-        //TODO: confirmar que nao pode acabar sem \n
         if (((char*)buf)[bytes_read - 1] == '\n') break; // End of message 
     }
     ((char*)buf)[bytes_read] = '\0'; // Null-terminate the string 
@@ -106,11 +104,7 @@ int tcp_read_field(int fd, char* buffer, size_t max_len) {
 
 int tcp_read_file(int fd, char* file_name, long file_size) {
     FILE* file = fopen(file_name, "wb");
-    if (!file) {
-        // TODO FIXME olhar para isto
-        // perror("ERROR: Failed to open file for writing");
-        return ERROR;
-    }
+    if (!file) return ERROR;
 
     char buffer[TCP_BUFFER_SIZE];
     long total_received = 0;
@@ -120,7 +114,6 @@ int tcp_read_file(int fd, char* file_name, long file_size) {
         size_t to_read = (file_size - total_received) < TCP_BUFFER_SIZE ?
                          (file_size - total_received) : TCP_BUFFER_SIZE;
         n = read(fd, buffer, to_read);
-        // FIXME TODO: ver se é melhor separar n==0 e n<0 para disconnect e erro respetivamente
         if (n == 0) break;
         if (n < 0) {
             fclose(file);

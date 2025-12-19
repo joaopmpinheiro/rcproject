@@ -12,7 +12,6 @@
 
 #include "client_data.h"
 
-// TODO: arranjar um sitio para esta funcao
 int verify_file(char* file_name) {
     struct stat st;
     if (stat(file_name, &st) != 0)
@@ -364,7 +363,7 @@ ReplyStatus changepass_handler(char** cursor) {
 }
 
 ReplyStatus create_event_handler(char** cursor, char** extra_info) {
-    char event_name[MAX_EVENT_NAME + 1], file_name[FILE_NAME_LENGTH + 1]; // TODO: maximum file name length?
+    char event_name[MAX_EVENT_NAME + 1], file_name[FILE_NAME_LENGTH + 1];
     char date[EVENT_DATE_LENGTH + 1], num_seats[4];
     *extra_info = NULL;
     
@@ -429,7 +428,7 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
         return STATUS_CUSTOM_OUTPUT;
     }
 
-    return status; // TODO: handle response
+    return status;
 }
 
 ReplyStatus close_event_handler(char** cursor) {

@@ -481,7 +481,6 @@ void create_event_handler(Request* req){
     // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <seat_count> 
     // <file_name> <file_size> <file_content>
     // TODO VER CASO DO EOM AQUI
-    // TODO write RCE ERR and close fd in case of error
     int field_status;
     field_status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
     if (field_status == ERROR || field_status == EOM) return;
@@ -555,7 +554,6 @@ void create_event_handler(Request* req){
     }
 
     // Read file content (exactly file_size bytes)
-    // TODO: abstrair
     size_t total_read = 0;
     while (total_read < file_size) {
         ssize_t n = read(fd, file_content + total_read, file_size - total_read);
@@ -569,7 +567,6 @@ void create_event_handler(Request* req){
     file_content[file_size] = '\0';
 
 
-    // TODO: funçao de rollback, pensar nisso
     if (find_available_eid(EID) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
         return;
@@ -586,7 +583,6 @@ void create_event_handler(Request* req){
         return;
     }
 
-    // TODO pode ser preciso por o eid no ficheiro q isto faz tbm
     if (write_event_information_file(EID, UID, event_name, file_name, seat_count,
                                event_date) == ERROR) {
         tcp_write(fd, "RCE NOK\n", 8);
@@ -632,7 +628,6 @@ void close_event_handler(Request* req){
     char protocol[4] = "RCL";
 
     // PROTOCOL: CLS <uid> <password> <eid>
-    // TODO write feedback
     int status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
     if (status == ERROR || status == EOM) return;
 
@@ -652,7 +647,6 @@ void close_event_handler(Request* req){
     if (!verify_uid_format(UID) ||
         !verify_password_format(password) ||
         !verify_eid_format(EID)) {
-        // TODO, maybe printar logs nestes casos (?)
         tcp_write(fd, "RCE ERR\n", 8);
         return;
     }
@@ -743,9 +737,9 @@ void list_events_handler(Request* req){
         if (get_list_event_info(event_EID, event_name, event_date) == ERROR) continue;
 
         // Determine event state
+        if (is_event_closed(event_EID)) state = CLOSED;
         if (is_event_past(event_EID)) state = PAST;
         else if (is_event_sold_out(event_EID)) state = SOLD_OUT;
-        else if (is_event_closed(event_EID)) state = CLOSED;
         else state = ACCEPTING;
 
         // Append event details to response
@@ -802,7 +796,6 @@ void show_event_handler(Request* req){
         tcp_write(fd, "RSE NOK\n", 8);
         return;
     }
-    fprintf(stderr, "response %s\n", response);
 
     char description_path[128];
     snprintf(description_path, sizeof(description_path), "EVENTS/%s/DESCRIPTION/%s", EID, file_name);

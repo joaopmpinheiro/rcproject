@@ -116,7 +116,6 @@ int verify_event_date_format(char* date_str) {
         len--;
     }
     
-    // FIXME: vem sempre 01 no dia ou pode vir 1??
     if (len != 16) return INVALID;  // DD-MM-YYYY HH:MM = 16 characters
 
     // Check fixed positions for '-', ' ', and ':'

@@ -76,7 +76,7 @@ int tcp_setup(){
         exit(EXIT_FAILURE);
     }
 
-    if (listen(set.tcp_socket, MAX_TCP_CLIENTS) != 0) { // TODO: quantas connections em espera? - neste momento aceita 5
+    if (listen(set.tcp_socket, MAX_TCP_CLIENTS) != 0) {
         perror("Listen failed");
         close(set.tcp_socket);
         return ERROR;

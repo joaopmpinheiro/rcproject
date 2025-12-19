@@ -30,7 +30,7 @@ TODO:
     - DOUBLE CHECK SE EID É SEMPRE PADDED (1 -> 001) ✅
     - O QUE É QUE SE PASSA COM VERIFICAR O TEMPO NO CREATE PQP ✅
     - fazer as bostinhass das confirmacoes e confirmar q tds comandos dao
-    - ver se temos timeout no tcp 
+    - ver se temos timeout no tcp -> nao temos mas ele da close com o ctrl c do server, se n
     - READ ME: por que tem q se estar dentro do ./server e ./user 
     - wrp deve dar logout ao user ✅
     - abulir papai nowel

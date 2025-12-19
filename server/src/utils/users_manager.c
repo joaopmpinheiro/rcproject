@@ -146,7 +146,6 @@ int verify_event_file(char* event_file_name){
     return strcmp(event_file_name + 3, ".txt") == 0 ? VALID : INVALID;
 }
 
-//TODO: melhorar esta funcao
 int verify_reservation_file(char* reservation_file_name){
     if (strlen(reservation_file_name) != 27) return INVALID;
 

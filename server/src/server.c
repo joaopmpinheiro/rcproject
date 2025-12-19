@@ -27,14 +27,12 @@ int main(int argc, char *argv[]) {
 
         // Check for UDP connection
         if (FD_ISSET(set.udp_socket, &set.temp_fds)) {
-            fprintf(stderr, "Received UDP connection\n");
             udp_connection();
             // One of the threads will handle the request, check handle_task() in threads.c
         }
 
         // Check for TCP connection
         else if (FD_ISSET(set.tcp_socket, &set.temp_fds)) {
-            fprintf(stderr, "Received TCP connection\n");
             tcp_connection();
             // One of the threads will handle the request, check handle_task() in threads.c
         }

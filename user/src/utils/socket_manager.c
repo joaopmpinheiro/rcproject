@@ -29,14 +29,12 @@ int connect_tcp(const char* ip, const char* port) {
     fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (fd < 0) {
         freeaddrinfo(res);
-        perror("TCP Socket creation failed");
         return ERROR;
     }
 
     if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
         close(fd);
         freeaddrinfo(res);
-        perror("TCP Connection failed");
         return ERROR;
     }
 

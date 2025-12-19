@@ -30,7 +30,7 @@ void sig_detected(int signum) {
     
 void parse_arguments(int argc, char *argv[]) {   
     int opt;
-    while ((opt = getopt(argc, argv, "p:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "-p:-n:")) != -1) {
         switch (opt) {
             case 'p':
                 if (optarg[0] == '-') {
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
         return ERROR;
     }
 
-    char input_buffer[1024] = {0}; //FIXME: tamanho do buffer
+    char input_buffer[1024] = {0};
     char cmd[64] = {0};
     RequestType command;
     ReplyStatus status;
@@ -95,7 +95,6 @@ int main(int argc, char* argv[]) {
         command = identify_command(cmd);
         status = command_handler(command, &cursor, udp_fd, &server_udp_addr);
         
-        // TODO: mais algum devia dar paragem?
         if (status == STATUS_MALFORMED_RESPONSE ||
             status == STATUS_MALFORMED_COMMAND ||
             status == STATUS_SEND_FAILED ||
@@ -103,13 +102,14 @@ int main(int argc, char* argv[]) {
             status == STATUS_UNEXPECTED_RESPONSE ||
             status == STATUS_UNEXPECTED_STATUS) {
             close(udp_fd);
-            exit(1);
+            break;
         }
     }
     if(stop == 1) {
-        printf("\nExiting...\n");
-        fflush(stdout);
+        printf("\nSIGINT detected.\n");
     }
+    printf("Exiting...\n");
+    fflush(stdout);
     close(udp_fd);
     return 0;
 }
