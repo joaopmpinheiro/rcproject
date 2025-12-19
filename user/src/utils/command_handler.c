@@ -3,22 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-ReplyStatus handle_response_code(char* resp, RequestType command, int parsed, int n, char* status) {
-    // Problem parsing response
-    if (parsed < 1) return STATUS_MALFORMED_RESPONSE;
-    
-    // Server did not even recognize the command
-    if (identify_status_code(status) == STATUS_ERROR) return STATUS_ERROR;
-    
-    // Server returned the wrong command response
-    const char* command_response = get_command_response_code(command);
-    if (strcmp(resp, command_response)) return STATUS_UNEXPECTED_RESPONSE;
-    
-    // Not enough parts in response
-    if (parsed < n) return STATUS_MALFORMED_RESPONSE;   
 
-    return identify_status_code(status);
-}
 
 RequestType identify_command(char* command) {
     if (strcmp(command, "login") == 0) return LOGIN;

@@ -8,18 +8,6 @@
 // =============== command_handler.c ===============
 
 /**
- * @brief Handles the response code from the server after receiving a reply.
- * 
- * @param resp Response buffer containing server reply
- * @param command The command type that was sent
- * @param parsed Number of successfully parsed fields
- * @param n Expected number of fields
- * @param status Status string extracted from response
- * @return ReplyStatus Parsed status or error code
- */
-ReplyStatus handle_response_code(char* resp, RequestType command, int parsed, int n, char* status);
-
-/**
  * @brief Identifies the command type from user input string.
  * 
  * @param command User input command string
@@ -145,7 +133,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 
 /**
  * @brief Lists the events reserved by the logged-in user (by up to 50 events).
- * USER INPUT: myreservations or myres
+ * USER INPUT: myreservations or myr
  * USER PROTOCOL: LMR <uid> <password>
  * SERVER PROTOCOL: RMR <status> [<event1ID name event_date seats
  * reserved> <event2ID name event_date seats_reserved> ...]
@@ -440,16 +428,6 @@ ReplyStatus parse_response_header(char** cursor, RequestType request_type);
 
 
 // =============== read_from_server.c ===============
-
-/**
- * @brief Reads the command code from TCP response.
- * 
- * @param tcp_fd TCP socket file descriptor
- * @param command Buffer to store the command code
- * @param expected_command Expected command type for validation
- * @return ReplyStatus STATUS_OK on success, error on mismatch
- */
-ReplyStatus read_command(int tcp_fd, char* command, RequestType expected_command);
 
 /**
  * @brief Reads the command and status from the server response.

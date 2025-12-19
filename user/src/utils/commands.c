@@ -241,14 +241,6 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
 }
 
 
-/**
- * @brief Lists the events reserved by the logged-in user (by up to 50 events).
- * USER INPUT: myreservations or myres
- * USER PROTOCOL: LMR <uid> <password>
- * SERVER PROTOCOL: RMR <status> [<event1ID name event_date seats
- * reserved> <event2ID name event_date seats_reserved> ...]
- * @param 
- */
 ReplyStatus myreservations_handler(char** cursor, int udp_fd,
                                 struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {

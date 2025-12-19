@@ -124,7 +124,6 @@ void login_handler(Request* req, char* UID, char* password) {
     if (!user_exists(UID)) {
         if (create_new_user(UID, password) == ERROR) {
             send_udp_response("RLI ERR\n", req);
-            fprintf(stderr, "Error creating new user with UID %s\n", UID);
             return;
         }
         send_udp_response("RLI REG\n", req);
@@ -135,7 +134,6 @@ void login_handler(Request* req, char* UID, char* password) {
     // Error verifying password
     if (status == ERROR) {
         send_udp_response("RLI ERR\n", req);
-        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
     // Incorrect password
@@ -168,7 +166,6 @@ void logout_handler(Request* req, char* UID, char* password) {
     // Error verifying password
     if (status == ERROR) {
         send_udp_response("RLO ERR\n", req);
-        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
 
@@ -194,7 +191,6 @@ void unregister_handler(Request* req, char* UID, char* password) {
     int status = verify_correct_password(UID, password);
     if(status == ERROR) {
         send_udp_response("RUR ERR\n", req);
-        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
     if(status == INVALID) {
@@ -205,7 +201,6 @@ void unregister_handler(Request* req, char* UID, char* password) {
     // Proceed to unregister user
     if(remove_user(UID) == ERROR) {
         send_udp_response("RUR ERR\n", req);
-        fprintf(stderr, "Error deleting user with UID %s\n", UID);
         return;
     }
     send_udp_response("RUR OK\n", req);
@@ -223,7 +218,6 @@ void myevents_handler(Request* req, char* UID, char* password) {
     int status = verify_correct_password(UID, password);
     if(status == ERROR) {
         send_udp_response("RME ERR\n", req);
-        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
 
@@ -241,19 +235,11 @@ void myevents_handler(Request* req, char* UID, char* password) {
     char response[999 * 6 + 10]; // Max 999 events, each with "EID state " (6 chars) + null terminator
     if(format_list_of_user_events(UID, response, sizeof(response)) == ERROR) {
         send_udp_response("RME ERR\n", req);
-        fprintf(stderr, "Error formatting list of events for user with UID %s\n", UID);
         return;
     }
     send_udp_response(response, req);
 }   
 
-/* 
-states:
-1 - accepting reservations
-0 - in the past
-2 - in the future but sold out
-3 - closed
-*/
 
 int format_list_of_user_events(char* UID, char* message, size_t message_size) {
     char path[32];
@@ -309,7 +295,6 @@ void myreservations_handler(Request* req, char* UID, char* password) {
     int status = verify_correct_password(UID, password);
     if(status == ERROR) {
         send_udp_response("RMR ERR\n", req);
-        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
     if(status == INVALID) {
@@ -325,11 +310,9 @@ void myreservations_handler(Request* req, char* UID, char* password) {
     int err = format_list_of_user_reservations(UID, response, sizeof(response));
     if (err <= 0) {
         send_udp_response("RMR ERR\n", req);
-        fprintf(stderr, "Error formatting list of reservations for user with UID %s\n", UID);
         return;
     }
 
-    fprintf(stderr, "Formatted reservations response: %s", response);
     send_udp_response(response, req);
 } 
 
@@ -338,10 +321,8 @@ void myreservations_handler(Request* req, char* UID, char* password) {
 
 
 
-// ------------- TCP -------------
-/* USER: uccessful password change, unknown user, user not logged In or incorrect password. 
-*/    
-// Helper function to read a field or send a error and close connection in create_event_handler
+// ------------- TCP -------------  
+// Reads a field from TCP socket or sends error response (CMD ERR\n) if  there was an error.
 static int read_field_or_error(int fd, char* dst, size_t len, char* code) {
     char response[16] = {0};
     if (tcp_read_field(fd, dst, len) == ERROR) {
@@ -378,7 +359,6 @@ void change_password_handler(Request* req) {
     status = read_field_or_error(req->client_socket, new_password, PASSWORD_LENGTH, "RCP");
     if (status != SUCCESS) return;
 
-    // FIXME isto é burro e podia ser chamado no command handler
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
      "Handling change password (RCP), for user with UID %s",
@@ -396,7 +376,6 @@ void change_password_handler(Request* req) {
     status = verify_correct_password(UID, old_password);
     if(status == ERROR) {
         tcp_write(req->client_socket, "RCP ERR\n", strlen("RCP ERR\n"));
-        fprintf(stderr, "Error verifying password for user with UID %s\n", UID);
         return;
     }
     if(status == INVALID) {
@@ -407,7 +386,6 @@ void change_password_handler(Request* req) {
     // Proceed to change password
     if(write_password(UID, new_password) == ERROR) {
         tcp_write(req->client_socket, "RCP ERR\n", strlen("RCP ERR\n"));
-        fprintf(stderr, "Error changing password for user with UID %s\n", UID);
         return;
     }
     tcp_write(req->client_socket, "RCP OK\n", strlen("RCP OK\n"));
@@ -432,38 +410,37 @@ void create_event_handler(Request* req) {
 
     // PROTOCOL: CRE <uid> <password> <event_name> <event_date> <seat_count> 
     // <file_name> <file_size> <file_content>
-    // TODO VER CASO DO EOM AQUI
     int field_status;
     field_status = read_field_or_error(fd, UID, UID_LENGTH, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     field_status = read_field_or_error(fd, password, PASSWORD_LENGTH, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     field_status = read_field_or_error(fd, event_name, MAX_EVENT_NAME, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     // Read event_date (16 chars: DD-MM-YYYY HH:MM)
     // Date has a space in it, so we need to read date and time separately
     char date_part[11]; // DD-MM-YYYY
     char time_part[6];  // HH:MM
     field_status = read_field_or_error(fd, date_part, 10, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     field_status = read_field_or_error(fd, time_part, 5, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_part, time_part);
 
     // Read seat_count (max 3 digits)
     field_status = read_field_or_error(fd, seat_count, 3, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     field_status = read_field_or_error(fd, file_name, FILE_NAME_LENGTH, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     field_status = read_field_or_error(fd, file_size_str, FILE_SIZE_LENGTH, protocol);
-    if (field_status == ERROR || field_status == EOM) return;
+    if (field_status == ERROR) return;
 
     if (!verify_file_size(file_size_str)) {
         tcp_write(fd, "RCE ERR\n", 8);
@@ -484,7 +461,6 @@ void create_event_handler(Request* req) {
         !verify_event_date_format(event_date) ||
         !verify_seat_count(seat_count) ||
         !verify_file_name_format(file_name)) {
-        printf("Field validation failed\n");
         tcp_write(fd, "RCE ERR\n", 8);
         file_size = (size_t)atol(file_size_str);
         consume_file(fd, file_size);
@@ -592,7 +568,6 @@ void close_event_handler(Request* req) {
     status = read_field_or_error(fd, EID, MAX_EVENT_NAME, protocol);
     if (status == ERROR) return;
 
-    // FIXME TODO MUDAR PORT PARA IP
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
      "Handling close event (CLS), from user with UID %s", UID);
@@ -632,7 +607,6 @@ void close_event_handler(Request* req) {
     }
 
     if (is_event_closed(EID)) {
-        fprintf(stderr, "Event %s is already closed.\n", EID);
         tcp_write(fd, "RCL CLO\n", 8);
         return;
     }
@@ -653,7 +627,6 @@ void close_event_handler(Request* req) {
 void list_events_handler(Request* req) {
     int fd = req->client_socket;
     
-    // FIXME TODO MUDAR PORT PARA IP
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
      "Handling list event (LST)");
@@ -793,7 +766,6 @@ void reserve_seats_handler(Request* req) {
        read_field_or_error(fd, seat_count, SEAT_COUNT_LENGTH, protocol) != SUCCESS) return;
     
 
-    // FIXME isto é burro e podia ser chamado no command handler
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
      "Handling reserve seats (RID), from user with UID %s",

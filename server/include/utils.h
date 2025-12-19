@@ -598,10 +598,9 @@ int verify_correct_password(char* UID, char* password);
 // =============== events_manager.c ===============
 
 /**
- * @brief Checks if an event with the given EID exists.
- * 
- * @param EID Event ID
- * @return int TRUE if event exists, FALSE otherwise
+ * @brief Checks if event directory exists
+ * @param EID Event ID to check
+ * @return TRUE if EVENTS/EID directory exists, FALSE otherwise
  */
 int event_exists(char* EID);
 

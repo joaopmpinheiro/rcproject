@@ -13,8 +13,6 @@
 #include "../../common/common.h"
 #include "../../common/data.h"
 
-
-
 int connect_tcp(const char* ip, const char* port) {
     struct addrinfo hints, *res;
     int fd, errcode;

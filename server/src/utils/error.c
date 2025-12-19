@@ -1,12 +1,6 @@
 #include "../include/globals.h"
 #include <arpa/inet.h>
 
-/**
- * @brief Logs message to stdout in verbose mode with optional client IP:PORT
- * @param message Message to log
- * @param client_addr Client socket address (NULL for pre-connection errors)
- * @note Output format: "message [from IP:PORT]" or just "message"
- */
 void server_log(const char* message, struct sockaddr_in* client_addr) {
     if (set.verbose) {
         if (client_addr != NULL) {
@@ -20,10 +14,6 @@ void server_log(const char* message, struct sockaddr_in* client_addr) {
     }
 }
 
-/**
- * @brief Prints usage information to stderr
- * @param prog_name Program name (typically argv[0])
- */
 void usage(const char *prog_name) {
     fprintf(stderr, "Usage: %s [-n server_ip] [-p server_port]\n", prog_name);
     fprintf(stderr, "  -p server_port  Specify the server port number\n");

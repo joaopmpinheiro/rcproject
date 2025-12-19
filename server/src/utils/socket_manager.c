@@ -1,11 +1,6 @@
 #include "../../include/utils.h"
 #include "../../include/globals.h"
 
-/**
- * @brief Main select loop handler for multiplexed UDP and TCP connections
- * Listens for incoming requests and dispatches to appropriate handlers
- * @return SUCCESS if shutdown cleanly, ERROR on critical failure
- */
 int select_handler() {
     int max_fd = set.udp_socket > set.tcp_socket ? set.udp_socket : set.tcp_socket;
     set.temp_fds = set.read_fds;
@@ -17,20 +12,11 @@ int select_handler() {
     return SUCCESS;
 }
 
-/**
- * @brief Sends UDP response message to client
- * @param message Response message (should end with \n)
- * @param req Request structure containing client address info
- */
 void send_udp_response(const char* message, Request *req) {
     sendto(set.udp_socket, message, strlen(message), 0,\
             (struct sockaddr *)&req->client_addr, req->addr_len);
 }
 
-/**
- * @brief Receives UDP request from client and dispatches to handler
- * Handles protocol parsing and error responses
- */
 void udp_connection() {
     char buffer[BUFFER_SIZE];
     struct sockaddr_in client_addr;
@@ -56,10 +42,7 @@ void udp_connection() {
     } 
 }    
 
-/**
- * @brief Accepts TCP connection from client and dispatches to handler
- * Handles client socket management and cleanup
- */
+
 void tcp_connection() {
     char request_type[4];   
     struct sockaddr_in client_addr;
@@ -68,7 +51,6 @@ void tcp_connection() {
     // Accept the incoming TCP connection, creating a new socket for this client
     int client_socket = accept(set.tcp_socket, (struct sockaddr *)&client_addr, &addr_len);
 
-    // FIXME: isto pode/deve se fazer??
     if (client_socket < 0) {
         server_log("TCP Accept failed", NULL);
         return;

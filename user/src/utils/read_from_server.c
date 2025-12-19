@@ -14,16 +14,6 @@
 #include "../../common/data.h"
 #include "../../common/verifications.h"
 
-ReplyStatus read_command(int tcp_fd, char* command, RequestType expected_command) {
-    if(tcp_read_field(tcp_fd, command, COMMAND_LENGTH) == ERROR)\
-        return STATUS_RECV_FAILED;
-    RequestType req = identify_command_response(command);
-    if (req == UNKNOWN) return STATUS_MALFORMED_RESPONSE;
-    if (req == ERROR_REQUEST) return STATUS_ERROR;
-    if (req != expected_command) return STATUS_UNEXPECTED_RESPONSE;
-    return STATUS_OK;
-}
-
 ReplyStatus read_cmd_status(int tcp_fd, RequestType expected_command) {
     char command[COMMAND_LENGTH + 1];
     char rep_status[4];
@@ -72,7 +62,6 @@ ReplyStatus read_show_response_header(int tcp_fd,
     return STATUS_OK;
 }    
 
-//TODO: reconhecer diferencas entre EOM e ERROR
 ReplyStatus read_events_list(int fd_tcp, char* eid, char* name, char* state,
                               char* event_day, char* event_time) {
                                 
@@ -89,12 +78,5 @@ ReplyStatus read_events_list(int fd_tcp, char* eid, char* name, char* state,
     return STATUS_UNASSIGNED;
 }
 
-ReplyStatus read_reserve_seats(int tcp_fd, char* seats) {
-    if (tcp_read_field(tcp_fd, NULL, 0) != SUCCESS)
-        return STATUS_MALFORMED_RESPONSE;
-    if(!verify_reserved_seats(seats, "999"))
-        return STATUS_MALFORMED_RESPONSE;
-    return STATUS_UNASSIGNED;
-}
 
 
