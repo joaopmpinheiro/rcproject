@@ -6,7 +6,7 @@ int select_handler() {
     set.temp_fds = set.read_fds;
 
     if (select(max_fd + 1, &set.temp_fds, NULL, NULL, &set.timeout) < 0) {
-        server_log("Select error");
+        server_log("Select error", NULL);
         return ERROR;
     }
     return SUCCESS;
@@ -27,7 +27,7 @@ void udp_connection() {
                             (struct sockaddr *)&client_addr, &addr_len);
     
     if (received_bytes < 0) {
-        server_log("UDP Receive failed");
+        server_log("UDP Receive failed", NULL);
         return;
     }
     // if the buffer is not empty
@@ -52,14 +52,14 @@ void tcp_connection() {
 
     // FIXME: isto pode/deve se fazer??
     if (client_socket < 0) {
-        server_log("TCP Accept failed");
+        server_log("TCP Accept failed", NULL);
         return;
     }
 
     // Read only the 3-letter command using the helper that handles delimiters
     ssize_t cmd_len = tcp_read_field(client_socket, request_type, 3);
     if (cmd_len <= 0) {
-        server_log("TCP Read failed or connection closed");
+        server_log("TCP Read failed or connection closed", NULL);
         close(client_socket);
         return;
     }

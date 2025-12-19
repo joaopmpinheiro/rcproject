@@ -4,7 +4,7 @@
 *.exe
 *.a
 user/user
-server/server
+server/ES
 
 
 # Ignore PDFs
@@ -25,6 +25,7 @@ server/server
 
 # Ignore Markdown
 *.md
+!README.md
 
 # Ignore IDE settings
 *.DS_Store

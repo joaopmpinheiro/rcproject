@@ -56,8 +56,11 @@ void handle_udp_request(Request* req) {
         return;
     }
 
-    if(set.verbose) printf("Handling %s (%s) command, from UID: %s, using port %s\n",
-                            command_to_str(command), command_buff, uid, set.port);
+    char log[BUFFER_SIZE];
+    snprintf(log, sizeof(log),
+     "Handling %s (%s) command, from UID: %s",
+     command_to_str(command), command_buff, uid);
+    server_log(log, &req->client_addr);
 
     switch (command) {
         case LOGIN:
@@ -437,9 +440,9 @@ void change_password_handler(Request* req){
     // FIXME isto é burro e podia ser chamado no command handler
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling change password (RCP), for user with UID %s, using port %s",
-     UID, set.port);
-    server_log(log);
+     "Handling change password (RCP), for user with UID %s",
+     UID);
+    server_log(log, &req->client_addr);
     
     if(!user_exists(UID)) {
         tcp_write(req->client_socket, "RCP NID\n", strlen("RCP NID\n"));
@@ -539,8 +542,8 @@ void create_event_handler(Request* req){
 
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling create event (CRE), from user with UID %s, using port %s", UID, set.port);
-    server_log(log);
+     "Handling create event (CRE), from user with UID %s", UID);
+    server_log(log, &req->client_addr);
     
     // Validate all fields
     if (!verify_uid_format(UID) ||
@@ -666,8 +669,8 @@ void close_event_handler(Request* req){
     // FIXME TODO MUDAR PORT PARA IP
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling close event (CLS), from user with UID %s, using port %s", UID, set.port);
-    server_log(log);
+     "Handling close event (CLS), from user with UID %s", UID);
+    server_log(log, &req->client_addr);
 
     // Validate all fields
     if (!verify_uid_format(UID) ||
@@ -736,8 +739,8 @@ void list_events_handler(Request* req){
     // FIXME TODO MUDAR PORT PARA IP
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling list event (LST), using port %s", set.port);
-    server_log(log);
+     "Handling list event (LST)");
+    server_log(log, &req->client_addr);
 
     if (is_dir_empty("EVENTS")) {
         tcp_write(fd, "RLS NOK\n", 7);   
@@ -801,8 +804,8 @@ void show_event_handler(Request* req){
 
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling show event (SHO), for EID %s, using port %s", EID, set.port);
-    server_log(log);
+     "Handling show event (SHO), for EID %s", EID);
+    server_log(log, &req->client_addr);
 
     // Validate EID
     if (!verify_eid_format(EID)) {
@@ -913,9 +916,9 @@ void reserve_seats_handler(Request* req){
     // FIXME isto é burro e podia ser chamado no command handler
     char log[BUFFER_SIZE];
     snprintf(log, sizeof(log),
-     "Handling reserve seats (RID), from user with UID %s, using port %s",
-     UID, set.port);
-    server_log(log);
+     "Handling reserve seats (RID), from user with UID %s",
+     UID);
+    server_log(log, &req->client_addr);
 
     // Validate all fields
     if (!verify_uid_format(UID) ||

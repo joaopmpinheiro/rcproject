@@ -30,7 +30,7 @@ void server_setup();
 void parse_arguments(int argc, char *argv[]);
 
 //error.c
-void server_log(const char* message);
+void server_log(const char* message, struct sockaddr_in* client_addr);
 void usage(const char *prog_name);
 
 

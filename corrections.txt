@@ -36,5 +36,6 @@ TODO:
     - abulir papai nowel
     - abrir no clion para matar as funcoes q nao usamos
     - apagar stderr de debug
+    - IP NO VERBOSE AHHH
 
 DOUBT:

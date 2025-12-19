@@ -15,7 +15,7 @@ OBJS = \
 	$(UTILS)/events_manager.o \
 	$(SRCDIR)/server.o
 
-TARGET = server
+TARGET = ES
 
 all: $(TARGET)
 
