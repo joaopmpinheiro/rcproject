@@ -8,12 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/**
- * @brief Validates basic UID and password format from request buffer
- * @param req Request containing buffer with command, UID, and password
- * @return VALID if format is correct, INVALID if verification fails
- * @note Internal helper - validates only format, not authentication
- */
 int verify_uid_password(Request* req) {
     if(!verify_argument_count(req->buffer, 3)) return INVALID;
 
@@ -186,22 +180,8 @@ void logout_handler(Request* req, char* UID, char* password) {
 
     erase_login(UID);
     send_udp_response("RLO OK\n", req);
-
 }
 
-/**
- * @brief Handles unregister request: UNR UID password
- * 
- * Sends to user:
- * RUR OK - successful unregistration,
- * RUR UNR - user was not registered
- * RUR NOK - user not logged in
- * RUR WRP - wrong password
- * 
- * @param req 
- * @param UID 
- * @param password 
- */
 void unregister_handler(Request* req, char* UID, char* password) {
     if(!user_exists(UID)) {
         send_udp_response("RUR UNR\n", req);
@@ -231,21 +211,7 @@ void unregister_handler(Request* req, char* UID, char* password) {
     send_udp_response("RUR OK\n", req);
 }
 
-
-/**
- * @brief Handles myevents request: MYE UID password
- * 
- * * Sends to user:
- * RME OK [EID1 state>]*
- * RME NOK - user has no events
- * RME NLG - user not logged in
- * RME WRP - wrong password
- * 
- * @param req 
- * @param UID 
- * @param password 
- */
-void myevents_handler(Request* req, char* UID, char* password){
+void myevents_handler(Request* req, char* UID, char* password) {
     if(!user_exists(UID)) {
         send_udp_response("RME ERR\n", req);
         return;
@@ -331,25 +297,7 @@ int format_list_of_user_events(char* UID, char* message, size_t message_size) {
     return SUCCESS;
 }
 
-/*
-- list
-- user does not have reservations [sends a maximum of 50 reservations - the most recent]
-*/
-
-/**
- * @brief Handles myreservations request: LMR UID password
- * 
- * Sends to user:
- * RMR status - [EID date value]*
- * RMR NOK - user has no reservations
- * RMR NLG - user not logged in
- * RMR WRP - wrong password
- * 
- * @param req 
- * @param UID 
- * @param password 
- */
-void myreservations_handler(Request* req, char* UID, char* password){
+void myreservations_handler(Request* req, char* UID, char* password) {
     if(!user_exists(UID)) {
         send_udp_response("RMR ERR\n", req);
         return;
@@ -417,20 +365,7 @@ static void consume_file(int fd, size_t file_size) {
     }
 }
 
-
-
-/**
- * @brief Handles change password request: CPS UID oldPassword newPassword 
- * 
- * Sends to user:
- * RCP OK - successful password change,
- * RCP NLG - user not logged in
- * RCP NOK - wrong password
- * RCP NID - unknown user
- * 
- * @param req 
- */
-void change_password_handler(Request* req){
+void change_password_handler(Request* req) {
     char UID[UID_LENGTH + 1];
     char old_password[PASSWORD_LENGTH + 1];
     char new_password[PASSWORD_LENGTH + 1];
@@ -478,20 +413,7 @@ void change_password_handler(Request* req){
     tcp_write(req->client_socket, "RCP OK\n", strlen("RCP OK\n"));
 }
 
-
-/**
- * @brief Handles create event request: CRE UID password event_name event_date seat_count 
- * file_name file_size file_content
- * 
- * Sends to user: 
- * RCE OK EID - successful event creation,
- * RCE NOK - failed event creation
- * RCE NLG - user not logged in
- * RCE WRP - wrong password
- * RCE ERR - error in request or server
- * @param req 
-*/
-void create_event_handler(Request* req){
+void create_event_handler(Request* req) {
     char UID[UID_LENGTH + 1];
     char password[PASSWORD_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
@@ -646,23 +568,7 @@ void create_event_handler(Request* req){
     tcp_write(fd, response, strlen(response));
 }
 
-/**
- * @brief Handles close event request: CLS UID password EID
- * 
- * Sends to user:
- * RCL OK - successful event closure
- * RCL NLG - user not logged in
- * RCL NOK - wrong password
- * RCL NOE - no event with given EID
- * RCL EOW - user is not the event creator
- * RCL SLD - event is sold out
- * RCL PST - event date has already passed
- * RCL CLO - event is already closed
- * RCL ERR - error in request or server
- * 
- * @param req 
- */
-void close_event_handler(Request* req){
+void close_event_handler(Request* req) {
     char UID[UID_LENGTH + 1];
     char password[PASSWORD_LENGTH + 1];
     char EID[EID_LENGTH + 1];
@@ -739,16 +645,7 @@ void close_event_handler(Request* req){
     tcp_write(fd, "RCL OK\n", 7); 
 }
 
-/**
- * @brief Handles list events request: LST
- * 
- * Sends to user:
- * RLS OK [EID name state event_date]*
- * RLS NOK - no events available
- * 
- * @param req 
- */
-void list_events_handler(Request* req){
+void list_events_handler(Request* req) {
     int fd = req->client_socket;
     
     // FIXME TODO MUDAR PORT PARA IP
@@ -796,19 +693,9 @@ void list_events_handler(Request* req){
     }
 
     tcp_write(fd, "\n", 1);
-    
 }
 
-/**
- * @brief Handles show event request: SHO EID
- * 
- * Sends to user:
- * RSE OK [UID name event_date attendance_size Seats_reserved Fname Fsize Fdata]
- * RSE NOK - event does not exist or other problem
- * 
- * @param req 
- */
-void show_event_handler(Request* req){
+void show_event_handler(Request* req) {
     char EID[EID_LENGTH + 1];
 
     int fd = req->client_socket;
@@ -847,16 +734,6 @@ void show_event_handler(Request* req){
     tcp_send_file(fd, description_path);
 }
 
-/**
- * @brief Formats event details for show event response
- * 
- * @param EID 
- * @param message 
- * @param message_size 
- * @param file_name 
- * @param file_size 
- * @return int 
- */
 int format_event_details(char* EID, char* message, size_t message_size, char* file_name, long* file_size) {
     char UID[UID_LENGTH + 1];
     char event_name[MAX_EVENT_NAME + 1];
@@ -894,22 +771,7 @@ int format_event_details(char* EID, char* message, size_t message_size, char* fi
     return SUCCESS;
 }
 
-/**
- * @brief Handles reserve seats request: RES UID password EID num_seats
- * 
- * Sends to user:
- * RRI ACC - reservation successful,
- * RRI NOK - event not active
- * RRI NLG - user not logged in
- * RRI WRP - wrong password
- * RRI CLS - event closed
- * RRI SLD - event sold out
- * RRI REJ n_seats- not enough available seats
- * RRI PST - event date has passed
- * 
- * @param req 
- */
-void reserve_seats_handler(Request* req){
+void reserve_seats_handler(Request* req) {
     char UID[UID_LENGTH + 1];
     char password[PASSWORD_LENGTH + 1];
     char EID[EID_LENGTH + 1];
