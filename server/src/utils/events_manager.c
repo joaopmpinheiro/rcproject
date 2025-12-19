@@ -204,11 +204,12 @@ int read_event_full_details(char* EID, char* UID, char* event_name,
     char date_str[11];  // DD-MM-YYYY
     char time_str[6];   // HH:MM
     // Format: UID event_name filename seat_count date time
-    if (fscanf(fp, "%6s %10s %20s %3s %10s %5s", UID, event_name, file_name,
+    if (fscanf(fp, "%6s %10s %24s %3s %10s %5s", UID, event_name, file_name,
                total_seats, date_str, time_str) != 6) {
         fclose(fp);
         return ERROR;
     }
+
     fclose(fp);
     // Combine date and time into event_date
     snprintf(event_date, EVENT_DATE_LENGTH + 1, "%s %s", date_str, time_str);

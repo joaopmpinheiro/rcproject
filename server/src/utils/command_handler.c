@@ -844,30 +844,22 @@ int format_event_details(char* EID, char* message, size_t message_size, char* fi
                             reserved_seats, file_name) == ERROR)
         return ERROR;
     
-/*         if (!verify_eid_format(EID) ||
-       !verify_uid_format(UID) ||
-       !verify_event_name_format(event_name) ||
-       //!verify_event_date_format(event_date) ||
-       !verify_seat_count(total_seats) ||
-       !verify_reserved_seats(reserved_seats, total_seats) ||
-       !verify_file_name_format(file_name)) 
-        return ERROR; */
-
-        if (!verify_eid_format(EID)) printf("EID format invalid %s\n", EID);
-        if (!verify_uid_format(UID)) printf("UID format invalid %s\n", UID);
-        if (!verify_event_name_format(event_name)) printf("Event name format invalid %s\n", event_name);
-       //!verify_event_date_format(event_date) ||
-       if ( !verify_seat_count(total_seats)) printf("Total seats format invalid %s\n", total_seats);
-       if (!verify_reserved_seats(reserved_seats, total_seats)) printf("Reserved seats format invalid %s\n", reserved_seats);
-       if (!verify_file_name_format(file_name)) printf("File name format invalid %s\n", file_name);
+    if (!verify_eid_format(EID) ||
+        !verify_uid_format(UID) ||
+        !verify_event_name_format(event_name) ||
+        //!verify_event_date_format(event_date) ||
+        !verify_seat_count(total_seats) ||
+        !verify_reserved_seats(reserved_seats, total_seats) ||
+        !verify_file_name_format(file_name)) 
+        return ERROR;
     
     // Check if description file exists
     char description_path[128];
     snprintf(description_path, sizeof(description_path), "EVENTS/%s/DESCRIPTION/%s", EID, file_name);
-    if(!file_exists(description_path)) printf("Description file does not exist: %s\n", description_path);
+    if(!file_exists(description_path)) return ERROR;
     
     struct stat st;
-    if (stat(description_path, &st) != 0) printf("Stat failed for file: %s\n", description_path);
+    if (stat(description_path, &st) != 0) return ERROR;
     *file_size = st.st_size;
     
     snprintf(message, message_size,
