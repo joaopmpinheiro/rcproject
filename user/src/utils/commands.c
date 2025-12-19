@@ -50,7 +50,7 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     
     // Protocol: RLI <status>
     char *resp_cursor = response;
-    status =  parse_udp_response_header(&resp_cursor, LOGIN);
+    status =  parse_response_header(&resp_cursor, LOGIN);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
     // Expected responses: OK / NOK / REG
     if(status != STATUS_OK &&
@@ -92,7 +92,7 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     
     // Parse response
     char *resp_cursor = response;
-    status = parse_udp_response_header(&resp_cursor, UNREGISTER);
+    status = parse_response_header(&resp_cursor, UNREGISTER);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;    
     // Expected responses: OK / NOK / UNR / WRP
     if(status != STATUS_OK &&
@@ -138,7 +138,7 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
 
     // Parse response
     char *resp_cursor = response;
-    status = parse_udp_response_header(&resp_cursor, LOGGED_OUT);
+    status = parse_response_header(&resp_cursor, LOGOUT);
     if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
 
     // Expected responses: OK / NOK / UNR / WRP
@@ -185,7 +185,7 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
      
     // Parse response
     char *resp_cursor = response;
-    ReplyStatus status = parse_udp_response_header(&resp_cursor, MYEVENTS);
+    ReplyStatus status = parse_response_header(&resp_cursor, MYEVENTS);
     
     // Expected responses: OK / NOK / NLG / WRP
     if(status != STATUS_OK &&
@@ -265,13 +265,12 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
 
     char response[8192];
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
-    if (n == ERROR) return STATUS_RECV_FAILED;
-
+    if (n < 0) return STATUS_RECV_FAILED;
     response[n] = '\0';
-    fprintf(stderr, "Received myreservations response: %s", response); 
+
     // PROTOCOL: RMR <status> [<event1ID date value> ...]
     char *resp_cursor = response;
-    ReplyStatus status = parse_udp_response_header(&resp_cursor, MYRESERVATIONS);
+    ReplyStatus status = parse_response_header(&resp_cursor, MYRESERVATIONS);
     
     // Expected responses: OK / NOK / NLG / WRP
     if(status != STATUS_OK &&
@@ -284,17 +283,15 @@ ReplyStatus myreservations_handler(char** cursor, int udp_fd,
        status != STATUS_MALFORMED_RESPONSE) {
         return STATUS_UNEXPECTED_RESPONSE;
     }
-
-    // If wrong password or not logged in, clear global state
-    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
-        is_logged_in = 0;
-        memset(current_password, 0, sizeof(current_password));
-        memset(current_uid, 0, sizeof(current_uid));
+    if (is_end_of_message(&resp_cursor) && 
+        (status == STATUS_WRONG_PASSWORD ||
+         status == STATUS_NOT_LOGGED_IN)){
+            is_logged_in = 0;
+            memset(current_password, 0, sizeof(current_password));
+            memset(current_uid, 0, sizeof(current_uid));
     }
-
-    // Only if status == OK, parse the reservation list
+    if (!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
     if (status != STATUS_OK) return status;
-
     return show_myreservations(resp_cursor);
 }
 
@@ -312,16 +309,13 @@ ReplyStatus changepass_handler(char** cursor) {
     char request[256], response[256];
     snprintf(request, sizeof(request), "CPS %s %s %s\n", current_uid, current_password, new_password);
 
-    // Parse response
-    char response_code[4], reply_status[4];
-    
     // Send request to server and receive response
     status = tcp_send_receive(request, response, 256);
     if (status != STATUS_UNASSIGNED) return status;
-    
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, CHANGEPASS, parsed, 2, reply_status);
 
+    char *resp_cursor = response;
+    status = parse_response_header(&resp_cursor, CHANGEPASS);
+    
     // Expected responses: OK / NOK / NLG / NID
     if (status != STATUS_OK &&
         status != STATUS_NOK &&
@@ -329,21 +323,18 @@ ReplyStatus changepass_handler(char** cursor) {
         status != STATUS_USER_NOT_FOUND &&
         status != STATUS_ERROR &&
         status != STATUS_MALFORMED_RESPONSE) {
-        return STATUS_UNEXPECTED_RESPONSE;
-    }
-
-    // If wrong password or not logged in, clear global state
-    if(status == STATUS_NOT_LOGGED_IN || status == STATUS_USER_NOT_FOUND){
+            return STATUS_UNEXPECTED_RESPONSE;
+        }
+        
+    if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
+     // If wrong password or not logged in, clear global state
+    if (status == STATUS_NOT_LOGGED_IN || status == STATUS_USER_NOT_FOUND){
         is_logged_in = 0;
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
     }
-
     // Update global state on successful password change
-    if (status == STATUS_OK) {
-        strcpy(current_password, new_password);
-    }
-
+    if (status == STATUS_OK) strcpy(current_password, new_password);
     return status;
 }
 
@@ -447,11 +438,11 @@ ReplyStatus close_event_handler(char** cursor) {
 
     status = tcp_send_receive(request, response, 256);
     if(status != STATUS_UNASSIGNED) return status;
-
-    char response_code[4], reply_status[4];
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, CLOSE, parsed, 2, reply_status);
-
+    
+    char *response_cursor = response;
+    status = parse_response_header(&response_cursor, CLOSE);
+    if(!is_end_of_message(&response_cursor)) return STATUS_MALFORMED_RESPONSE;
+    
     // Expected responses: OK / NOK / NLG / NOE / EOW / SLD / PST / CLO / WRP
     if(status != STATUS_OK &&
        status != STATUS_NOK &&
@@ -463,9 +454,9 @@ ReplyStatus close_event_handler(char** cursor) {
        status != STATUS_EVENT_CLOSE_CLOSED &&
        status != STATUS_WRONG_PASSWORD &&
        status != STATUS_ERROR &&
-       status != STATUS_MALFORMED_RESPONSE) {
+       status != STATUS_MALFORMED_RESPONSE) 
         return STATUS_UNEXPECTED_RESPONSE;
-    }
+    
 
     // If wrong password or not logged in, clear global state
     if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){

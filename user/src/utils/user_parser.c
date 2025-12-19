@@ -61,7 +61,6 @@ ReplyStatus parse_change_password(char **cursor, char* old_password,
         !verify_password_format(new_password))
         return STATUS_INVALID_PASSWORD;
 
-    if(strcmp(old_password, current_password) != 0) return STATUS_WRONG_PASSWORD;
     return STATUS_UNASSIGNED;
 }
 
@@ -94,7 +93,7 @@ ReplyStatus parse_reservations(char **cursor, char* eid, char* event_date,
     return STATUS_UNASSIGNED;    
 }
 
-ReplyStatus parse_udp_response_header(char** cursor, RequestType request_type) {
+ReplyStatus parse_response_header(char** cursor, RequestType request_type) {
     // Parse response
     char response_code[4], reply_status[4];
     
@@ -110,8 +109,7 @@ ReplyStatus parse_udp_response_header(char** cursor, RequestType request_type) {
     }
 
     // Extract reply status
-    if(get_next_arg(cursor, reply_status) == ERROR)
-        return STATUS_MALFORMED_RESPONSE;
+    if(get_next_arg(cursor, reply_status) == ERROR) return STATUS_MALFORMED_RESPONSE;
     fprintf(stderr, "UDP response code: %s, reply status: %s\n", response_code, reply_status);
     if(resp_type != request_type) return STATUS_UNEXPECTED_RESPONSE;
     return identify_status_code(reply_status);
