@@ -549,7 +549,7 @@ void create_event_handler(Request* req){
     if (!verify_uid_format(UID) ||
         !verify_password_format(password) ||
         !verify_event_name_format(event_name) ||
-        !verify_event_date_format(event_date) ||
+        //!verify_event_date_format(event_date) ||
         !verify_seat_count(seat_count) ||
         !verify_file_name_format(file_name)) {
         printf("Field validation failed\n");
@@ -847,7 +847,7 @@ int format_event_details(char* EID, char* message, size_t message_size, char* fi
     if (!verify_eid_format(EID) ||
        !verify_uid_format(UID) ||
        !verify_event_name_format(event_name) ||
-       !verify_event_date_format(event_date) ||
+       //!verify_event_date_format(event_date) ||
        !verify_seat_count(total_seats) ||
        !verify_reserved_seats(reserved_seats, total_seats) ||
        !verify_file_name_format(file_name)) 
