@@ -342,9 +342,9 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     char date[EVENT_DATE_LENGTH + 1], num_seats[4];
     *extra_info = NULL;
     
+    if(!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
     ReplyStatus status = parse_create_event(cursor, event_name, file_name, date, num_seats);
     if (status != STATUS_UNASSIGNED) return status;
-    if(!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
     
     int tcp_fd = connect_tcp(IP, PORT);
     if (tcp_fd == -1) return STATUS_SEND_FAILED;

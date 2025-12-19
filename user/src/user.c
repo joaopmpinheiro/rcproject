@@ -65,6 +65,7 @@ void parse_arguments(int argc, char *argv[]) {
 
 int main(int argc, char* argv[]) {
     signal(SIGINT, sig_detected);
+    signal(SIGPIPE, SIG_IGN); 
     parse_arguments(argc, argv);
     
     struct sockaddr_in server_udp_addr;
@@ -107,6 +108,7 @@ int main(int argc, char* argv[]) {
     }
     if(stop == 1) {
         printf("\nExiting...\n");
+        fflush(stdout);
     }
     close(udp_fd);
     return 0;
