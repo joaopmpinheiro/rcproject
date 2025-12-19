@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
 
     parse_arguments(argc, argv);
-
+    
     server_setup();
 
     while(1){

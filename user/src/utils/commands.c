@@ -400,26 +400,22 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
     char *cursor_resp = request_header;
     
     if(get_next_arg(&cursor_resp, response_code) == ERROR)
-        return STATUS_MALFORMED_RESPONSE;
+    return STATUS_MALFORMED_RESPONSE;
     
     // Identify response type (check if it is ERR)
     RequestType resp_type = identify_command_response(response_code);
-    if(is_end_of_message(cursor)){
+    if(is_end_of_message(&cursor_resp)){
         if(resp_type == ERROR_REQUEST) return STATUS_ERROR;
         else return STATUS_MALFORMED_RESPONSE;
     }
 
     // Extract reply status
     if(get_next_arg(&cursor_resp, reply_status) == ERROR)
-        return STATUS_MALFORMED_RESPONSE;
+        return STATUS_EVENT_SOLD_OUT;
 
-    if(resp_type != CREATE) return STATUS_UNEXPECTED_RESPONSE;
-  
-    if(get_next_arg(&cursor_resp, response_code) == ERROR)
-        return STATUS_MALFORMED_RESPONSE;
+    if(resp_type != CREATE) return STATUS_EVENT_RESERVATION_REJECTION;
 
-    status = identify_status_code(response_code);
-    
+    status = identify_status_code(reply_status);
     // Expected responses: OK / NOK / NLG / WRP
     if(status != STATUS_OK &&
        status != STATUS_NOK &&
@@ -435,7 +431,6 @@ ReplyStatus create_event_handler(char** cursor, char** extra_info) {
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
     }
-
     if (status == STATUS_OK){
         if(get_next_arg(&cursor_resp, eid) == ERROR ||
            !is_end_of_message(&cursor_resp))
