@@ -56,7 +56,8 @@ void handle_udp_request(Request* req) {
        !verify_uid_format(uid) ||
        !verify_password_format(password)) {
         char response[16]; 
-        snprintf(response, sizeof(response), "%s ERR\n", command_buff);
+        const char* cmd_resp = get_command_response_code(command);
+        snprintf(response, sizeof(response), "%s ERR\n", cmd_resp);
         send_udp_response(response, req);
         return;
     }

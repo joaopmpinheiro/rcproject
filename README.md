@@ -1,6 +1,6 @@
 # Event Reservation Platform
 
-A C-based client-server event reservation system for the **Redes de Computadores (RC)** course at IST. Uses raw BSD sockets with UDP for user management and listing activities, and TCP for file transfers and event/reservation management.
+A C-based client-server event reservation system for the **Redes de Computadores (RC)** course at IST. Uses raw BSD sockets with UDP for user management and listing activities and TCP for file transfers and event/reservation management.
 
 **Group:** 32 **Deadline:** December 19, 2025
 
