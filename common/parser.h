@@ -8,6 +8,5 @@
 int get_next_arg(char **cursor, char *out);
 int is_end_of_message(char **cursor);
 int parse_cmd(char **cursor, char* cmd);
-
-
+int is_padded_end_of_message(char **cursor);
 #endif

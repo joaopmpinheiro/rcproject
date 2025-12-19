@@ -1,5 +1,6 @@
 #include "../../common/common.h"
 #include "../../common/data.h"
+#include "../../common/parser.h"
 #include "parser.h"
 #include <errno.h>
 #include <stdio.h>
@@ -7,9 +8,10 @@
 #include <string.h>
 #include <time.h>
 
+
 ReplyStatus parse_eid(char **cursor, char* eid) {
     if(get_next_arg(cursor, eid) == ERROR ||
-       !is_end_of_message(cursor))
+       !is_padded_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
 
     if(!verify_eid_format(eid)) return STATUS_INVALID_EID;
@@ -19,7 +21,7 @@ ReplyStatus parse_eid(char **cursor, char* eid) {
 ReplyStatus parse_login(char **cursor, char* uid, char* password) {
     if(get_next_arg(cursor, uid) == ERROR ||
        get_next_arg(cursor, password) == ERROR ||
-       !is_end_of_message(cursor))
+       !is_padded_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
     if(!verify_uid_format(uid)) return STATUS_INVALID_UID;
     if(!verify_password_format(password)) return STATUS_INVALID_PASSWORD;
@@ -32,11 +34,11 @@ ReplyStatus parse_create_event(char **cursor, char* event_name, char* file_name,
 	char time_str[TIME_STR_SIZE + 1] = {0};
 	
     if(get_next_arg(cursor, event_name) == ERROR ||
-    get_next_arg(cursor, file_name) == ERROR ||
-    get_next_arg(cursor, day_str) == ERROR||
-    get_next_arg(cursor, time_str) == ERROR ||
-    get_next_arg(cursor, num_seats) == ERROR ||
-    !is_end_of_message(cursor))
+        get_next_arg(cursor, file_name) == ERROR ||
+        get_next_arg(cursor, day_str) == ERROR||
+        get_next_arg(cursor, time_str) == ERROR ||
+        get_next_arg(cursor, num_seats) == ERROR ||
+        !is_padded_end_of_message(cursor))
         return STATUS_INVALID_ARGS;
 
     snprintf(date, EVENT_DATE_LENGTH + 1, "%s %s", day_str, time_str);
@@ -110,7 +112,7 @@ ReplyStatus parse_udp_response_header(char** cursor, RequestType request_type) {
     // Extract reply status
     if(get_next_arg(cursor, reply_status) == ERROR)
         return STATUS_MALFORMED_RESPONSE;
-
+    fprintf(stderr, "UDP response code: %s, reply status: %s\n", response_code, reply_status);
     if(resp_type != request_type) return STATUS_UNEXPECTED_RESPONSE;
     return identify_status_code(reply_status);
 }

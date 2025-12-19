@@ -65,20 +65,19 @@ ReplyStatus login_handler(char** cursor, int udp_fd, struct sockaddr_in* server_
     if (status != STATUS_OK && status != STATUS_REGISTERED) return status;
 
     // Update global state on successful login
-    if ((status == STATUS_OK && !is_logged_in) ||
+    if ((status == STATUS_OK) ||
          status == STATUS_REGISTERED) {
         is_logged_in = 1;
         strcpy(current_password, password);
         strcpy(current_uid, uid);
     }
-    else if (status == STATUS_OK) is_logged_in = 1;
     return status;
 }
 
 ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* server_udp_addr,
                                 socklen_t udp_addr_len) {
     // Verify arguments
-    if (!is_end_of_message(cursor)) return STATUS_INVALID_ARGS;
+    if (!is_padded_end_of_message(cursor)) return STATUS_INVALID_ARGS;
     if (!is_logged_in) return STATUS_NOT_LOGGED_IN_LOCAL;
 
     // PROTOCOL: UNR <uid> <password>
@@ -94,8 +93,7 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
     // Parse response
     char *resp_cursor = response;
     status = parse_udp_response_header(&resp_cursor, UNREGISTER);
-    if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
-
+    if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;    
     // Expected responses: OK / NOK / UNR / WRP
     if(status != STATUS_OK &&
        status != STATUS_NOK &&
@@ -117,7 +115,6 @@ ReplyStatus unregister_handler(char** cursor, int udp_fd, struct sockaddr_in* se
         memset(current_password, 0, sizeof(current_password));
         memset(current_uid, 0, sizeof(current_uid));
     }
-
     return status;
 }
 
@@ -140,9 +137,9 @@ ReplyStatus logout_handler(char** cursor, int udp_fd, struct sockaddr_in* server
     if (status != STATUS_UNASSIGNED) return status;
 
     // Parse response
-    char response_code[4], reply_status[4];
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    status = handle_response_code(response_code, LOGOUT, parsed, 2, reply_status);
+    char *resp_cursor = response;
+    status = parse_udp_response_header(&resp_cursor, LOGGED_OUT);
+    if(!is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE;
 
     // Expected responses: OK / NOK / UNR / WRP
     if(status != STATUS_OK &&
@@ -184,19 +181,11 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     char response[8192];
     n = recvfrom(udp_fd, response, sizeof(response) - 1, 0, NULL, NULL);
     if (n < 0) return STATUS_RECV_FAILED;
-
     response[n] = '\0';
-
-    char response_code[4];
-    char reply_status[4];
-
-    int parsed = sscanf(response, "%3s %3s", response_code, reply_status);
-    if(parsed == 1 && strcmp(reply_status, "ERR") == 0) return STATUS_ERROR;
-    if (parsed < 2) return STATUS_MALFORMED_RESPONSE;
-    
-    // PROTOCOL: RME <status>[ <event1ID state> <event2ID state> ...]
-    if (strcmp(response_code, "RME") != 0) return STATUS_UNEXPECTED_RESPONSE;
-    ReplyStatus status = identify_status_code(reply_status);
+     
+    // Parse response
+    char *resp_cursor = response;
+    ReplyStatus status = parse_udp_response_header(&resp_cursor, MYEVENTS);
     
     // Expected responses: OK / NOK / NLG / WRP
     if(status != STATUS_OK &&
@@ -211,19 +200,20 @@ ReplyStatus myevent_handler(char** cursor, int udp_fd, struct sockaddr_in* serve
     }
 
     // IF wrong password or not logged in, clear global state
-    if(status == STATUS_WRONG_PASSWORD || status == STATUS_NOT_LOGGED_IN){
-        is_logged_in = 0;
-        memset(current_password, 0, sizeof(current_password));
-        memset(current_uid, 0, sizeof(current_uid));
+    if (is_end_of_message(&resp_cursor) && 
+        (status == STATUS_WRONG_PASSWORD ||
+         status == STATUS_NOT_LOGGED_IN)){
+            is_logged_in = 0;
+            memset(current_password, 0, sizeof(current_password));
+            memset(current_uid, 0, sizeof(current_uid));
     }
-    if (status != STATUS_OK) return status;    
-    
+    if (status != STATUS_OK && is_end_of_message(&resp_cursor)) return status;   
+    else if (is_end_of_message(&resp_cursor)) return STATUS_MALFORMED_RESPONSE; 
 
     char* event_list = response + 7;
 
     printf("\n%-5s %-10s\n", "EID", "State");
     printf("===================\n");
-
 
     char eid[4];
     int state;
